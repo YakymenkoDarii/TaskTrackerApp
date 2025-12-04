@@ -14,6 +14,5 @@ namespace TaskTrackerApp.Domain.Entities
 
         // Foreign Keys
         public IList<Column> Columns { get; set; }
-        public Guid? OwnerId { get; set; }
     }
 }

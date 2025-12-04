@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TaskTrackerApp.Application.DTOs
+namespace TaskTrackerApp.Domain.DTOs.Card
 {
     public class CardDto
     {

@@ -3,21 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TaskTrackerApp.Domain.Entities.Base;
+using TaskTrackerApp.Domain.DTOs.Card;
 
-namespace TaskTrackerApp.Domain.Entities
+namespace TaskTrackerApp.Domain.DTOs.Column
 {
-    public class Column : BaseEntity
+    public class ColumnDto
     {
+        public int Id { get; set; }
         public string Title { get; set; }
-
         public string Description { get; set; }
-
         public int BoardId { get; set; }
-
-        // Foreign Keys
-        public IList<Card> Cards { get; set; }
-
-        public Board Board { get; set; }
+        public List<CardDto> Cards { get; set; } = new List<CardDto>();
     }
 }
