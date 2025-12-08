@@ -27,7 +27,7 @@ namespace TaskTrackerApp.Application.Features.Cards.Commands.CreateCard
                 DueDate = request.DueDate,
                 ColumnId = request.ColumnId,
                 BoardId = request.BoardId,
-                AssigneeId = request.AssigneeId,
+                //AssigneeId = request.AssigneeId,
             };
 
             var createdCard = await _cardRepository.AddAsync(card);

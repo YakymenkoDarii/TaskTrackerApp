@@ -35,7 +35,7 @@ namespace TaskTrackerApp.Application.Features.Cards.Queries.GetCardById
                 DueDate = card.DueDate,
                 ColumnId = card.ColumnId,
                 BoardId = card.BoardId,
-                AssigneeId = card.AssigneeId,
+                //AssigneeId = card.AssigneeId,
                 CreatedAt = card.CreatedAt
             };
         }

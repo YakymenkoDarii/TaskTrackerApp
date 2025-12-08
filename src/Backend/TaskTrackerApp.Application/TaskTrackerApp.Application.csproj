@@ -9,12 +9,10 @@
   <ItemGroup>
     <PackageReference Include="dbup-core" Version="6.0.15" />
     <PackageReference Include="MediatR" Version="13.1.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Domain\TaskTrackerApp.Domain.csproj" />
-    <ProjectReference Include="..\TaskTrackerApp.Application\TaskTrackerApp.Application.csproj" />
+    <ProjectReference Include="..\TaskTrackerApp.Domain\TaskTrackerApp.Domain.csproj" />
   </ItemGroup>
 
 </Project>
