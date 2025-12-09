@@ -20,8 +20,6 @@ namespace TaskTrackerApp.Domain.Entities
 
         public string? AvatarUrl { get; set; }
 
-        public string Role { get; set; } = "User";
-
         public DateTime CreatedAt { get; set; }
 
         //Foreign keys

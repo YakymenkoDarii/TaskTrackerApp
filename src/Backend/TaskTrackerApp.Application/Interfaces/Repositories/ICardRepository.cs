@@ -7,7 +7,7 @@ using TaskTrackerApp.Domain.Entities;
 
 namespace TaskTrackerApp.Application.Interfaces.Repositories
 {
-    public interface ICardRepository : IGenericRepository<Card>
+    public interface ICardRepository : IRepository<Card, int>
     {
         Task<IEnumerable<Card>> GetCardsByBoardIdAsync(int boardId);
     }

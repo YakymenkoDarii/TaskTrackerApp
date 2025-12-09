@@ -7,7 +7,7 @@ using TaskTrackerApp.Domain.Entities;
 
 namespace TaskTrackerApp.Application.Interfaces.Repositories
 {
-    public interface IBoardRepository : IGenericRepository<Board>
+    public interface IBoardRepository : IRepository<Board, int>
     {
     }
 }

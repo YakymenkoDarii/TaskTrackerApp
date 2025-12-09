@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{CEC5F712-4E85-41A0-B02C-0A87951C7966}"
+	ProjectSection(SolutionItems) = preProject
+		C:\Users\dariy\Desktop\0001_InitialScheme.png = C:\Users\dariy\Desktop\0001_InitialScheme.png
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Backend", "Backend", "{C12898B3-0B9F-4F22-B255-F605BF886482}"
 EndProject

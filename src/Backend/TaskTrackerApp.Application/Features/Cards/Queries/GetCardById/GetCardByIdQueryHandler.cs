@@ -1,26 +1,24 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaskTrackerApp.Application.Interfaces.Repositories;
+using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.DTOs.Card;
 
 namespace TaskTrackerApp.Application.Features.Cards.Queries.GetCardById
 {
     public class GetCardByIdQueryHandler : IRequestHandler<GetCardByIdQuery, CardDto>
     {
-        private readonly ICardRepository _cardRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public GetCardByIdQueryHandler(ICardRepository cardRepository)
+        public GetCardByIdQueryHandler(IUnitOfWork unitOfWork)
         {
-            _cardRepository = cardRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<CardDto> Handle(GetCardByIdQuery request, CancellationToken cancellationToken)
         {
-            var card = await _cardRepository.GetByIdAsync(request.Id);
+            var card = await _unitOfWork.CardRepository.GetAsync(request.Id);
 
             if (card == null)
             {
@@ -38,6 +36,7 @@ namespace TaskTrackerApp.Application.Features.Cards.Queries.GetCardById
                 //AssigneeId = card.AssigneeId,
                 CreatedAt = card.CreatedAt
             };
+
         }
     }
 }

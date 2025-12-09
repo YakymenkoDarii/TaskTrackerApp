@@ -1,21 +1,19 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TaskTrackerApp.Application.Interfaces.Repositories;
+using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Entities;
 
 namespace TaskTrackerApp.Application.Features.Cards.Commands.CreateCard
 {
     public class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, int>
     {
-        private readonly ICardRepository _cardRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CreateCardCommandHandler(ICardRepository cardRepository)
+        public CreateCardCommandHandler(IUnitOfWork unitOfWork)
         {
-            _cardRepository = cardRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<int> Handle(CreateCardCommand request, CancellationToken cancellationToken)
@@ -30,8 +28,11 @@ namespace TaskTrackerApp.Application.Features.Cards.Commands.CreateCard
                 //AssigneeId = request.AssigneeId,
             };
 
-            var createdCard = await _cardRepository.AddAsync(card);
-            return createdCard.Id;
+            var newId = await _unitOfWork.CardRepository.AddAsync(card);
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return newId;
         }
     }
 }
