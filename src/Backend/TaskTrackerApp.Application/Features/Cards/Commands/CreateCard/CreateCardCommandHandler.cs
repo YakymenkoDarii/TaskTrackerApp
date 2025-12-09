@@ -1,38 +1,36 @@
 ﻿using MediatR;
-using System.Threading;
-using System.Threading.Tasks;
-using TaskTrackerApp.Application.Interfaces.Repositories;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Entities;
 
-namespace TaskTrackerApp.Application.Features.Cards.Commands.CreateCard
+namespace TaskTrackerApp.Application.Features.Cards.Commands.CreateCard;
+
+public class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, int>
 {
-    public class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, int>
+    private readonly IUnitOfWorkFactory _unitOfWorkFactory;
+
+    public CreateCardCommandHandler(IUnitOfWorkFactory unitOfWorkFactory)
     {
-        private readonly IUnitOfWork _unitOfWork;
+        _unitOfWorkFactory = unitOfWorkFactory;
+    }
 
-        public CreateCardCommandHandler(IUnitOfWork unitOfWork)
+    public async Task<int> Handle(CreateCardCommand request, CancellationToken cancellationToken)
+    {
+        using var uow = _unitOfWorkFactory.Create();
+
+        var card = new Card
         {
-            _unitOfWork = unitOfWork;
-        }
+            Title = request.Title,
+            Description = request.Description,
+            DueDate = request.DueDate,
+            ColumnId = request.ColumnId,
+            BoardId = request.BoardId,
+            //AssigneeId = request.AssigneeId,
+        };
 
-        public async Task<int> Handle(CreateCardCommand request, CancellationToken cancellationToken)
-        {
-            var card = new Card
-            {
-                Title = request.Title,
-                Description = request.Description,
-                DueDate = request.DueDate,
-                ColumnId = request.ColumnId,
-                BoardId = request.BoardId,
-                //AssigneeId = request.AssigneeId,
-            };
+        var newId = await uow.CardRepository.AddAsync(card);
 
-            var newId = await _unitOfWork.CardRepository.AddAsync(card);
+        await uow.SaveChangesAsync(cancellationToken);
 
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return newId;
-        }
+        return newId;
     }
 }

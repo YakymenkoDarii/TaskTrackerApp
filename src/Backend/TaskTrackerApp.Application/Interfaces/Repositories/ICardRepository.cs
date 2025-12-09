@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskTrackerApp.Domain.Entities;
+﻿using TaskTrackerApp.Domain.Entities;
 
-namespace TaskTrackerApp.Application.Interfaces.Repositories
+namespace TaskTrackerApp.Application.Interfaces.Repositories;
+
+public interface ICardRepository : IRepository<Card, int>
 {
-    public interface ICardRepository : IRepository<Card, int>
-    {
-        Task<IEnumerable<Card>> GetCardsByBoardIdAsync(int boardId);
-    }
+    Task<IEnumerable<Card>> GetCardsByBoardIdAsync(int boardId);
 }
