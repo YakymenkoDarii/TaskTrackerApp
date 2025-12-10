@@ -1,1 +1,0 @@
-﻿--Task: Write script for creating database

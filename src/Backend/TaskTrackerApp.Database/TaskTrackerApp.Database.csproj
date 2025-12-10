@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+
+	<ItemGroup>
+		<EmbeddedResource Include="Scripts\001_CreateUsersTable.sql" />
+		<EmbeddedResource Include="Scripts\002_CreateBoardsTable.sql" />
+		<EmbeddedResource Include="Scripts\003_CreateBoardMembersTable.sql" />
+		<EmbeddedResource Include="Scripts\004_CreateColumnsTable.sql" />
+		<EmbeddedResource Include="Scripts\005_CreateCardsTable.sql" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="dbup-sqlserver" Version="6.0.16" />
+	</ItemGroup>
+
+</Project>
