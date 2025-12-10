@@ -39,8 +39,6 @@ public class Repository<TEntity, TId> : IRepository<TEntity, TId> where TEntity 
             _dbSet.Attach(entity);
         }
         _context.Entry(entity).State = EntityState.Modified;
-
-
     }
 
     public async Task DeleteAsync(TId id)
