@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using TaskTrackerApp.Application.Features.Cards.Commands.CreateCard; // Needed to find the Application Assembly
+using TaskTrackerApp.Application.AssemblyReference;
 using TaskTrackerApp.Application.Interfaces.Repositories;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Database;
@@ -19,7 +19,7 @@ builder.Services.AddDbContext<TaskTrackerDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(typeof(CreateCardCommandHandler).Assembly));
+    cfg.RegisterServicesFromAssembly(AssemblyReference.Assembly));
 
 builder.Services.AddScoped<ICardRepository, CardRepository>();
 

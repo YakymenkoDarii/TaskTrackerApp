@@ -16,7 +16,7 @@ public class CardsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateCardCommand command)
+    public async Task<IActionResult> CreateAsync([FromBody] CreateCardCommand command)
     {
         var id = await _mediator.Send(command);
         return Ok(id);
