@@ -9,5 +9,5 @@ public class CreateCardCommand : IRequest<int>
     public DateTime? DueDate { get; set; }
     public int ColumnId { get; set; }
     public int BoardId { get; set; }
-    public Guid? AssigneeId { get; set; }
+    public int? AssigneeId { get; set; }
 }

@@ -1,6 +1,6 @@
 ﻿namespace TaskTrackerApp.Domain.Entities;
 
-public class BoardMembers
+public class BoardMember
 {
     public int Id { get; set; }
 

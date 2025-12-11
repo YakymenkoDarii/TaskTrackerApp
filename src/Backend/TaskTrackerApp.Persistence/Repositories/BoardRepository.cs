@@ -10,6 +10,12 @@ public class BoardRepository : Repository<Board, int>, IBoardRepository
     {
     }
 
+    public async Task<int> AddNewMemberAsync(BoardMember boardMember)
+    {
+        var memberEntry = await _context.BoardMembers.AddAsync(boardMember);
+        return boardMember.Id;
+    }
+
     public async Task<IEnumerable<Board>> GetAllWithOwnerAsync(int userId)
     {
         return await _dbSet

@@ -32,7 +32,7 @@ public class GetCardByIdQueryHandler : IRequestHandler<GetCardByIdQuery, CardDto
             DueDate = card.DueDate,
             ColumnId = card.ColumnId,
             BoardId = card.BoardId,
-            //AssigneeId = card.AssigneeId,
+            AssigneeId = card.AssigneeId,
             CreatedAt = card.CreatedAt
         };
 
