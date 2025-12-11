@@ -1,6 +1,6 @@
 ﻿namespace TaskTrackerApp.Domain.Entities;
 
-public class BoardMembers
+public class BoardMember
 {
     public int Id { get; set; }
 
@@ -11,5 +11,4 @@ public class BoardMembers
     public string? Role { get; set; }
 
     public DateTime? JoinedAt { get; set; } = DateTime.UtcNow;
-
 }

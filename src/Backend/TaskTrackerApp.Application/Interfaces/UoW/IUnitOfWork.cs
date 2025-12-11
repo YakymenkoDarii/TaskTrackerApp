@@ -4,9 +4,13 @@ namespace TaskTrackerApp.Application.Interfaces.UoW;
 
 public interface IUnitOfWork : IDisposable
 {
-    //Add other repositories
     ICardRepository CardRepository { get; }
-    // IBoardRepository BoardRepository { get; }
-    // IColumnRepository ColumnRepository { get; }
+
+    IBoardRepository BoardRepository { get; }
+
+    IColumnRepository ColumnRepository { get; }
+
+    IUserRepository UserRepository { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

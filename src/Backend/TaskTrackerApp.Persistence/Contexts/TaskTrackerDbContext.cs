@@ -12,7 +12,7 @@ public class TaskTrackerDbContext : DbContext
 
     public DbSet<User> Users { get; set; }
     public DbSet<Board> Boards { get; set; }
-    public DbSet<BoardMembers> BoardMembers { get; set; }
+    public DbSet<BoardMember> BoardMembers { get; set; }
     public DbSet<Column> Columns { get; set; }
     public DbSet<Card> Cards { get; set; }
 
@@ -20,7 +20,7 @@ public class TaskTrackerDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<BoardMembers>(entity =>
+        modelBuilder.Entity<BoardMember>(entity =>
         {
             entity.HasKey(bm => bm.Id);
 

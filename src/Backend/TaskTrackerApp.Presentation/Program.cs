@@ -11,7 +11,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-
 builder.Services.AddDbContextFactory<TaskTrackerDbContext>(options =>
     options.UseSqlServer(connectionString));
 
@@ -32,7 +31,6 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 DatabaseInitializer.Initialize(connectionString);
-
 
 app.UseHttpsRedirection();
 

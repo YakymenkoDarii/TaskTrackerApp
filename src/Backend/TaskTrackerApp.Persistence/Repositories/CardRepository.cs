@@ -9,7 +9,6 @@ public class CardRepository : Repository<Card, int>, ICardRepository
 {
     public CardRepository(TaskTrackerDbContext dbContext) : base(dbContext)
     {
-
     }
 
     public async Task<IEnumerable<Card>> GetCardsByBoardIdAsync(int boardId)

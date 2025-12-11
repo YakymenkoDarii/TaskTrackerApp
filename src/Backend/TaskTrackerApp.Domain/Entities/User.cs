@@ -4,13 +4,13 @@ public class User
 {
     public int Id { get; set; }
 
-    public required string Email { get; set; }
+    public string Email { get; set; }
 
-    public required string PasswordHash { get; set; }
+    public string PasswordHash { get; set; }
 
-    public required string Tag { get; set; }
+    public string Tag { get; set; }
 
-    public required string DisplayName { get; set; }
+    public string DisplayName { get; set; }
 
     public string? AvatarUrl { get; set; }
 
