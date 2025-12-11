@@ -1,14 +1,9 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Entities;
 
 namespace TaskTrackerApp.Application.Features.Users.Commands.CreateUsers;
+
 public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, int>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
@@ -17,6 +12,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, int>
     {
         _uowFactory = uowFactory;
     }
+
     public async Task<int> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();

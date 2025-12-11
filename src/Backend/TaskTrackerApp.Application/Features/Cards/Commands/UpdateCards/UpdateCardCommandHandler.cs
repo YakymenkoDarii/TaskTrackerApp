@@ -2,6 +2,7 @@
 using TaskTrackerApp.Application.Interfaces.UoW;
 
 namespace TaskTrackerApp.Application.Features.Cards.Commands.UpdateCards;
+
 public class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
@@ -10,6 +11,7 @@ public class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand>
     {
         _uowFactory = uowFactory;
     }
+
     public async Task Handle(UpdateCardCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();

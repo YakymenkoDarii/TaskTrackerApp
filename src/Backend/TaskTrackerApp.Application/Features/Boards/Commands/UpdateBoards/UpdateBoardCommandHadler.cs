@@ -1,13 +1,8 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskTrackerApp.Application.Features.Boards.Commands.DeleteBoards;
 using TaskTrackerApp.Application.Interfaces.UoW;
 
 namespace TaskTrackerApp.Application.Features.Boards.Commands.UpdateBoards;
+
 public class UpdateBoardCommandHandler : IRequestHandler<UpdateBoardCommand>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
@@ -16,6 +11,7 @@ public class UpdateBoardCommandHandler : IRequestHandler<UpdateBoardCommand>
     {
         _uowFactory = uowFactory;
     }
+
     public async Task Handle(UpdateBoardCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();

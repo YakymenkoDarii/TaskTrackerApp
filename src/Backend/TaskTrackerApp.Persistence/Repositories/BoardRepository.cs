@@ -4,6 +4,7 @@ using TaskTrackerApp.Domain.Entities;
 using TaskTrackerApp.Persistence.Contexts;
 
 namespace TaskTrackerApp.Persistence.Repositories;
+
 public class BoardRepository : Repository<Board, int>, IBoardRepository
 {
     public BoardRepository(TaskTrackerDbContext context) : base(context)
@@ -21,7 +22,6 @@ public class BoardRepository : Repository<Board, int>, IBoardRepository
         return await _dbSet
             .Where(b => b.CreatedBy == userId)
             .ToListAsync();
-
     }
 
     public async Task<IEnumerable<User>> GetMembersAsync(int boardId)

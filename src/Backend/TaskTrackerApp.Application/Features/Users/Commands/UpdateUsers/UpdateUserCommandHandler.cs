@@ -1,13 +1,8 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskTrackerApp.Application.Features.Columns.Commands.UpdateColumns;
 using TaskTrackerApp.Application.Interfaces.UoW;
 
 namespace TaskTrackerApp.Application.Features.Users.Commands.UpdateUsers;
+
 public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
@@ -16,6 +11,7 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand>
     {
         _uowFactory = uowFactory;
     }
+
     public async Task Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();

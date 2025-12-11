@@ -1,13 +1,8 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskTrackerApp.Application.Features.Boards.Commands.DeleteBoards;
 using TaskTrackerApp.Application.Interfaces.UoW;
 
 namespace TaskTrackerApp.Application.Features.Columns.Commands.DeleteColumns;
+
 internal class DeleteColumnCommandHandler : IRequestHandler<DeleteColumnCommand>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
@@ -16,6 +11,7 @@ internal class DeleteColumnCommandHandler : IRequestHandler<DeleteColumnCommand>
     {
         _uowFactory = uowFactory;
     }
+
     public async Task Handle(DeleteColumnCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();

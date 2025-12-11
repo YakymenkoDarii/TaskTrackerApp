@@ -23,5 +23,4 @@ public class Card : BaseEntity
     public Board Board { get; set; }
 
     public User AssigneeUser { get; set; }
-
 }

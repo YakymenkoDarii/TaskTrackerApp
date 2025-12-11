@@ -1,14 +1,9 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskTrackerApp.Application.Features.Boards.Commands.CreateBoards;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Entities;
 
 namespace TaskTrackerApp.Application.Features.Columns.Commands.CreateColumns;
+
 public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, int>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
@@ -17,6 +12,7 @@ public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, i
     {
         _uowFactory = uowFactory;
     }
+
     public async Task<int> Handle(CreateColumnCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();

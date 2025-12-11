@@ -11,5 +11,4 @@ public class BoardMember
     public string? Role { get; set; }
 
     public DateTime? JoinedAt { get; set; } = DateTime.UtcNow;
-
 }

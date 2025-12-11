@@ -1,15 +1,9 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskTrackerApp.Application.Features.Cards.Queries.GetCardById;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.DTOs.Board;
-using TaskTrackerApp.Domain.DTOs.Card;
 
 namespace TaskTrackerApp.Application.Features.Boards.Queries.GetAllBoards;
+
 public class GetAllBoardsQueryHandler : IRequestHandler<GetAllBoardsQuery, IEnumerable<BoardDto>>
 {
     private readonly IUnitOfWorkFactory _unitOfWorkFactory;
