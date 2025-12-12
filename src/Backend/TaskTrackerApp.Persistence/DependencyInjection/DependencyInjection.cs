@@ -18,8 +18,8 @@ public static class DependencyInjection
         services.AddDbContextFactory<TaskTrackerDbContext>(options =>
             options.UseSqlServer(connectionString));
 
-        services.AddDbContext<TaskTrackerDbContext>(options =>
-            options.UseSqlServer(connectionString));
+        services.AddScoped<TaskTrackerDbContext>(p =>
+            p.GetRequiredService<IDbContextFactory<TaskTrackerDbContext>>().CreateDbContext());
 
         services.AddScoped<ICardRepository, CardRepository>();
         services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
