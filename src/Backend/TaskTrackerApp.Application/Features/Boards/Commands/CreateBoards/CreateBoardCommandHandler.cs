@@ -22,6 +22,7 @@ public class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, int
             Title = request.Title,
             Description = request.Description,
             CreatedBy = request.CreatedBy,
+            UpdatedBy = request.CreatedBy,
         };
 
         var newId = await uow.BoardRepository.AddAsync(board);
