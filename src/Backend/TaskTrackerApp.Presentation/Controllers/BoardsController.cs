@@ -51,7 +51,7 @@ public class BoardsController : ControllerBase
         {
             Title = boardDto.Title,
             Description = boardDto.Description,
-            CreatedBy = boardDto.CreatedBy
+            CreatedById = boardDto.CreatedById
         };
 
         var result = await _mediator.Send(command);
@@ -66,7 +66,7 @@ public class BoardsController : ControllerBase
             Id = id,
             Title = boardDto.Title,
             Description = boardDto.Description,
-            UpdatedBy = boardDto.UpdatedBy
+            UpdatedById = boardDto.UpdatedById
         };
 
         await _mediator.Send(command);
@@ -75,7 +75,7 @@ public class BoardsController : ControllerBase
     }
 
     [HttpDelete]
-    public async Task<IActionResult> DeleteBoard(int id)
+    public async Task<IActionResult> DeleteAsync(int id)
     {
         var command = new DeleteBoardCommand
         {

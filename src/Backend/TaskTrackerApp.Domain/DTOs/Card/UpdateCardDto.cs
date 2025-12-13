@@ -1,8 +1,6 @@
-﻿using MediatR;
+﻿namespace TaskTrackerApp.Domain.DTOs.Card;
 
-namespace TaskTrackerApp.Application.Features.Cards.Commands.UpdateCards;
-
-public class UpdateCardCommand : IRequest
+public class UpdateCardDto
 {
     public int Id { get; set; }
 

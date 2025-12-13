@@ -3,11 +3,11 @@
     Title NVARCHAR(200) NOT NULL,
     Description NVARCHAR(MAX) NULL,
     
-    CreatedAt DATETIME2 DEFAULT GETDATE(),
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
     UpdatedAt DATETIME2 NULL,
-    CreatedBy INT NOT NULL,
-    UpdatedBy INT NULL,
+    CreatedById INT NOT NULL,
+    UpdatedById INT NOT NULL,
 
-    CONSTRAINT FK_Boards_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES Users(Id),
-    CONSTRAINT FK_Boards_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES Users(Id)
+    CONSTRAINT FK_Boards_CreatedBy FOREIGN KEY (CreatedById) REFERENCES Users(Id),
+    CONSTRAINT FK_Boards_UpdatedBy FOREIGN KEY (UpdatedById) REFERENCES Users(Id)
 );

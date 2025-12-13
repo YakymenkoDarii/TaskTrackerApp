@@ -10,5 +10,5 @@ public class UpdateBoardCommand : IRequest
 
     public string Description { get; set; } = string.Empty;
 
-    public int UpdatedBy { get; set; }
+    public int UpdatedById { get; set; }
 }

@@ -25,7 +25,7 @@ public class GetAllBoardsQueryHandler : IRequestHandler<GetAllBoardsQuery, IEnum
             Title = b.Title,
             Description = b.Description,
             CreatedAt = b.CreatedAt,
-            CreatedBy = b.CreatedBy,
+            CreatedById = b.CreatedById,
         });
 
         return boardDtos;

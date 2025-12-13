@@ -8,5 +8,5 @@ public class CreateBoardCommand : IRequest<int>
 
     public string Description { get; set; } = string.Empty;
 
-    public int CreatedBy { get; set; }
+    public int CreatedById { get; set; }
 }

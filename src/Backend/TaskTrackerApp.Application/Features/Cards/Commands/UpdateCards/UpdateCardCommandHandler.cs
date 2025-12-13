@@ -23,7 +23,7 @@ public class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand>
         card.Description = request.Description;
         card.DueDate = request.DueDate;
         card.AssigneeId = request.AssigneeId;
-        card.UpdatedBy = request.UpdatedBy;
+        card.UpdatedById = request.UpdatedById;
         card.UpdatedAt = DateTime.UtcNow;
 
         await uow.CardRepository.UpdateAsync(card);

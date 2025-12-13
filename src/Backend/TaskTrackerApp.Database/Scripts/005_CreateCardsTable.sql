@@ -8,13 +8,14 @@
     ColumnId INT NOT NULL,
     AssigneeId INT NULL,
 
-    CreatedAt DATETIME2 DEFAULT GETDATE(),
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
     UpdatedAt DATETIME2 NULL,
-    CreatedBy INT NOT NULL,
-    UpdatedBy INT NULL,
+    CreatedById INT NOT NULL,
+    UpdatedById INT NOT NULL,
 
     CONSTRAINT FK_Cards_Board FOREIGN KEY (BoardId) REFERENCES Boards(Id),
     CONSTRAINT FK_Cards_Column FOREIGN KEY (ColumnId) REFERENCES Columns(Id) ON DELETE CASCADE,
-    CONSTRAINT FK_Cards_Assignee FOREIGN KEY (AssigneeId) REFERENCES Users(Id),
-    CONSTRAINT FK_Cards_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES Users(Id)
+    CONSTRAINT FK_Cards_Assignee FOREIGN KEY (AssigneeId) REFERENCES Users(Id) ON DELETE SET NULL,
+    CONSTRAINT FK_Cards_CreatedBy FOREIGN KEY (CreatedById) REFERENCES Users(Id),
+    CONSTRAINT FK_Cards_UpdatedBy FOREIGN KEY (UpdatedById) REFERENCES Users(Id)
 );

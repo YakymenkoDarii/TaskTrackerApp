@@ -20,7 +20,7 @@ public class UpdateBoardCommandHandler : IRequestHandler<UpdateBoardCommand>
 
         board.Title = request.Title;
         board.Description = request.Description;
-        board.UpdatedBy = request.UpdatedBy;
+        board.UpdatedById = request.UpdatedById;
         board.UpdatedAt = DateTime.UtcNow;
 
         await uow.BoardRepository.UpdateAsync(board);

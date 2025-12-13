@@ -1,8 +1,6 @@
-﻿using MediatR;
+﻿namespace TaskTrackerApp.Domain.DTOs.Column;
 
-namespace TaskTrackerApp.Application.Features.Columns.Commands.UpdateColumns;
-
-public class UpdateColumnCommand : IRequest
+public class UpdateColumnDto
 {
     public int Id { get; set; }
 

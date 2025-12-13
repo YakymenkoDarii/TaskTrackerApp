@@ -17,7 +17,8 @@ public class User
     public DateTime CreatedAt { get; set; }
 
     //Foreign keys
-    public IList<Card> AssignedTasks { get; set; }
+    public IList<Card> AssignedTasks { get; set; } = new List<Card>();
 
-    public IList<Board> CreatedBoards { get; set; }
+    public IList<Board> CreatedBoards { get; set; } = new List<Board>();
+    public IList<BoardMember> BoardMemberships { get; set; } = new List<BoardMember>();
 }

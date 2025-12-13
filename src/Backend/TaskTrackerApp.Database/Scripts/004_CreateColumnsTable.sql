@@ -4,12 +4,8 @@
     Description NVARCHAR(MAX) NULL,
     BoardId INT NOT NULL,
 
-    CreatedAt DATETIME2 DEFAULT GETDATE(),
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
     UpdatedAt DATETIME2 NULL,
-    CreatedBy INT NOT NULL,
-    UpdatedBy INT NULL,
 
-    CONSTRAINT FK_Columns_Board FOREIGN KEY (BoardId) REFERENCES Boards(Id) ON DELETE CASCADE,
-    CONSTRAINT FK_Columns_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES Users(Id), 
-    CONSTRAINT FK_Columns_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES Users(Id)
+    CONSTRAINT FK_Columns_Board FOREIGN KEY (BoardId) REFERENCES Boards(Id) ON DELETE CASCADE
 );
