@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskTrackerApp.Application.Features.Users.Commands.CreateUsers;
 using TaskTrackerApp.Application.Features.Users.Commands.DeleteUsers;
@@ -9,6 +10,7 @@ namespace TaskTrackerApp.Presentation.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UsersController : ControllerBase
 {
     private IMediator _mediator;

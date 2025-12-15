@@ -1,4 +1,6 @@
-﻿namespace TaskTrackerApp.Domain.Entities;
+﻿using TaskTrackerApp.Domain.Enums;
+
+namespace TaskTrackerApp.Domain.Entities;
 
 public class User
 {
@@ -16,9 +18,12 @@ public class User
 
     public DateTime CreatedAt { get; set; }
 
+    public Role Role { get; set; } = Role.User;
+
     //Foreign keys
     public IList<Card> AssignedTasks { get; set; } = new List<Card>();
 
     public IList<Board> CreatedBoards { get; set; } = new List<Board>();
+
     public IList<BoardMember> BoardMemberships { get; set; } = new List<BoardMember>();
 }
