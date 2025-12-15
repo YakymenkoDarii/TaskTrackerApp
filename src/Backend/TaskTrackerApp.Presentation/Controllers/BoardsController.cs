@@ -33,7 +33,7 @@ public class BoardsController : ControllerBase
     }
 
     [HttpGet("id")]
-    public async Task<IActionResult> GetById(int boardId)
+    public async Task<IActionResult> GetByIdAsync(int boardId)
     {
         var query = new GetBoardByIdQuery(boardId);
 
