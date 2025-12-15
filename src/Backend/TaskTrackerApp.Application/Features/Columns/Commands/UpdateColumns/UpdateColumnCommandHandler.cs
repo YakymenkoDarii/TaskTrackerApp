@@ -21,7 +21,6 @@ public class UpdateColumnCommandHandler : IRequestHandler<UpdateColumnCommand>
         column.Title = request.Title;
         column.Description = request.Description;
         column.BoardId = request.BoardId;
-        column.UpdatedBy = request.UpdatedBy;
         column.UpdatedAt = DateTime.UtcNow;
 
         await uow.ColumnRepository.UpdateAsync(column);

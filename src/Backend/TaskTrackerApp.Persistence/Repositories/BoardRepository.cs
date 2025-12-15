@@ -20,7 +20,7 @@ public class BoardRepository : Repository<Board, int>, IBoardRepository
     public async Task<IEnumerable<Board>> GetAllWithOwnerAsync(int userId)
     {
         return await _dbSet
-            .Where(b => b.CreatedBy == userId)
+            .Where(b => b.CreatedById == userId)
             .ToListAsync();
     }
 

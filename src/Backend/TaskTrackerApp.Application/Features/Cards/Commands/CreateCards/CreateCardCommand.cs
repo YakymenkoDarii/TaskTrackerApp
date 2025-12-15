@@ -10,4 +10,5 @@ public class CreateCardCommand : IRequest<int>
     public int ColumnId { get; set; }
     public int BoardId { get; set; }
     public int? AssigneeId { get; set; }
+    public int CreatedById { get; set; }
 }

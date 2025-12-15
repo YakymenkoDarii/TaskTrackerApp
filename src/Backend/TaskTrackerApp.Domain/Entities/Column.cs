@@ -1,17 +1,17 @@
-﻿using TaskTrackerApp.Domain.Entities.Base;
+﻿namespace TaskTrackerApp.Domain.Entities;
 
-namespace TaskTrackerApp.Domain.Entities;
-
-public class Column : BaseEntity
+public class Column
 {
-    public string Title { get; set; }
+    public int Id { get; set; }
 
-    public string Description { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 
     public int BoardId { get; set; }
 
-    // Foreign Keys
-    public IList<Card> Cards { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
 
     public Board Board { get; set; }
+    public IList<Card> Cards { get; set; } = new List<Card>();
 }

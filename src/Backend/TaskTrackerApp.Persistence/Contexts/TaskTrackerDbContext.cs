@@ -20,68 +20,48 @@ public class TaskTrackerDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<BoardMember>(entity =>
-        {
-            entity.HasKey(bm => bm.Id);
-
-            entity.HasOne<User>()
-                .WithMany()
-                .HasForeignKey(bm => bm.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne<Board>()
-                .WithMany()
-                .HasForeignKey(bm => bm.BoardId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
         modelBuilder.Entity<Board>(entity =>
         {
-            entity.HasOne<User>()
-                .WithMany(u => u.CreatedBoards)
-                .HasForeignKey(b => b.CreatedBy)
-                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(b => b.CreatedBy)
+                  .WithMany(u => u.CreatedBoards)
+                  .HasForeignKey(b => b.CreatedById)
+                  .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne<User>()
-                .WithMany()
-                .HasForeignKey(b => b.UpdatedBy)
-                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(b => b.UpdatedBy)
+                  .WithMany()
+                  .HasForeignKey(b => b.UpdatedById)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(b => b.Columns).WithOne(c => c.Board).HasForeignKey(c => c.BoardId);
+            entity.HasMany(b => b.Cards).WithOne(c => c.Board).HasForeignKey(c => c.BoardId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Column>(entity =>
         {
-            entity.HasOne<Board>()
-                .WithMany(b => b.Columns)
-                .HasForeignKey(c => c.BoardId)
-                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasKey(c => c.Id);
 
-            entity.HasOne<User>()
-                .WithMany()
-                .HasForeignKey(c => c.CreatedBy)
-                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(c => c.Board)
+                  .WithMany(b => b.Columns)
+                  .HasForeignKey(c => c.BoardId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Card>(entity =>
         {
-            entity.HasOne<Column>()
-                .WithMany(c => c.Cards)
-                .HasForeignKey(c => c.ColumnId)
-                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(c => c.CreatedBy)
+                  .WithMany()
+                  .HasForeignKey(c => c.CreatedById)
+                  .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne<Board>()
-                .WithMany()
-                .HasForeignKey(c => c.BoardId)
-                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(c => c.UpdatedBy)
+                  .WithMany()
+                  .HasForeignKey(c => c.UpdatedById)
+                  .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne<User>()
-                .WithMany(u => u.AssignedTasks)
-                .HasForeignKey(c => c.AssigneeId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            entity.HasOne<User>()
-                .WithMany()
-                .HasForeignKey(c => c.CreatedBy)
-                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(c => c.AssigneeUser)
+                  .WithMany(u => u.AssignedTasks)
+                  .HasForeignKey(c => c.AssigneeId)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

@@ -25,6 +25,8 @@ public class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, int>
             ColumnId = request.ColumnId,
             BoardId = request.BoardId,
             AssigneeId = request.AssigneeId,
+            CreatedById = request.CreatedById,
+            UpdatedById = request.CreatedById
         };
 
         var newId = await uow.CardRepository.AddAsync(card);

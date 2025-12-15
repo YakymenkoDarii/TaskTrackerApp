@@ -4,9 +4,13 @@ namespace TaskTrackerApp.Domain.Entities;
 
 public class Board : BaseEntity
 {
-    public string Title { get; set; }
-    public string Description { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 
-    // Foreign Keys
-    public IList<Column> Columns { get; set; }
+    public User CreatedBy { get; set; }
+    public User UpdatedBy { get; set; }
+
+    public IList<Column> Columns { get; set; } = new List<Column>();
+    public IList<Card> Cards { get; set; } = new List<Card>();
+    public IList<BoardMember> Members { get; set; } = new List<BoardMember>();
 }

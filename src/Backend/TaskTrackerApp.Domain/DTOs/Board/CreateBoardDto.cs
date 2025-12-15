@@ -1,8 +1,6 @@
-﻿using MediatR;
+﻿namespace TaskTrackerApp.Domain.DTOs.Board;
 
-namespace TaskTrackerApp.Application.Features.Boards.Commands.CreateBoards;
-
-public class CreateBoardCommand : IRequest<int>
+public class CreateBoardDto
 {
     public string Title { get; set; }
 
