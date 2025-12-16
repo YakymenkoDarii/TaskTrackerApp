@@ -25,8 +25,9 @@ internal class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
     {
         using var uow = _uowFactory.Create();
 
-        User user = request.Email is not null ? await uow.UserRepository.GetByEmailAsync(request.Email)
-                                              : await uow.UserRepository.GetByTagAsync(request.Tag);
+        var user = request.Email is null
+            ? await uow.UserRepository.GetByTagAsync(request.Tag)
+            : await uow.UserRepository.GetByEmailAsync(request.Email);
 
         if (user is null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
         {

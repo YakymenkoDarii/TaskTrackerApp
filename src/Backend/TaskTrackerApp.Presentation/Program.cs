@@ -18,7 +18,7 @@ builder.Services
     .AddPersistence(builder.Configuration)
     .AddInfrastructure();
 
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 
 builder.Services.AddAuthentication(options =>
 {

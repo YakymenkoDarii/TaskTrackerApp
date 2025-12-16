@@ -26,8 +26,8 @@ internal class SignupCommandHandler : IRequestHandler<SignupCommand, AuthRespons
     {
         using var uow = _uowFactory.Create();
 
-        if (await uow.UserRepository.GetByEmailAsync(request.Email) is not null ||
-            await uow.UserRepository.GetByTagAsync(request.Tag) is not null)
+        if (await uow.UserRepository.GetByEmailAsync(request.Email) is not null
+            || await uow.UserRepository.GetByTagAsync(request.Tag) is not null)
         {
             return null;
         }
