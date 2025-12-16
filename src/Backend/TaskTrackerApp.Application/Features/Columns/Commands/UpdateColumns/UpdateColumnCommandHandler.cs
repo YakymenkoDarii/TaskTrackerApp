@@ -3,7 +3,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 
 namespace TaskTrackerApp.Application.Features.Columns.Commands.UpdateColumns;
 
-public class UpdateColumnCommandHandler : IRequestHandler<UpdateColumnCommand>
+internal class UpdateColumnCommandHandler : IRequestHandler<UpdateColumnCommand>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 

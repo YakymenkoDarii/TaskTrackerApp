@@ -5,6 +5,7 @@ using Microsoft.OpenApi;
 using System.Text;
 using TaskTrackerApp.Application.DependencyInjection;
 using TaskTrackerApp.Database;
+using TaskTrackerApp.Domain.Settings;
 using TaskTrackerApp.Infrastructure.DependencyInjection;
 using TaskTrackerApp.Persistence.DependencyInjection;
 
@@ -16,6 +17,8 @@ builder.Services
     .AddApplication()
     .AddPersistence(builder.Configuration)
     .AddInfrastructure();
+
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 
 builder.Services.AddAuthentication(options =>
 {

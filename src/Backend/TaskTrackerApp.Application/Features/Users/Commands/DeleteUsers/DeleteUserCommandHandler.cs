@@ -3,7 +3,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 
 namespace TaskTrackerApp.Application.Features.Users.Commands.DeleteUsers;
 
-public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand>
+internal class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 

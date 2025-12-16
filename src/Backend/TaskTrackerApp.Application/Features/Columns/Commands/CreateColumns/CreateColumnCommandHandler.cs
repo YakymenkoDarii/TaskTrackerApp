@@ -4,7 +4,7 @@ using TaskTrackerApp.Domain.Entities;
 
 namespace TaskTrackerApp.Application.Features.Columns.Commands.CreateColumns;
 
-public class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, int>
+internal class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, int>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 

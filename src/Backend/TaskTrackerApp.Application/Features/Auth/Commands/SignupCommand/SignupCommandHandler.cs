@@ -7,7 +7,7 @@ using TaskTrackerApp.Domain.Enums;
 
 namespace TaskTrackerApp.Application.Features.Auth.Commands.SignupCommand;
 
-public class SignupCommandHandler : IRequestHandler<SignupCommand, AuthResponse>
+internal class SignupCommandHandler : IRequestHandler<SignupCommand, AuthResponse>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly IPasswordHasher _passwordHasher;
@@ -26,12 +26,8 @@ public class SignupCommandHandler : IRequestHandler<SignupCommand, AuthResponse>
     {
         using var uow = _uowFactory.Create();
 
-        if (await uow.UserRepository.GetByEmailAsync(request.Email) is not null)
-        {
-            return null;
-        }
-
-        if (await uow.UserRepository.GetByTagAsync(request.Tag) is not null)
+        if (await uow.UserRepository.GetByEmailAsync(request.Email) is not null ||
+            await uow.UserRepository.GetByTagAsync(request.Tag) is not null)
         {
             return null;
         }

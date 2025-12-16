@@ -4,7 +4,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 
 namespace TaskTrackerApp.Application.Features.Cards.Commands.DeleteCards;
 
-public class DeleteCardCommandHandler : IRequestHandler<DeleteCardCommand>
+internal class DeleteCardCommandHandler : IRequestHandler<DeleteCardCommand>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 

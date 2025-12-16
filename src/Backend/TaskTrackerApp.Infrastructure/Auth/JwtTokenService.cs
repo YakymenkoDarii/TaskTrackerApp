@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -8,23 +8,24 @@ using TaskTrackerApp.Application.Interfaces.Auth;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.DTOs.Auth;
 using TaskTrackerApp.Domain.Entities;
+using TaskTrackerApp.Domain.Settings;
 
 namespace TaskTrackerApp.Infrastructure.Auth;
 
 public class JwtTokenService : IJwtTokenService
 {
-    private readonly IConfiguration _config;
+    private readonly JwtSettings _jwtSettings;
     private readonly IUnitOfWorkFactory _uowFactory;
 
-    public JwtTokenService(IConfiguration config, IUnitOfWorkFactory uowFactory)
+    public JwtTokenService(IOptions<JwtSettings> jwtOptions, IUnitOfWorkFactory uowFactory)
     {
-        _config = config;
+        _jwtSettings = jwtOptions.Value;
         _uowFactory = uowFactory;
     }
 
     public string GenerateAccessToken(User user)
     {
-        var secretKey = _config["JwtSettings:SecretKey"];
+        var secretKey = _jwtSettings.SecretKey;
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
@@ -36,10 +37,10 @@ public class JwtTokenService : IJwtTokenService
         };
 
         var token = new JwtSecurityToken(
-            issuer: _config["JwtSettings:Issuer"],
-            audience: _config["JwtSettings:Audience"],
+            issuer: _jwtSettings.Issuer,
+            audience: _jwtSettings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(double.Parse(_config["JwtSettings:ExpiryMinutes"])),
+            expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiryMinutes),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
@@ -104,7 +105,7 @@ public class JwtTokenService : IJwtTokenService
 
     private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
     {
-        var secretKey = _config["JwtSettings:SecretKey"];
+        var secretKey = _jwtSettings.SecretKey;
         if (string.IsNullOrEmpty(secretKey)) return null;
 
         var tokenValidationParameters = new TokenValidationParameters
@@ -113,8 +114,8 @@ public class JwtTokenService : IJwtTokenService
             ValidateIssuer = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-            ValidAudience = _config["JwtSettings:Audience"],
-            ValidIssuer = _config["JwtSettings:Issuer"],
+            ValidAudience = _jwtSettings.Audience,
+            ValidIssuer = _jwtSettings.Issuer,
             ValidateLifetime = false
         };
 

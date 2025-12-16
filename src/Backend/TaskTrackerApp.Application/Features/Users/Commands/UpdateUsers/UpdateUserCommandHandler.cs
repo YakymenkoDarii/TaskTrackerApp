@@ -3,7 +3,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 
 namespace TaskTrackerApp.Application.Features.Users.Commands.UpdateUsers;
 
-public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand>
+internal class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 

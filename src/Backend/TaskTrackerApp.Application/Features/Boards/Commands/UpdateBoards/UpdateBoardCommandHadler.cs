@@ -3,7 +3,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 
 namespace TaskTrackerApp.Application.Features.Boards.Commands.UpdateBoards;
 
-public class UpdateBoardCommandHandler : IRequestHandler<UpdateBoardCommand>
+internal class UpdateBoardCommandHandler : IRequestHandler<UpdateBoardCommand>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 

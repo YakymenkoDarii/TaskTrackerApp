@@ -4,7 +4,7 @@ using TaskTrackerApp.Domain.Entities;
 
 namespace TaskTrackerApp.Application.Features.Boards.Commands.CreateBoards;
 
-public class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, int>
+internal class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, int>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 

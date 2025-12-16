@@ -6,7 +6,7 @@ using TaskTrackerApp.Domain.Entities;
 
 namespace TaskTrackerApp.Application.Features.Auth.Commands.LoginCommand;
 
-public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
+internal class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly IJwtTokenService _jwtTokenGenerator;
@@ -25,23 +25,10 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse>
     {
         using var uow = _uowFactory.Create();
 
-        User user;
+        User user = request.Email is not null ? await uow.UserRepository.GetByEmailAsync(request.Email)
+                                              : await uow.UserRepository.GetByTagAsync(request.Tag);
 
-        if (request.Email is not null)
-        {
-            user = await uow.UserRepository.GetByEmailAsync(request.Email);
-        }
-        else
-        {
-            user = await uow.UserRepository.GetByTagAsync(request.Tag);
-        }
-
-        if (user is null)
-        {
-            return null;
-        }
-
-        if (!_passwordHasher.Verify(request.Password, user.PasswordHash))
+        if (user is null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
         {
             return null;
         }
