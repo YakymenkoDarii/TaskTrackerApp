@@ -1,0 +1,2 @@
+﻿ALTER TABLE [Users] 
+ADD [Role] NVARCHAR(50) NOT NULL DEFAULT 'User';

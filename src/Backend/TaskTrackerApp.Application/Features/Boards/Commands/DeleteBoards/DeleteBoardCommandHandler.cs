@@ -3,7 +3,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 
 namespace TaskTrackerApp.Application.Features.Boards.Commands.DeleteBoards;
 
-public class DeleteBoardCommandHandler : IRequestHandler<DeleteBoardCommand>
+internal class DeleteBoardCommandHandler : IRequestHandler<DeleteBoardCommand>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 

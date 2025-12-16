@@ -4,7 +4,7 @@ using TaskTrackerApp.Domain.Entities;
 
 namespace TaskTrackerApp.Application.Features.Boards.Commands.AddNewUser;
 
-public class AddNewUserCommandHandler : IRequestHandler<AddNewUserCommand, int>
+internal class AddNewUserCommandHandler : IRequestHandler<AddNewUserCommand, int>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 

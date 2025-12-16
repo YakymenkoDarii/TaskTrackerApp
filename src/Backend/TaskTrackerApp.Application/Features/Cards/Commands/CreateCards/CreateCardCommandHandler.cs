@@ -4,7 +4,7 @@ using TaskTrackerApp.Domain.Entities;
 
 namespace TaskTrackerApp.Application.Features.Cards.Commands.CreateCard;
 
-public class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, int>
+internal class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, int>
 {
     private readonly IUnitOfWorkFactory _unitOfWorkFactory;
 

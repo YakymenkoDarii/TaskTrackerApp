@@ -3,7 +3,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 
 namespace TaskTrackerApp.Application.Features.Cards.Commands.UpdateCards;
 
-public class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand>
+internal class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 
