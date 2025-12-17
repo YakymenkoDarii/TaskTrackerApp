@@ -16,5 +16,4 @@
     <ProjectReference Include="..\TaskTrackerApp.Frontend.Services.Abstraction\TaskTrackerApp.Frontend.Services.Abstraction.csproj" />
     <ProjectReference Include="..\TaskTrackerApp.Frontend.Services\TaskTrackerApp.Frontend.Services.csproj" />
   </ItemGroup>
-
 </Project>
