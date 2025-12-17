@@ -12,17 +12,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{CEC5F712-4
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Backend", "Backend", "{C12898B3-0B9F-4F22-B255-F605BF886482}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Application", "src\Backend\TaskTrackerApp.Application\TaskTrackerApp.Application.csproj", "{726521C5-6588-86E8-61F1-539767335AE3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Application", "TaskTrackerApp.Application\TaskTrackerApp.Application.csproj", "{726521C5-6588-86E8-61F1-539767335AE3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Presentation", "src\Backend\TaskTrackerApp.Presentation\TaskTrackerApp.Presentation.csproj", "{039AF249-C6BD-F57C-2994-C3ACE556EC6D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Presentation", "TaskTrackerApp.Presentation\TaskTrackerApp.Presentation.csproj", "{039AF249-C6BD-F57C-2994-C3ACE556EC6D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Persistence", "src\Backend\TaskTrackerApp.Persistence\TaskTrackerApp.Persistence.csproj", "{574DEFFF-33A8-2414-A82F-40394C9D61DC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Persistence", "TaskTrackerApp.Persistence\TaskTrackerApp.Persistence.csproj", "{574DEFFF-33A8-2414-A82F-40394C9D61DC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Infrastructure", "src\Backend\TaskTrackerApp.Infrastructure\TaskTrackerApp.Infrastructure.csproj", "{84AD0B6C-1DB6-2804-9535-6F798743C35C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Infrastructure", "TaskTrackerApp.Infrastructure\TaskTrackerApp.Infrastructure.csproj", "{84AD0B6C-1DB6-2804-9535-6F798743C35C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Domain", "src\Backend\TaskTrackerApp.Domain\TaskTrackerApp.Domain.csproj", "{60ABC277-5B96-0FCF-4142-97A9B393FA98}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Domain", "TaskTrackerApp.Domain\TaskTrackerApp.Domain.csproj", "{60ABC277-5B96-0FCF-4142-97A9B393FA98}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Database", "src\Backend\TaskTrackerApp.Database\TaskTrackerApp.Database.csproj", "{977108B2-A786-8EB7-9BD3-9F5A50017FE7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Database", "TaskTrackerApp.Database\TaskTrackerApp.Database.csproj", "{977108B2-A786-8EB7-9BD3-9F5A50017FE7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
