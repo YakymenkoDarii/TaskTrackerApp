@@ -30,6 +30,16 @@ public class AuthController : ControllerBase
 
         var result = await _mediator.Send(command);
 
+        if (result is null)
+        {
+            return Unauthorized("Invalid credentials");
+        }
+
+        if (string.IsNullOrEmpty(result.AccessToken))
+        {
+            return Unauthorized("Invalid credentials");
+        }
+
         return Ok(result);
     }
 
@@ -45,6 +55,16 @@ public class AuthController : ControllerBase
         };
 
         var result = await _mediator.Send(command);
+
+        if (result is null)
+        {
+            return Unauthorized("Invalid credentials");
+        }
+
+        if (string.IsNullOrEmpty(result.AccessToken))
+        {
+            return Unauthorized("Invalid credentials");
+        }
 
         return Ok(result);
     }

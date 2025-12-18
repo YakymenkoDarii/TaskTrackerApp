@@ -1,21 +1,26 @@
 using MudBlazor.Services;
+using Refit;
+using TaskTrackerApp.Frontend.Services;
+using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces;
 using TaskTrackerApp.Frontend.WebApp.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddMudServices();
 
+builder.Services.AddRefitClient<IAuthApi>()
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri("https://localhost:5050"));
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

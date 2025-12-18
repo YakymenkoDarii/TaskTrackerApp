@@ -1,0 +1,89 @@
+﻿@page "/signup"
+@using Microsoft.AspNetCore.Components.Forms
+@using MudBlazor
+@using TaskTrackerApp.Frontend.Domain.Models
+
+<EditForm EditContext="@_editContext" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudGrid Justify="Justify.Center" Class="mt-10">
+        <MudItem xs="12" sm="8" md="6" lg="5">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">Sign Up</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+
+                <MudCardContent>
+                    
+                    <MudTextField Label="Email"
+                                  @bind-Value="model.Email"
+                                  For="@(() => model.Email)"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Immediate="true"
+                                  ShrinkLabel="true" />
+
+                    <MudTextField Label="User Tag"
+                                  @bind-Value="model.Tag"
+                                  For="@(() => model.Tag)"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Class="mt-4"
+                                  Immediate="true"
+                                  ShrinkLabel="true" />
+
+                    <MudTextField Label="Display Name"
+                                  @bind-Value="model.DisplayName"
+                                  For="@(() => model.DisplayName)"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Class="mt-4"
+                                  Immediate="true"
+                                  ShrinkLabel="true" />
+
+                    <MudTextField Label="Password"
+                                  @bind-Value="model.Password"
+                                  For="@(() => model.Password)"
+                                  Variant="Variant.Outlined"
+                                  InputType="@PasswordInputType"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@PasswordInputIcon"
+                                  OnAdornmentClick="TogglePasswordVisibility"
+                                  Class="mt-4"
+                                  Margin="Margin.Dense"
+                                  Immediate="true"
+                                  ShrinkLabel="true" />
+
+                    <MudTextField Label="Confirm Password"
+                                  @bind-Value="model.ConfirmPassword"
+                                  For="@(() => model.ConfirmPassword)"
+                                  Variant="Variant.Outlined"
+                                  InputType="@RepeatPasswordInputType"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@RepeatPasswordInputIcon"
+                                  OnAdornmentClick="ToggleRepeatPasswordVisibility"
+                                  Class="mt-4"
+                                  Margin="Margin.Dense"
+                                  Immediate="true"
+                                  ShrinkLabel="true" />
+
+                </MudCardContent>
+
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit"
+                               Variant="Variant.Filled"
+                               Color="Color.Success"
+                               FullWidth="true"
+                               Class="ml-auto">
+                        Register
+                    </MudButton>
+                </MudCardActions>
+
+                <div class="d-flex justify-center py-4">
+                    <MudLink Href="/login">Already have an account? Login</MudLink>
+                </div>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
