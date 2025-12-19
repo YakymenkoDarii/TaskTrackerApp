@@ -6,13 +6,15 @@ using TaskTrackerApp.Frontend.WebApp.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var apiBaseUrl = builder.Configuration["BaseUri"];
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddMudServices();
 
 builder.Services.AddRefitClient<IAuthApi>()
-    .ConfigureHttpClient(c => c.BaseAddress = new Uri("https://localhost:5050"));
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!));
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 

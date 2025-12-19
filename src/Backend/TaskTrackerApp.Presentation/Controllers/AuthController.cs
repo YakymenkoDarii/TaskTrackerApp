@@ -35,12 +35,9 @@ public class AuthController : ControllerBase
             return Unauthorized("Invalid credentials");
         }
 
-        if (string.IsNullOrEmpty(result.AccessToken))
-        {
-            return Unauthorized("Invalid credentials");
-        }
-
-        return Ok(result);
+        return string.IsNullOrWhiteSpace(result?.AccessToken)
+            ? Unauthorized("Invalid credentials")
+            : Ok(result);
     }
 
     [HttpPost("signup")]
@@ -61,12 +58,9 @@ public class AuthController : ControllerBase
             return Unauthorized("Invalid credentials");
         }
 
-        if (string.IsNullOrEmpty(result.AccessToken))
-        {
-            return Unauthorized("Invalid credentials");
-        }
-
-        return Ok(result);
+        return string.IsNullOrWhiteSpace(result?.AccessToken)
+            ? Unauthorized("Invalid credentials")
+            : Ok(result);
     }
 
     [HttpPost("refresh")]
