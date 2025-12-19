@@ -1,0 +1,60 @@
+﻿@page "/login"
+@using Microsoft.AspNetCore.Components.Forms
+@using MudBlazor
+@using TaskTrackerApp.Frontend.Domain.Models
+
+<MudSnackbarProvider />
+
+<EditForm EditContext=@_editContext
+          OnValidSubmit=@OnValidSubmit>
+    <DataAnnotationsValidator />
+
+    <MudGrid Justify=@Justify.Center
+             Class="mt-10">
+        <MudItem xs="12" sm="8" md="4">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo=@Typo.h5>Login</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+
+                <MudCardContent>
+                    <MudTextField Label="Email or Tag"
+                                  @bind-Value=@model.Login
+                                  For=@(() => model.Login)
+                                  Variant=@Variant.Outlined
+                                  Margin=@Margin.Dense
+                                  Immediate=@true
+                                  ShrinkLabel=@true />
+
+                    <MudTextField Label="Password"
+                                  @bind-Value=@model.Password
+                                  For=@(() => model.Password)
+                                  Variant=@Variant.Outlined
+                                  InputType=@PasswordInputType
+                                  Adornment=@Adornment.End
+                                  AdornmentIcon=@PasswordInputIcon
+                                  OnAdornmentClick=@TogglePasswordVisibility
+                                  Class="mt-4"
+                                  Margin=@Margin.Dense
+                                  Immediate=@true
+                                  ShrinkLabel=@true />
+                </MudCardContent>
+
+                <MudCardActions>
+                    <MudButton ButtonType=@ButtonType.Submit
+                               Variant=@Variant.Filled
+                               Color=@Color.Primary
+                               FullWidth=@true>
+                        Login
+                    </MudButton>
+                </MudCardActions>
+
+                <div class="d-flex justify-center py-4">
+                    <MudLink Href="/signup">Don't have an account? Sign Up</MudLink>
+                </div>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>

@@ -30,7 +30,9 @@ public class AuthController : ControllerBase
 
         var result = await _mediator.Send(command);
 
-        return Ok(result);
+        return string.IsNullOrWhiteSpace(result?.AccessToken)
+            ? Unauthorized("Invalid credentials")
+            : Ok(result);
     }
 
     [HttpPost("signup")]
@@ -46,7 +48,9 @@ public class AuthController : ControllerBase
 
         var result = await _mediator.Send(command);
 
-        return Ok(result);
+        return string.IsNullOrWhiteSpace(result?.AccessToken)
+            ? Unauthorized("Invalid credentials")
+            : Ok(result);
     }
 
     [HttpPost("refresh")]
