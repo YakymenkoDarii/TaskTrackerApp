@@ -1,9 +1,10 @@
 ﻿using MediatR;
 using TaskTrackerApp.Domain.DTOs.Auth;
+using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Auth.Commands.SignupCommand;
 
-public class SignupCommand : IRequest<AuthResponse>
+public class SignupCommand : IRequest<Result<AuthResponse>>
 {
     public string Email { get; set; }
 

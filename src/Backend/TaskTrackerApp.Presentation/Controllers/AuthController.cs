@@ -4,6 +4,7 @@ using TaskTrackerApp.Application.Features.Auth.Commands.LoginCommand;
 using TaskTrackerApp.Application.Features.Auth.Commands.RefreshTokenCommand;
 using TaskTrackerApp.Application.Features.Auth.Commands.SignupCommand;
 using TaskTrackerApp.Domain.DTOs.Auth;
+using TaskTrackerApp.Domain.Errors;
 
 namespace TaskTrackerApp.Presentation.Controllers;
 
@@ -30,9 +31,21 @@ public class AuthController : ControllerBase
 
         var result = await _mediator.Send(command);
 
-        return string.IsNullOrWhiteSpace(result?.AccessToken)
-            ? Unauthorized("Invalid credentials")
-            : Ok(result);
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+
+        return result.Error.Code switch
+        {
+            var code when code == LoginError.UserNotFound.Code
+                => Unauthorized(result.Error),
+
+            var code when code == LoginError.InvalidPassword.Code
+                => Unauthorized(result.Error),
+
+            _ => BadRequest(result.Error)
+        };
     }
 
     [HttpPost("signup")]
@@ -48,9 +61,21 @@ public class AuthController : ControllerBase
 
         var result = await _mediator.Send(command);
 
-        return string.IsNullOrWhiteSpace(result?.AccessToken)
-            ? Unauthorized("Invalid credentials")
-            : Ok(result);
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+
+        return result.Error.Code switch
+        {
+            var code when code == SignupError.EmailInUse.Code
+                => Unauthorized(result.Error),
+
+            var code when code == SignupError.TagInUse.Code
+                => Unauthorized(result.Error),
+
+            _ => BadRequest(result.Error)
+        };
     }
 
     [HttpPost("refresh")]

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components.Forms;
 using MudBlazor;
 using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
+using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Models;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces;
 
@@ -78,12 +79,23 @@ public partial class Login
             SnackBar.Add("Authorized", Severity.Success);
             return;
         }
-
-        if (!result.IsSuccess)
+        switch (result.Error.Code)
         {
-            SnackBar.Add("Wrong login or password");
-        }
+            case var c when c == LoginError.InvalidPassword.Code:
+                SnackBar.Add("Wrong password", Severity.Error);
+                break;
 
-        _editContext.NotifyValidationStateChanged();
+            case var c when c == LoginError.UserNotFound.Code:
+                SnackBar.Add("User not found", Severity.Error);
+                break;
+
+            case "Client.Network":
+                SnackBar.Add("No internet connection", Severity.Warning);
+                break;
+
+            default:
+                SnackBar.Add(result.Error.Message, Severity.Error);
+                break;
+        }
     }
 }

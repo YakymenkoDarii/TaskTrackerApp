@@ -1,5 +1,5 @@
 ﻿using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
-using TaskTrackerApp.Frontend.Domain.Result;
+using TaskTrackerApp.Frontend.Domain.Results;
 
 namespace TaskTrackerApp.Frontend.Services.Abstraction.Interfaces;
 
