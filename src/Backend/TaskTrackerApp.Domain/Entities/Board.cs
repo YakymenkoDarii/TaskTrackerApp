@@ -6,6 +6,9 @@ public class Board : BaseEntity
 {
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public bool IsArchived { get; set; } = false;
+    public int Position { get; set; }
+    public DateTime LastTimeOpenned { get; set; } = DateTime.UtcNow;
 
     public User CreatedBy { get; set; }
     public User UpdatedBy { get; set; }

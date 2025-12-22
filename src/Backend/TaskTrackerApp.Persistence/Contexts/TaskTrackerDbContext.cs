@@ -78,5 +78,24 @@ public class TaskTrackerDbContext : DbContext
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<BoardMember>(entity =>
+        {
+            entity.HasIndex(bm => new { bm.BoardId, bm.UserId })
+                  .IsUnique();
+
+            entity.Property(bm => bm.Role)
+                  .HasConversion<string>();
+
+            entity.HasOne(bm => bm.Board)
+              .WithMany(b => b.Members)
+              .HasForeignKey(bm => bm.BoardId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(bm => bm.User)
+              .WithMany()
+              .HasForeignKey(bm => bm.UserId)
+              .OnDelete(DeleteBehavior.Restrict);
+        });
     }
 }

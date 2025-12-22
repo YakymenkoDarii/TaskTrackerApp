@@ -7,6 +7,9 @@ public class Card : BaseEntity
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public DateTime? DueDate { get; set; }
+    public bool IsArchived { get; set; } = false;
+    public bool IsCompleted { get; set; } = false;
+    public int Position { get; set; }
 
     public int ColumnId { get; set; }
     public int BoardId { get; set; }
