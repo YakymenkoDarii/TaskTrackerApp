@@ -1,7 +1,7 @@
 ﻿using Refit;
 using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
 
-namespace TaskTrackerApp.Frontend.Services.Abstraction.Interfaces;
+namespace TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.APIs;
 
 public interface IAuthApi
 {

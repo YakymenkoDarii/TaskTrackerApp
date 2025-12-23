@@ -1,4 +1,4 @@
-﻿namespace TaskTrackerApp.Domain.DTOs.Board;
+﻿namespace TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 
 public class BoardDto
 {

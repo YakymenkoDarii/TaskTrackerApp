@@ -1,8 +1,14 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
 @inject NavigationManager Nav
+@attribute [Authorize]
 
-@code {
-    protected override void OnInitialized()
-    {
-    }
-}
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+	<MudText>
+		Here you will see due tasks and etc.
+	</MudText>
+</MudLayout>

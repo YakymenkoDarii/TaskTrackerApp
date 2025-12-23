@@ -1,10 +1,11 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.DTOs.Board;
+using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Boards.Queries.GetAllBoards;
 
-public class GetAllBoardsQueryHandler : IRequestHandler<GetAllBoardsQuery, IEnumerable<BoardDto>>
+public class GetAllBoardsQueryHandler : IRequestHandler<GetAllBoardsQuery, Result<IEnumerable<BoardDto>>>
 {
     private readonly IUnitOfWorkFactory _unitOfWorkFactory;
 
@@ -13,7 +14,7 @@ public class GetAllBoardsQueryHandler : IRequestHandler<GetAllBoardsQuery, IEnum
         _unitOfWorkFactory = unitOfWorkFactory;
     }
 
-    public async Task<IEnumerable<BoardDto>> Handle(GetAllBoardsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<IEnumerable<BoardDto>>> Handle(GetAllBoardsQuery request, CancellationToken cancellationToken)
     {
         using var uow = _unitOfWorkFactory.Create();
 
@@ -24,10 +25,9 @@ public class GetAllBoardsQueryHandler : IRequestHandler<GetAllBoardsQuery, IEnum
             Id = b.Id,
             Title = b.Title,
             Description = b.Description,
-            CreatedAt = b.CreatedAt,
-            CreatedById = b.CreatedById,
+            LastTimeOpenned = b.LastTimeOpenned,
         });
 
-        return boardDtos;
+        return boardDtos.ToList();
     }
 }

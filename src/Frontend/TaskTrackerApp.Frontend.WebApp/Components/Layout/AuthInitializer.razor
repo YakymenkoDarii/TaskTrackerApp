@@ -1,0 +1,76 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
+@using TaskTrackerApp.Frontend.Domain.DTOs.Auth
+@using TaskTrackerApp.Frontend.Services.Services.Auth
+@inject ProtectedLocalStorage LocalStorage
+@inject ISessionCacheService SessionCache
+@inject AuthenticationStateProvider AuthProvider
+
+@if (!isReady)
+{
+    <div style="height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </div>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; } = default!;
+    private bool isReady = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await RestoreSessionAsync();
+            isReady = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RestoreSessionAsync()
+    {
+        try
+        {
+            Console.WriteLine($"[AuthInitializer] Cache Instance: {((SessionCacheService)SessionCache).InstanceId}");
+            // Debug Log
+            Console.WriteLine("[AuthInitializer] Checking session...");
+
+            if (!string.IsNullOrEmpty(SessionCache.CurrentSessionId))
+            {
+                Console.WriteLine("[AuthInitializer] Session already in memory.");
+                return;
+            }
+
+            var result = await LocalStorage.GetAsync<string>("auth_token");
+
+            if (result.Success && !string.IsNullOrEmpty(result.Value))
+            {
+                var token = result.Value;
+                var userData = new AuthUserDataDto { AccessToken = token };
+
+                var newSessionId = SessionCache.CreateSession(userData);
+                SessionCache.CurrentSessionId = newSessionId;
+
+                Console.WriteLine($"[AuthInitializer] Restored Session ID: {newSessionId}");
+
+                if (AuthProvider is AuthStateProvider customProvider)
+                {
+                    customProvider.NotifyAuthStatusChanged();
+                }
+            }
+            else
+            {
+                Console.WriteLine("[AuthInitializer] No token found in storage.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AuthInitializer] Error: {ex.Message}");
+        }
+    }
+}

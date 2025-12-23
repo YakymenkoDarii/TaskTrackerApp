@@ -1,11 +1,13 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using MudBlazor.Services;
 using Refit;
 using TaskTrackerApp.Frontend.Services;
-using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces;
+using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.APIs;
+using TaskTrackerApp.Frontend.Services.Services.Auth;
 using TaskTrackerApp.Frontend.WebApp.Components;
 
 var builder = WebApplication.CreateBuilder(args);
-
 var apiBaseUrl = builder.Configuration["BaseUri"];
 
 builder.Services.AddRazorComponents()
@@ -13,10 +15,35 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddMudServices();
 
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
+
+builder.Services.AddProjectServices();
+
 builder.Services.AddRefitClient<IAuthApi>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!));
 
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IBoardsApi>(sp =>
+{
+    var authHandler = sp.GetRequiredService<AuthHeaderHandler>();
+    authHandler.InnerHandler = new HttpClientHandler();
+
+    var httpClient = new HttpClient(authHandler)
+    {
+        BaseAddress = new Uri(apiBaseUrl!)
+    };
+
+    return RestService.For<IBoardsApi>(httpClient);
+});
+
+builder.Services.AddScoped<ProtectedLocalStorage>();
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/login";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
+    });
 
 var app = builder.Build();
 
@@ -27,9 +54,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
-
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

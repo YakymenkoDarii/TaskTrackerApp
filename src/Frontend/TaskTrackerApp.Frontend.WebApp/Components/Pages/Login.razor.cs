@@ -4,7 +4,7 @@ using MudBlazor;
 using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
 using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Models;
-using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces;
+using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.WebApp.Components.Pages;
 
@@ -15,6 +15,9 @@ public partial class Login
 
     [Inject]
     public IAuthService AuthService { private get; set; } = default!;
+
+    [Inject]
+    public NavigationManager Navigation { private get; set; } = default!;
 
     private readonly LoginModel model = new();
 
@@ -77,8 +80,10 @@ public partial class Login
         if (result.IsSuccess)
         {
             SnackBar.Add("Authorized", Severity.Success);
+            Navigation.NavigateTo("/");
             return;
         }
+
         switch (result.Error.Code)
         {
             case var c when c == LoginError.InvalidPassword.Code:

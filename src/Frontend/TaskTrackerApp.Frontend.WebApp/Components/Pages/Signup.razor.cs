@@ -4,7 +4,7 @@ using MudBlazor;
 using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
 using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Models;
-using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces;
+using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.WebApp.Components.Pages;
 
@@ -15,6 +15,9 @@ public partial class Signup
 
     [Inject]
     public ISnackbar Snackbar { private get; set; } = default!;
+
+    [Inject]
+    public NavigationManager Navigation { private get; set; } = default!;
 
     private readonly SignupModel model = new();
 
@@ -98,7 +101,7 @@ public partial class Signup
         if (result.IsSuccess)
         {
             Snackbar.Add("Account created successfully!", Severity.Success);
-            // Navigation.NavigateTo("/login"); // Uncomment to redirect user
+            Navigation.NavigateTo("/login");
             return;
         }
 
