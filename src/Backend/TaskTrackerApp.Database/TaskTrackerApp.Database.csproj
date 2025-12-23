@@ -8,13 +8,7 @@
 
 
 	<ItemGroup>
-		<EmbeddedResource Include="Scripts\001_CreateUsersTable.sql" />
-		<EmbeddedResource Include="Scripts\002_CreateBoardsTable.sql" />
-		<EmbeddedResource Include="Scripts\003_CreateBoardMembersTable.sql" />
-		<EmbeddedResource Include="Scripts\004_CreateColumnsTable.sql" />
-		<EmbeddedResource Include="Scripts\005_CreateCardsTable.sql" />
-		<EmbeddedResource Include="Scripts\006_AddRolesToUser.sql" />
-		<EmbeddedResource Include="Scripts\007_CreateRefreshTokenTable.sql" />
+		<EmbeddedResource Include="Scripts\*.sql" />
 	</ItemGroup>
 
 	<ItemGroup>

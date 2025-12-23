@@ -29,8 +29,6 @@ public class GetBoardByIdQueryHandler : IRequestHandler<GetBoardByIdQuery, Board
             Id = board.Id,
             Title = board.Title,
             Description = board.Description,
-            CreatedAt = board.CreatedAt,
-            CreatedById = board.CreatedById,
         };
     }
 }

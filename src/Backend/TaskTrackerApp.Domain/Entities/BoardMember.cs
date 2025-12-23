@@ -1,4 +1,6 @@
-﻿namespace TaskTrackerApp.Domain.Entities;
+﻿using TaskTrackerApp.Domain.Enums;
+
+namespace TaskTrackerApp.Domain.Entities;
 
 public class BoardMember
 {
@@ -8,7 +10,7 @@ public class BoardMember
 
     public int BoardId { get; set; }
 
-    public string? Role { get; set; }
+    public BoardRole Role { get; set; } = BoardRole.Member;
 
     public User User { get; set; }
     public Board Board { get; set; }

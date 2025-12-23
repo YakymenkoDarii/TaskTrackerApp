@@ -2,8 +2,9 @@
 using Microsoft.AspNetCore.Components.Forms;
 using MudBlazor;
 using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
+using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Models;
-using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces;
+using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.WebApp.Components.Pages;
 
@@ -14,6 +15,9 @@ public partial class Signup
 
     [Inject]
     public ISnackbar Snackbar { private get; set; } = default!;
+
+    [Inject]
+    public NavigationManager Navigation { private get; set; } = default!;
 
     private readonly SignupModel model = new();
 
@@ -96,13 +100,32 @@ public partial class Signup
 
         if (result.IsSuccess)
         {
-            Snackbar.Add("Signed up", Severity.Success);
+            Snackbar.Add("Account created successfully!", Severity.Success);
+            Navigation.NavigateTo("/login");
             return;
         }
 
-        if (!result.IsSuccess)
+        switch (result.Error.Code)
         {
-            Snackbar.Add("Something went wrong. Please try again later.", Severity.Error);
+            case var c when c == SignupError.EmailInUse.Code:
+                Snackbar.Add("This email is already registered.", Severity.Error);
+                break;
+
+            case var c when c == SignupError.TagInUse.Code:
+                Snackbar.Add("This user tag is taken.", Severity.Error);
+                break;
+
+            case ClientErrors.NetworkErrorCode:
+                Snackbar.Add("No internet connection.", Severity.Warning);
+                break;
+
+            case ClientErrors.UnknownNetworkErrorCode:
+                Snackbar.Add("Server error. Please try again later.", Severity.Error);
+                break;
+
+            default:
+                Snackbar.Add(result.Error.Message, Severity.Error);
+                break;
         }
 
         _editContext.NotifyValidationStateChanged();

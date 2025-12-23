@@ -1,5 +1,7 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TaskTrackerApp.Application.Features.Boards.Commands.CreateBoards;
 using TaskTrackerApp.Application.Features.Boards.Commands.DeleteBoards;
 using TaskTrackerApp.Application.Features.Boards.Commands.UpdateBoards;
@@ -11,6 +13,7 @@ namespace TaskTrackerApp.Presentation.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class BoardsController : ControllerBase
 {
     private IMediator _mediator;
@@ -21,15 +24,23 @@ public class BoardsController : ControllerBase
     }
 
     [HttpGet("boards")]
-    public async Task<IActionResult> GetAllAsync(int userId)
+    public async Task<IActionResult> GetAllAsync()
     {
-        var query = new GetAllBoardsQuery(userId);
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized("Id was not found in the token");
+        }
+        int id = int.Parse(userId);
+
+        var query = new GetAllBoardsQuery(id);
 
         var result = await _mediator.Send(query);
 
         return result is null
             ? NotFound()
-            : Ok(result);
+            : Ok(result.Value);
     }
 
     [HttpGet("id")]

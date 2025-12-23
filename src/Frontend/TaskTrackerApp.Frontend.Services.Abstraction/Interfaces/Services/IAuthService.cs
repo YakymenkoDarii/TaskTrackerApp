@@ -1,11 +1,13 @@
 ﻿using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
-using TaskTrackerApp.Frontend.Domain.Result;
+using TaskTrackerApp.Frontend.Domain.Results;
 
-namespace TaskTrackerApp.Frontend.Services.Abstraction.Interfaces;
+namespace TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 public interface IAuthService
 {
     Task<Result<AuthResponse>> LoginAsync(LoginRequest loginRequest);
 
     Task<Result<AuthResponse>> SignupAsync(SignupRequest signupRequest);
+
+    Task LogoutAsync();
 }
