@@ -94,7 +94,7 @@ public partial class Login
                 SnackBar.Add("User not found", Severity.Error);
                 break;
 
-            case "Client.Network":
+            case ClientErrors.NetworkErrorCode:
                 SnackBar.Add("No internet connection", Severity.Warning);
                 break;
 

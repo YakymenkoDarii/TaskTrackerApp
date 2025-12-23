@@ -36,13 +36,16 @@ else
     {
         try
         {
+            #if DEBUG
             Console.WriteLine($"[AuthInitializer] Cache Instance: {((SessionCacheService)SessionCache).InstanceId}");
-            // Debug Log
             Console.WriteLine("[AuthInitializer] Checking session...");
+            #endif
 
             if (!string.IsNullOrEmpty(SessionCache.CurrentSessionId))
             {
+                #if DEBUG
                 Console.WriteLine("[AuthInitializer] Session already in memory.");
+                #endif
                 return;
             }
 
@@ -56,7 +59,9 @@ else
                 var newSessionId = SessionCache.CreateSession(userData);
                 SessionCache.CurrentSessionId = newSessionId;
 
+                #if DEBUG
                 Console.WriteLine($"[AuthInitializer] Restored Session ID: {newSessionId}");
+                #endif
 
                 if (AuthProvider is AuthStateProvider customProvider)
                 {
@@ -65,12 +70,16 @@ else
             }
             else
             {
+                #if DEBUG
                 Console.WriteLine("[AuthInitializer] No token found in storage.");
+                #endif
             }
         }
         catch (Exception ex)
         {
+            #if DEBUG
             Console.WriteLine($"[AuthInitializer] Error: {ex.Message}");
+            #endif
         }
     }
 }

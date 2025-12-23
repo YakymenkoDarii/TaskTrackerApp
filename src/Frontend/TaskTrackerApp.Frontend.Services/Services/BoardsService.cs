@@ -28,7 +28,7 @@ public class BoardsService : IBoardsService
         }
         catch (ApiException ex)
         {
-            return Result<IEnumerable<BoardDto>>.Failure(new Error("Client.Network", "Network error."));
+            return Result<IEnumerable<BoardDto>>.Failure(ClientErrors.NetworkError);
         }
     }
 
@@ -41,7 +41,7 @@ public class BoardsService : IBoardsService
 
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
-            return Result<IEnumerable<BoardDto>>.Failure(new Error("Auth.Unauthorized", "Please log in again."));
+            return Result<IEnumerable<BoardDto>>.Failure(AuthErrors.AuthError);
         }
 
         if (response.Error?.Content is null)
@@ -65,6 +65,8 @@ public class BoardsService : IBoardsService
         }
 
         return Result<IEnumerable<BoardDto>>.Failure(
-            new Error("Client.Server", response.ReasonPhrase ?? "Unknown server error"));
+            new Error(
+                ClientErrors.NetworkError.Code,
+                response.ReasonPhrase ?? ClientErrors.UnknownNetworkError.Message));
     }
 }

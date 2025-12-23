@@ -115,11 +115,11 @@ public partial class Signup
                 Snackbar.Add("This user tag is taken.", Severity.Error);
                 break;
 
-            case "Client.Network":
+            case ClientErrors.NetworkErrorCode:
                 Snackbar.Add("No internet connection.", Severity.Warning);
                 break;
 
-            case "Client.Server":
+            case ClientErrors.UnknownNetworkErrorCode:
                 Snackbar.Add("Server error. Please try again later.", Severity.Error);
                 break;
 

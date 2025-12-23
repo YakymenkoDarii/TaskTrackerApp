@@ -23,18 +23,10 @@ builder.Services.AddProjectServices();
 builder.Services.AddRefitClient<IAuthApi>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!));
 
-builder.Services.AddScoped<IBoardsApi>(sp =>
-{
-    var authHandler = sp.GetRequiredService<AuthHeaderHandler>();
-    authHandler.InnerHandler = new HttpClientHandler();
-
-    var httpClient = new HttpClient(authHandler)
-    {
-        BaseAddress = new Uri(apiBaseUrl!)
-    };
-
-    return RestService.For<IBoardsApi>(httpClient);
-});
+builder.Services
+    .AddRefitClient<IBoardsApi>()
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!))
+    .AddHttpMessageHandler<AuthHeaderHandler>();
 
 builder.Services.AddScoped<ProtectedLocalStorage>();
 

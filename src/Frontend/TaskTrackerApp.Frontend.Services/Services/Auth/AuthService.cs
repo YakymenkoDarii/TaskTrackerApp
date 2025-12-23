@@ -46,7 +46,7 @@ public class AuthService : IAuthService
         }
         catch (ApiException)
         {
-            return Result<AuthResponse>.Failure(new Error("Client.Network", "Network error."));
+            return Result<AuthResponse>.Failure(ClientErrors.NetworkError);
         }
     }
 
@@ -66,7 +66,7 @@ public class AuthService : IAuthService
         }
         catch (ApiException)
         {
-            return Result<AuthResponse>.Failure(new Error("Client.Network", "Network error."));
+            return Result<AuthResponse>.Failure(ClientErrors.NetworkError);
         }
     }
 
@@ -114,6 +114,9 @@ public class AuthService : IAuthService
         }
 
         return Result<AuthResponse>.Failure(
-            new Error("Client.Server", response.ReasonPhrase ?? "Unknown server error"));
+            new Error(
+                ClientErrors.NetworkError.Code,
+
+                response.ReasonPhrase ?? ClientErrors.UnknownNetworkError.Message));
     }
 }
