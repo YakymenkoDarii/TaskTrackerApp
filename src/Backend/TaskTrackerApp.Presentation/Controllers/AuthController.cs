@@ -1,4 +1,7 @@
-﻿using MediatR;
+﻿using System.Security.Claims;
+using MediatR;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using TaskTrackerApp.Application.Features.Auth.Commands.LoginCommand;
 using TaskTrackerApp.Application.Features.Auth.Commands.RefreshTokenCommand;
@@ -22,30 +25,34 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request)
     {
-        var command = new LoginCommand
-        {
-            Email = request.Email,
-            Password = request.Password,
-            Tag = request.Tag
-        };
+    var result = await _mediator.Send(new LoginCommand
+    {
+        Email = request.Email,
+        Password = request.Password,
+        Tag = request.Tag
+    });
 
-        var result = await _mediator.Send(command);
+    if (!result.IsSuccess)
+        return Unauthorized(result.Error);
 
-        if (result.IsSuccess)
-        {
-            return Ok(result.Value);
-        }
+    var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, result.Value.UserId),
+        new Claim(ClaimTypes.Name, result.Value.Email),
+        new Claim(ClaimTypes.Role, result.Value.Role)
+    };
 
-        return result.Error.Code switch
-        {
-            var code when code == LoginError.UserNotFound.Code
-                => Unauthorized(result.Error),
+    var identity = new ClaimsIdentity(
+        claims,
+        CookieAuthenticationDefaults.AuthenticationScheme
+    );
 
-            var code when code == LoginError.InvalidPassword.Code
-                => Unauthorized(result.Error),
+    await HttpContext.SignInAsync(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        new ClaimsPrincipal(identity)
+    );
 
-            _ => BadRequest(result.Error)
-        };
+    return Ok();
     }
 
     [HttpPost("signup")]
@@ -76,21 +83,5 @@ public class AuthController : ControllerBase
 
             _ => BadRequest(result.Error)
         };
-    }
-
-    [HttpPost("refresh")]
-    public async Task<IActionResult> RefreshAsync([FromBody] RefreshRequest request)
-    {
-        var command = new RefreshTokenCommand
-        {
-            AccessToken = request.AccessToken,
-            RefreshToken = request.RefreshToken
-        };
-
-        var result = await _mediator.Send(command);
-
-        return result is null
-            ? BadRequest()
-            : Ok(result);
     }
 }

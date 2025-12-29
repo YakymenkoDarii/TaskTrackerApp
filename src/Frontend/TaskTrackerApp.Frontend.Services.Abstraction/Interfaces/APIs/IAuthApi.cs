@@ -10,7 +10,4 @@ public interface IAuthApi
 
     [Post("/api/Auth/login")]
     Task<IApiResponse<AuthResponse?>> LoginAsync([Body] LoginRequest request);
-
-    [Post("/api/Auth/refresh")]
-    Task<IApiResponse<AuthResponse?>> RefreshAsync([Body] RefreshRequest request);
 }
