@@ -1,46 +1,63 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
+using Refit;
 using System.Security.Claims;
+using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
+using TaskTrackerApp.Frontend.Domain.Results;
+using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.APIs;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.Services.Services.Auth;
 
 public class AuthStateProvider : AuthenticationStateProvider
 {
-    private readonly ISessionCacheService _sessionCache;
+    private readonly IAuthApi _authApi;
 
-    public AuthStateProvider(ISessionCacheService sessionCache)
+    private ClaimsPrincipal _anonymous =
+        new(new ClaimsIdentity());
+
+    private ClaimsPrincipal _currentUser;
+
+    public AuthStateProvider(IAuthApi authApi)
     {
-        _sessionCache = sessionCache;
+        _authApi = authApi;
+        _currentUser = _anonymous;
     }
 
-    public override Task<AuthenticationState> GetAuthenticationStateAsync()
+    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        var sessionId = _sessionCache.CurrentSessionId;
-
-        var anonymous = new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-
-        if (string.IsNullOrWhiteSpace(sessionId))
+        try
         {
-            return Task.FromResult(anonymous);
+            var response = await _authApi.MeAsync();
+
+            if (!response.IsSuccessStatusCode || response.Content is null)
+                return new AuthenticationState(_anonymous);
+
+            var user = response.Content;
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.DisplayName),
+                new Claim(ClaimTypes.Email, user.Email),
+            };
+
+            var identity = new ClaimsIdentity(claims, "Cookies");
+            _currentUser = new ClaimsPrincipal(identity);
+
+            return new AuthenticationState(_currentUser);
         }
-
-        var userData = _sessionCache.GetSessionData(sessionId);
-
-        if (userData == null || string.IsNullOrWhiteSpace(userData.AccessToken))
+        catch
         {
-            return Task.FromResult(anonymous);
+            return new AuthenticationState(_anonymous);
         }
-
-        var claims = JwtParser.ParseClaimsFromJwt(userData.AccessToken);
-
-        var identity = new ClaimsIdentity(claims, "jwt");
-        var user = new ClaimsPrincipal(identity);
-
-        return Task.FromResult(new AuthenticationState(user));
     }
 
-    public void NotifyAuthStatusChanged()
+    public void NotifyUserLoggedIn()
+        => NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+
+    public void NotifyUserLoggedOut()
     {
+        _currentUser = _anonymous;
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 }

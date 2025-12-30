@@ -1,29 +1,27 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
 using MudBlazor;
 using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
 using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Models;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
+using TaskTrackerApp.Frontend.Services.Services.Auth;
 
 namespace TaskTrackerApp.Frontend.WebApp.Components.Pages;
 
 public partial class Login
 {
-    [Inject]
-    public ISnackbar SnackBar { private get; set; } = default!;
-
-    [Inject]
-    public IAuthService AuthService { private get; set; } = default!;
-
-    [Inject]
-    public NavigationManager Navigation { private get; set; } = default!;
+    [Inject] public ISnackbar SnackBar { get; set; } = default!;
+    [Inject] public IAuthService AuthService { get; set; } = default!;
+    [Inject] public NavigationManager Navigation { get; set; } = default!;
+    [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     private readonly LoginModel model = new();
 
     private InputType PasswordInputType = InputType.Password;
     private string PasswordInputIcon = Icons.Material.Filled.Visibility;
-    private bool isPasswordVisible = false;
+    private bool isPasswordVisible;
 
     private EditContext _editContext = default!;
     private ValidationMessageStore _messageStore = default!;
@@ -33,7 +31,7 @@ public partial class Login
         _editContext = new EditContext(model);
         _messageStore = new ValidationMessageStore(_editContext);
 
-        _editContext.OnFieldChanged += (s, e) =>
+        _editContext.OnFieldChanged += (_, e) =>
         {
             _messageStore.Clear(e.FieldIdentifier);
             _editContext.NotifyValidationStateChanged();
@@ -42,18 +40,14 @@ public partial class Login
 
     private void TogglePasswordVisibility()
     {
-        if (isPasswordVisible)
-        {
-            isPasswordVisible = false;
-            PasswordInputIcon = Icons.Material.Filled.Visibility;
-            PasswordInputType = InputType.Password;
-        }
-        else
-        {
-            isPasswordVisible = true;
-            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
-            PasswordInputType = InputType.Text;
-        }
+        isPasswordVisible = !isPasswordVisible;
+        PasswordInputIcon = isPasswordVisible
+            ? Icons.Material.Filled.VisibilityOff
+            : Icons.Material.Filled.Visibility;
+
+        PasswordInputType = isPasswordVisible
+            ? InputType.Text
+            : InputType.Password;
     }
 
     private async Task OnValidSubmit()
@@ -67,24 +61,27 @@ public partial class Login
         };
 
         if (model.Login.Contains('@'))
-        {
             request.Email = model.Login;
-        }
         else
-        {
             request.Tag = model.Login;
-        }
 
         var result = await AuthService.LoginAsync(request);
 
-        if (result.IsSuccess)
+        if (!result.IsSuccess)
         {
-            SnackBar.Add("Authorized", Severity.Success);
-            Navigation.NavigateTo("/");
+            HandleError(result.Error);
             return;
         }
 
-        switch (result.Error.Code)
+        var apiAuthProvider = (AuthStateProvider)AuthStateProvider;
+        apiAuthProvider.NotifyUserLoggedIn();
+
+        Navigation.NavigateTo("/boards", forceLoad: true);
+    }
+
+    private void HandleError(Error error)
+    {
+        switch (error.Code)
         {
             case var c when c == LoginError.InvalidPassword.Code:
                 SnackBar.Add("Wrong password", Severity.Error);
@@ -99,7 +96,7 @@ public partial class Login
                 break;
 
             default:
-                SnackBar.Add(result.Error.Message, Severity.Error);
+                SnackBar.Add(error.Message, Severity.Error);
                 break;
         }
     }

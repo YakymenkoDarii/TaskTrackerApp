@@ -9,7 +9,7 @@ using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Auth.Commands.SignupCommand;
 
-internal class SignupCommandHandler : IRequestHandler<SignupCommand, Result<AuthResponse>>
+internal class SignupCommandHandler : IRequestHandler<SignupCommand, Result<AuthUserDto>>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly IPasswordHasher _passwordHasher;
@@ -24,7 +24,7 @@ internal class SignupCommandHandler : IRequestHandler<SignupCommand, Result<Auth
         _jwtTokenGenerator = jwtTokenGenerator;
     }
 
-    public async Task<Result<AuthResponse>> Handle(SignupCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AuthUserDto>> Handle(SignupCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();
 
@@ -52,19 +52,14 @@ internal class SignupCommandHandler : IRequestHandler<SignupCommand, Result<Auth
         var id = await uow.UserRepository.AddAsync(user);
         user.Id = id;
 
-        string accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
-        RefreshToken refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
-
-        refreshToken.UserId = user.Id;
-
-        await uow.RefreshTokenRepository.AddAsync(refreshToken);
-
         await uow.SaveChangesAsync();
 
-        return new AuthResponse
+        return new AuthUserDto
         {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken.Token
+            Id = user.Id,
+            Email = user.Email,
+            DisplayName = user.DisplayName,
+            Role = user.Role,
         };
     }
 }

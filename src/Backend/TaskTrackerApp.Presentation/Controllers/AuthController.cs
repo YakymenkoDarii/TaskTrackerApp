@@ -1,12 +1,14 @@
-﻿using System.Security.Claims;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TaskTrackerApp.Application.Features.Auth.Commands.LoginCommand;
 using TaskTrackerApp.Application.Features.Auth.Commands.RefreshTokenCommand;
 using TaskTrackerApp.Application.Features.Auth.Commands.SignupCommand;
 using TaskTrackerApp.Domain.DTOs.Auth;
+using TaskTrackerApp.Domain.Entities;
 using TaskTrackerApp.Domain.Errors;
 
 namespace TaskTrackerApp.Presentation.Controllers;
@@ -25,63 +27,111 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request)
     {
-    var result = await _mediator.Send(new LoginCommand
-    {
-        Email = request.Email,
-        Password = request.Password,
-        Tag = request.Tag
-    });
+        var result = await _mediator.Send(new LoginCommand
+        {
+            Email = request.Email,
+            Password = request.Password,
+            Tag = request.Tag
+        });
 
-    if (!result.IsSuccess)
-        return Unauthorized(result.Error);
+        if (!result.IsSuccess)
+            return Unauthorized(result.Error);
 
-    var claims = new List<Claim>
+        var claims = new List<Claim>
     {
-        new Claim(ClaimTypes.NameIdentifier, result.Value.UserId),
-        new Claim(ClaimTypes.Name, result.Value.Email),
-        new Claim(ClaimTypes.Role, result.Value.Role)
+        new Claim(ClaimTypes.NameIdentifier, result.Value.Id.ToString()),
+        new Claim(ClaimTypes.Name, result.Value.DisplayName),
+        new Claim(ClaimTypes.Email, result.Value.Email),
+        new Claim(ClaimTypes.Role, result.Value.Role.ToString()),
     };
 
-    var identity = new ClaimsIdentity(
-        claims,
-        CookieAuthenticationDefaults.AuthenticationScheme
-    );
+        var identity = new ClaimsIdentity(
+            claims,
+            CookieAuthenticationDefaults.AuthenticationScheme
+        );
 
-    await HttpContext.SignInAsync(
-        CookieAuthenticationDefaults.AuthenticationScheme,
-        new ClaimsPrincipal(identity)
-    );
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity)
+        );
 
-    return Ok();
+        return Ok(result.Value.Id + "User Id");
     }
 
     [HttpPost("signup")]
     public async Task<IActionResult> SignupAsync([FromBody] SignupRequest request)
     {
-        var command = new SignupCommand
+        var result = await _mediator.Send(new SignupCommand
         {
             Email = request.Email,
             Password = request.Password,
             DisplayName = request.DisplayName,
             Tag = request.Tag
-        };
+        });
 
-        var result = await _mediator.Send(command);
-
-        if (result.IsSuccess)
+        if (!result.IsSuccess)
         {
-            return Ok(result.Value);
+            return result.Error.Code switch
+            {
+                var code when code == SignupError.EmailInUse.Code
+                    => Unauthorized(result.Error),
+
+                var code when code == SignupError.TagInUse.Code
+                    => Unauthorized(result.Error),
+
+                _ => BadRequest(result.Error)
+            };
         }
 
-        return result.Error.Code switch
+        var user = result.Value;
+        var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Name, user.DisplayName),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(ClaimTypes.Role, user.Role.ToString()),
+    };
+
+        var identity = new ClaimsIdentity(
+            claims,
+            CookieAuthenticationDefaults.AuthenticationScheme
+        );
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity)
+        );
+
+        return Ok(result.Value.Id + "User Id");
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> LogoutAsync()
+    {
+        await HttpContext.SignOutAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme
+        );
+
+        return Ok();
+    }
+
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var email = User.FindFirstValue(ClaimTypes.Email);
+        var name = User.FindFirstValue(ClaimTypes.Name);
+
+        if (string.IsNullOrEmpty(userId))
         {
-            var code when code == SignupError.EmailInUse.Code
-                => Unauthorized(result.Error),
+            return Unauthorized();
+        }
 
-            var code when code == SignupError.TagInUse.Code
-                => Unauthorized(result.Error),
-
-            _ => BadRequest(result.Error)
-        };
+        return Ok(new
+        {
+            Id = userId,
+            Email = email,
+            DisplayName = name
+        });
     }
 }

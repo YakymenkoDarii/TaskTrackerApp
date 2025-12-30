@@ -7,7 +7,7 @@ using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Auth.Commands.LoginCommand;
 
-internal class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
+internal class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthUserDto>>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly IJwtTokenService _jwtTokenGenerator;
@@ -22,7 +22,7 @@ internal class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthRe
         _jwtTokenGenerator = jwtTokenGenerator;
     }
 
-    public async Task<Result<AuthResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AuthUserDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();
 
@@ -31,28 +31,17 @@ internal class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthRe
             : await uow.UserRepository.GetByEmailAsync(request.Email);
 
         if (user is null)
-        {
             return LoginError.UserNotFound;
-        }
 
         if (!_passwordHasher.Verify(request.Password, user.PasswordHash))
-        {
             return LoginError.InvalidPassword;
-        }
 
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
-        var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
-
-        refreshToken.UserId = user.Id;
-
-        await uow.RefreshTokenRepository.AddAsync(refreshToken);
-
-        await uow.SaveChangesAsync();
-
-        return new AuthResponse
+        return new AuthUserDto
         {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken.Token
+            Id = user.Id,
+            Email = user.Email,
+            DisplayName = user.DisplayName,
+            Role = user.Role,
         };
     }
 }

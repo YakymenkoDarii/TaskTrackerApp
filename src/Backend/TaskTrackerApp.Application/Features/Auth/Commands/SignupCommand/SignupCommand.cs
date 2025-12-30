@@ -4,7 +4,7 @@ using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Auth.Commands.SignupCommand;
 
-public class SignupCommand : IRequest<Result<AuthResponse>>
+public class SignupCommand : IRequest<Result<AuthUserDto>>
 {
     public string Email { get; set; }
 

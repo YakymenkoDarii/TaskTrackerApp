@@ -5,9 +5,11 @@ namespace TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 public interface IAuthService
 {
-    Task<Result<AuthResponse>> LoginAsync(LoginRequest loginRequest);
+    Task<Result> LoginAsync(LoginRequest loginRequest);
 
-    Task<Result<AuthResponse>> SignupAsync(SignupRequest signupRequest);
+    Task<Result> SignupAsync(SignupRequest signupRequest);
 
-    Task LogoutAsync();
+    Task<Result> LogoutAsync();
+
+    Task<Result<MeDto>> GetMeAsync();
 }

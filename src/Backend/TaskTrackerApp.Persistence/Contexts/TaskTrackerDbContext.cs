@@ -82,10 +82,10 @@ public class TaskTrackerDbContext : DbContext
         modelBuilder.Entity<BoardMember>(entity =>
         {
             entity.HasIndex(bm => new { bm.BoardId, bm.UserId })
-                  .IsUnique();
+                        .IsUnique();
 
             entity.Property(bm => bm.Role)
-                  .HasConversion<string>();
+                    .HasConversion<string>();
 
             entity.HasOne(bm => bm.Board)
               .WithMany(b => b.Members)
@@ -93,9 +93,9 @@ public class TaskTrackerDbContext : DbContext
               .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(bm => bm.User)
-              .WithMany()
-              .HasForeignKey(bm => bm.UserId)
-              .OnDelete(DeleteBehavior.Restrict);
+                  .WithMany(u => u.BoardMemberships)
+                  .HasForeignKey(bm => bm.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

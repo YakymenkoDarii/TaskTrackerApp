@@ -1,9 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using TaskTrackerApp.Frontend.WebApp.Components.Layout
 
-<CascadingAuthenticationState>
-
-    <AuthInitializer>
         <Router AppAssembly="@typeof(Program).Assembly">
             
             <Found Context="routeData">
@@ -24,6 +21,3 @@
             </NotFound>
 
         </Router>
-    </AuthInitializer>
-
-</CascadingAuthenticationState>

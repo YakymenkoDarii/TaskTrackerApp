@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using Refit;
+﻿using Refit;
 using System.Text.Json;
 using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
 using TaskTrackerApp.Frontend.Domain.Errors;
@@ -13,110 +11,63 @@ namespace TaskTrackerApp.Frontend.Services.Services.Auth;
 public class AuthService : IAuthService
 {
     private readonly IAuthApi _authApi;
-    private readonly JsonSerializerOptions _jsonOptions;
-    private readonly ISessionCacheService _sessionCache;
-    private readonly ProtectedLocalStorage _localStorage;
-    private readonly AuthenticationStateProvider _authStateProvider;
 
-    public AuthService(IAuthApi authApi,
-        ISessionCacheService sessionCache,
-        ProtectedLocalStorage localStorage,
-        AuthenticationStateProvider authStateProvider)
+    private readonly JsonSerializerOptions _jsonOptions =
+        new() { PropertyNameCaseInsensitive = true };
+
+    public AuthService(IAuthApi authApi)
     {
         _authApi = authApi;
-        _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        _sessionCache = sessionCache;
-        _localStorage = localStorage;
-        _authStateProvider = authStateProvider;
     }
 
-    public async Task<Result<AuthResponse>> LoginAsync(LoginRequest loginRequest)
+    public async Task<Result> LoginAsync(LoginRequest request)
+    {
+        var result = await _authApi.LoginAsync(request);
+        return ParseResponse(result);
+    }
+
+    public async Task<Result> SignupAsync(SignupRequest request)
+    {
+        var result = await _authApi.SignupAsync(request);
+        return ParseResponse(result);
+    }
+
+    public async Task<Result> LogoutAsync()
+    {
+        var result = await _authApi.LogoutAsync();
+        return ParseResponse(result);
+    }
+
+    public async Task<Result<MeDto>> GetMeAsync()
     {
         try
         {
-            var response = await _authApi.LoginAsync(loginRequest);
-            var result = ParseResponse(response);
-
-            if (result.IsSuccess)
-            {
-                await StartUserSessionAsync(result.Value);
-            }
-
-            return result;
+            var response = await _authApi.MeAsync();
+            return response.IsSuccessStatusCode ? response.Content : null;
         }
-        catch (ApiException)
+        catch
         {
-            return Result<AuthResponse>.Failure(ClientErrors.NetworkError);
+            return null;
         }
     }
 
-    public async Task<Result<AuthResponse>> SignupAsync(SignupRequest signupRequest)
+    private Result ParseResponse(IApiResponse response)
     {
-        try
+        if (response.IsSuccessStatusCode)
         {
-            var response = await _authApi.SignupAsync(signupRequest);
-            var result = ParseResponse(response);
-
-            if (result.IsSuccess)
-            {
-                await StartUserSessionAsync(result.Value);
-            }
-
-            return result;
-        }
-        catch (ApiException)
-        {
-            return Result<AuthResponse>.Failure(ClientErrors.NetworkError);
-        }
-    }
-
-    public async Task LogoutAsync()
-    {
-        if (!string.IsNullOrEmpty(_sessionCache.CurrentSessionId))
-        {
-            _sessionCache.RemoveSession(_sessionCache.CurrentSessionId);
-            _sessionCache.CurrentSessionId = null;
-        }
-
-        await _localStorage.DeleteAsync("auth_token");
-
-        ((AuthStateProvider)_authStateProvider).NotifyAuthStatusChanged();
-    }
-
-    private async Task StartUserSessionAsync(AuthResponse authResponse)
-    {
-        var userData = new AuthUserDataDto { AccessToken = authResponse.AccessToken };
-        var sessionId = _sessionCache.CreateSession(userData);
-
-        _sessionCache.CurrentSessionId = sessionId;
-        await _localStorage.SetAsync("auth_token", authResponse.AccessToken);
-
-        ((AuthStateProvider)_authStateProvider).NotifyAuthStatusChanged();
-    }
-
-    private Result<AuthResponse> ParseResponse(IApiResponse<AuthResponse> response)
-    {
-        if (response.IsSuccessStatusCode && response.Content is not null)
-        {
-            return Result<AuthResponse>.Success(response.Content);
+            return Result.Success();
         }
 
         if (response.Error?.Content is not null)
         {
-            var backendError = JsonSerializer.Deserialize<Error>(
-                response.Error.Content,
-                _jsonOptions);
-
+            var backendError = JsonSerializer.Deserialize<Error>(response.Error.Content, _jsonOptions);
             if (backendError is not null)
             {
-                return Result<AuthResponse>.Failure(backendError);
+                return Result<AuthUserDataDto>.Failure(backendError);
             }
         }
-
-        return Result<AuthResponse>.Failure(
-            new Error(
-                ClientErrors.NetworkError.Code,
-
-                response.ReasonPhrase ?? ClientErrors.UnknownNetworkError.Message));
+        return Result<AuthUserDataDto>
+            .Failure(new Error(ClientErrors.NetworkError.Code,
+            response.ReasonPhrase ?? ClientErrors.UnknownNetworkError.Message));
     }
 }
