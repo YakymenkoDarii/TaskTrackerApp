@@ -1,4 +1,4 @@
-﻿namespace TaskTrackerApp.Frontend.Domain.DTOs.Auth;
+﻿namespace TaskTrackerApp.Frontend.Domain.DTOs.Auth.Requests;
 
 public sealed class SignupRequest
 {

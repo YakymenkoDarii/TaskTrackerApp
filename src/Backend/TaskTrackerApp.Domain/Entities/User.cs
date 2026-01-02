@@ -20,6 +20,9 @@ public class User
 
     public Role Role { get; set; } = Role.User;
 
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiration { get; set; }
+
     //Foreign keys
     public IList<Card> AssignedTasks { get; set; } = new List<Card>();
 

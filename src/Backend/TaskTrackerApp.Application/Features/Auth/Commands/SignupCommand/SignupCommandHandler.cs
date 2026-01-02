@@ -13,11 +13,11 @@ internal class SignupCommandHandler : IRequestHandler<SignupCommand, Result<Auth
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly IPasswordHasher _passwordHasher;
-    private readonly IJwtTokenService _jwtTokenGenerator;
+    private readonly ITokenService _jwtTokenGenerator;
 
     public SignupCommandHandler(IUnitOfWorkFactory uowFactory,
         IPasswordHasher passwordHasher,
-        IJwtTokenService jwtTokenGenerator)
+        ITokenService jwtTokenGenerator)
     {
         _uowFactory = uowFactory;
         _passwordHasher = passwordHasher;

@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
-using TaskTrackerApp.Frontend.Domain;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 using TaskTrackerApp.Frontend.Services.Services;
 using TaskTrackerApp.Frontend.Services.Services.Auth;
@@ -14,7 +13,12 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IBoardsService, BoardsService>();
 
-        services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
+        services.AddScoped<ITokenStorage, TokenStorage>();
+
+        services.AddTransient<AuthMessageHandler>();
+        services.AddTransient<CookieHandler>();
+
+        services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 
         return services;
     }

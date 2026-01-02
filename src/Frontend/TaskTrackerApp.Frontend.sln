@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Frontend.Ser
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Frontend.Services", "TaskTrackerApp.Frontend.Services\TaskTrackerApp.Frontend.Services.csproj", "{9659ED7D-E2A3-4DF6-BDDD-4AA505A2BC19}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Frontend.WebApp", "TaskTrackerApp.Frontend.WebApp\TaskTrackerApp.Frontend.WebApp.csproj", "{59474574-A21F-4D93-9AD7-AE2CB0C30102}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskTrackerApp.Frontend.BlazorApp", "TaskTrackerApp.Frontend.BlazorApp\TaskTrackerApp.Frontend.BlazorApp.csproj", "{64A37876-D747-47D8-8290-C2F93A03CB28}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,10 +31,10 @@ Global
 		{9659ED7D-E2A3-4DF6-BDDD-4AA505A2BC19}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9659ED7D-E2A3-4DF6-BDDD-4AA505A2BC19}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9659ED7D-E2A3-4DF6-BDDD-4AA505A2BC19}.Release|Any CPU.Build.0 = Release|Any CPU
-		{59474574-A21F-4D93-9AD7-AE2CB0C30102}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{59474574-A21F-4D93-9AD7-AE2CB0C30102}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{59474574-A21F-4D93-9AD7-AE2CB0C30102}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{59474574-A21F-4D93-9AD7-AE2CB0C30102}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64A37876-D747-47D8-8290-C2F93A03CB28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64A37876-D747-47D8-8290-C2F93A03CB28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64A37876-D747-47D8-8290-C2F93A03CB28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64A37876-D747-47D8-8290-C2F93A03CB28}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -43,7 +43,7 @@ Global
 		{F1065859-6CDC-4442-8BBF-FF81E4B71D16} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{6E41EDF6-F563-47DE-8B2A-44E5C36B270B} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{9659ED7D-E2A3-4DF6-BDDD-4AA505A2BC19} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
-		{59474574-A21F-4D93-9AD7-AE2CB0C30102} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{64A37876-D747-47D8-8290-C2F93A03CB28} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A7F02412-ABAE-43B4-88F0-752AB2C35F08}

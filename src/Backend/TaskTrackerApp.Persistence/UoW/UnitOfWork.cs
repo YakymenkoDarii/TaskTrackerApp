@@ -13,7 +13,6 @@ public class UnitOfWork : IUnitOfWork, IDisposable
     private IBoardRepository? _boardRepository;
     private IColumnRepository? _columnRepository;
     private IUserRepository? _userRepository;
-    private IRefreshTokenRepository? _refreshTokenRepository;
 
     public UnitOfWork(TaskTrackerDbContext dbContext)
     {
@@ -31,9 +30,6 @@ public class UnitOfWork : IUnitOfWork, IDisposable
 
     public IUserRepository UserRepository =>
     _userRepository ??= new UserRepository(_dbContext);
-
-    public IRefreshTokenRepository RefreshTokenRepository =>
-        _refreshTokenRepository ??= new RefreshTokenRepository(_dbContext);
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

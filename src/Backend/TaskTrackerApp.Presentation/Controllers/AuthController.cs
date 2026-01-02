@@ -1,14 +1,10 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using TaskTrackerApp.Application.Features.Auth.Commands.LoginCommand;
 using TaskTrackerApp.Application.Features.Auth.Commands.RefreshTokenCommand;
 using TaskTrackerApp.Application.Features.Auth.Commands.SignupCommand;
 using TaskTrackerApp.Domain.DTOs.Auth;
-using TaskTrackerApp.Domain.Entities;
+using TaskTrackerApp.Domain.DTOs.Auth.Requests;
 using TaskTrackerApp.Domain.Errors;
 
 namespace TaskTrackerApp.Presentation.Controllers;
@@ -17,7 +13,7 @@ namespace TaskTrackerApp.Presentation.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private IMediator _mediator;
+    private readonly IMediator _mediator;
 
     public AuthController(IMediator mediator)
     {
@@ -37,25 +33,48 @@ public class AuthController : ControllerBase
         if (!result.IsSuccess)
             return Unauthorized(result.Error);
 
-        var claims = new List<Claim>
+        if (!string.IsNullOrEmpty(result.Value.RefreshToken))
+        {
+            SetRefreshTokenCookie(
+                result.Value.RefreshToken,
+                result.Value.RefreshTokenExpiration
+            );
+        }
+
+        result.Value.RefreshToken = null;
+        return Ok(result.Value);
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
     {
-        new Claim(ClaimTypes.NameIdentifier, result.Value.Id.ToString()),
-        new Claim(ClaimTypes.Name, result.Value.DisplayName),
-        new Claim(ClaimTypes.Email, result.Value.Email),
-        new Claim(ClaimTypes.Role, result.Value.Role.ToString()),
-    };
+        var refreshTokenFromCookie = Request.Cookies["refreshToken"];
 
-        var identity = new ClaimsIdentity(
-            claims,
-            CookieAuthenticationDefaults.AuthenticationScheme
-        );
+        if (string.IsNullOrEmpty(refreshTokenFromCookie))
+            return Unauthorized(new Error("Auth.NoToken", "No refresh token found."));
 
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(identity)
-        );
+        var result = await _mediator.Send(new RefreshTokenCommand
+        {
+            Tag = request.Tag,
+            RefreshToken = refreshTokenFromCookie
+        });
 
-        return Ok(result.Value.Id + "User Id");
+        if (!result.IsSuccess)
+        {
+            DeleteRefreshTokenCookie();
+            return Unauthorized(result.Error);
+        }
+
+        if (!string.IsNullOrEmpty(result.Value.RefreshToken))
+        {
+            SetRefreshTokenCookie(
+                result.Value.RefreshToken,
+                result.Value.RefreshTokenExpiration
+            );
+        }
+
+        result.Value.RefreshToken = null;
+        return Ok(result.Value);
     }
 
     [HttpPost("signup")]
@@ -73,65 +92,47 @@ public class AuthController : ControllerBase
         {
             return result.Error.Code switch
             {
-                var code when code == SignupError.EmailInUse.Code
-                    => Unauthorized(result.Error),
-
-                var code when code == SignupError.TagInUse.Code
-                    => Unauthorized(result.Error),
-
+                var code when code == SignupError.EmailInUse.Code => Unauthorized(result.Error),
+                var code when code == SignupError.TagInUse.Code => Unauthorized(result.Error),
                 _ => BadRequest(result.Error)
             };
         }
 
-        var user = result.Value;
-        var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Name, user.DisplayName),
-        new Claim(ClaimTypes.Email, user.Email),
-        new Claim(ClaimTypes.Role, user.Role.ToString()),
-    };
-
-        var identity = new ClaimsIdentity(
-            claims,
-            CookieAuthenticationDefaults.AuthenticationScheme
-        );
-
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(identity)
-        );
-
-        return Ok(result.Value.Id + "User Id");
-    }
-
-    [HttpPost("logout")]
-    public async Task<IActionResult> LogoutAsync()
-    {
-        await HttpContext.SignOutAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme
-        );
-
         return Ok();
     }
 
-    [HttpGet("me")]
-    public IActionResult Me()
+    [HttpPost("logout")]
+    public IActionResult Logout()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var email = User.FindFirstValue(ClaimTypes.Email);
-        var name = User.FindFirstValue(ClaimTypes.Name);
+        DeleteRefreshTokenCookie();
+        return Ok();
+    }
 
-        if (string.IsNullOrEmpty(userId))
+    private void SetRefreshTokenCookie(string token, DateTime expiration)
+    {
+        var cookieOptions = new CookieOptions
         {
-            return Unauthorized();
-        }
+            HttpOnly = true,
+            Expires = expiration,
 
-        return Ok(new
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Path = "/"
+        };
+
+        Response.Cookies.Append("refreshToken", token, cookieOptions);
+    }
+
+    private void DeleteRefreshTokenCookie()
+    {
+        var cookieOptions = new CookieOptions
         {
-            Id = userId,
-            Email = email,
-            DisplayName = name
-        });
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Path = "/"
+        };
+
+        Response.Cookies.Delete("refreshToken", cookieOptions);
     }
 }

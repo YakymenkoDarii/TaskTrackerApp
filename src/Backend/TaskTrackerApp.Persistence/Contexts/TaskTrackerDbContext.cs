@@ -15,7 +15,6 @@ public class TaskTrackerDbContext : DbContext
     public DbSet<BoardMember> BoardMembers { get; set; }
     public DbSet<Column> Columns { get; set; }
     public DbSet<Card> Cards { get; set; }
-    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -69,14 +68,6 @@ public class TaskTrackerDbContext : DbContext
         {
             entity.Property(c => c.Role)
                 .HasConversion<string>();
-        });
-
-        modelBuilder.Entity<RefreshToken>(entity =>
-        {
-            entity.HasOne(c => c.User)
-                .WithMany()
-                .HasForeignKey(c => c.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<BoardMember>(entity =>
