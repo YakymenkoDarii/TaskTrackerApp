@@ -58,7 +58,7 @@ public class BoardsController : ControllerBase
         {
             Title = boardDto.Title,
             Description = boardDto.Description,
-            CreatedById = boardDto.CreatedById
+            CreatedById = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value)
         };
 
         var result = await _mediator.Send(command);

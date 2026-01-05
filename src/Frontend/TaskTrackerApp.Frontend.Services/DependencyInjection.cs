@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
-using TaskTrackerApp.Frontend.Services.Services;
 using TaskTrackerApp.Frontend.Services.Services.Auth;
+using TaskTrackerApp.Frontend.Services.Services.Boards;
 
 namespace TaskTrackerApp.Frontend.Services;
 

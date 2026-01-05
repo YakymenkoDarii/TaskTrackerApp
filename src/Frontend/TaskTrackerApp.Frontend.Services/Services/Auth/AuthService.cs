@@ -1,8 +1,5 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.IdentityModel.Tokens;
-using Refit;
+﻿using Refit;
 using System.Text.Json;
-using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
 using TaskTrackerApp.Frontend.Domain.DTOs.Auth.Requests;
 using TaskTrackerApp.Frontend.Domain.DTOs.Auth.Responses;
 using TaskTrackerApp.Frontend.Domain.Errors;
@@ -34,12 +31,12 @@ public class AuthService : IAuthService
 
         if (!result.IsSuccessStatusCode || result.Content is null)
         {
-            return ParseError(result);
+            return result.ToResult();
         }
 
         _tokenStorage.SetAccessToken(result.Content.AccessToken);
 
-        return Result<LoginResponse>.Success(result.Content);
+        return result.ToResult();
     }
 
     public async Task<Result<LoginResponse>> RefreshAsync()
@@ -57,7 +54,7 @@ public class AuthService : IAuthService
 
         _tokenStorage.SetAccessToken(result.Content.AccessToken);
 
-        return Result<LoginResponse>.Success(result.Content);
+        return result.ToResult();
     }
 
     public async Task<Result> SignupAsync(SignupRequest request)
@@ -65,7 +62,9 @@ public class AuthService : IAuthService
         var result = await _authApi.SignupAsync(request);
 
         if (result.IsSuccessStatusCode)
+        {
             return Result.Success();
+        }
 
         if (result.Error?.Content != null)
         {
@@ -84,20 +83,5 @@ public class AuthService : IAuthService
     {
         _tokenStorage.ClearAccessToken();
         await _authApi.LogoutAsync();
-    }
-
-    private Result<LoginResponse> ParseError(IApiResponse<LoginResponse> response)
-    {
-        if (response.Error?.Content != null)
-        {
-            var error = JsonSerializer.Deserialize<Error>(
-                response.Error.Content, _jsonOptions);
-
-            if (error != null)
-                return Result<LoginResponse>.Failure(error);
-        }
-
-        return Result<LoginResponse>.Failure(
-            new Error("NetworkError", response.ReasonPhrase ?? "Unknown"));
     }
 }

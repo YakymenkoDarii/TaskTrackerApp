@@ -1,5 +1,4 @@
-﻿using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
-using TaskTrackerApp.Frontend.Domain.DTOs.Auth.Requests;
+﻿using TaskTrackerApp.Frontend.Domain.DTOs.Auth.Requests;
 using TaskTrackerApp.Frontend.Domain.DTOs.Auth.Responses;
 using TaskTrackerApp.Frontend.Domain.Results;
 
