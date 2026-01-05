@@ -48,4 +48,22 @@ public class BoardsService : IBoardsService
             return Result.Failure(new Error("UnknownError", ex.Message));
         }
     }
+
+    public async Task<Result> DeleteAsync(int id)
+    {
+        try
+        {
+            await _boardsApi.DeleteAsync(id);
+            Console.WriteLine("This method called");
+            return Result.Success();
+        }
+        catch (ApiException ex)
+        {
+            return Result.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
 }

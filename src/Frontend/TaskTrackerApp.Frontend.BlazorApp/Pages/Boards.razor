@@ -72,25 +72,41 @@
             <MudGrid>
                 @foreach (var board in allBoards)
                 {
-                    <MudItem xs="12"
-                             sm="6"
-                             md="4">
-
+                    <MudItem xs="12" sm="6" md="4">
                         <MudCard Elevation="2"
-                                 Class="cursor-pointer hover-effect"
-                                 @onclick=@(() => HandleBoardClick(board.Id))>
+                                 Class="height-100 cursor-pointer hover-effect"
+                                 @onclick="@(() => HandleBoardClick(board.Id))">
 
                             <MudCardHeader>
                                 <CardHeaderContent>
-                                    <MudText Typo=@Typo.h6>
-                                        @board.Title
-                                    </MudText>
+                                    <MudText Typo="Typo.h6">@board.Title</MudText>
                                 </CardHeaderContent>
+
+                                <CardHeaderActions>
+                                    <span @onclick:stopPropagation="true">
+
+                                        <MudMenu Icon="@Icons.Material.Filled.MoreVert"
+                                                 AnchorOrigin="Origin.BottomRight"
+                                                 TransformOrigin="Origin.TopRight">
+
+                                            <MudMenuItem Icon="@Icons.Material.Filled.Archive"
+                                                         OnClick="@(() => ArchiveBoard(board.Id))">
+                                                Archive
+                                            </MudMenuItem>
+
+                                            <MudMenuItem Icon="@Icons.Material.Filled.Delete"
+                                                         IconColor="Color.Error"
+                                                         OnClick="@(() => DeleteBoard(board.Id))">
+                                                Delete
+                                            </MudMenuItem>
+                                        </MudMenu>
+
+                                    </span>
+                                </CardHeaderActions>
                             </MudCardHeader>
 
-                            <MudCardContent>
-                                <MudText Typo=@Typo.body2
-                                         Class="text-secondary">
+                            <MudCardContent Class="pb-4">
+                                <MudText Typo="Typo.body2" Class="text-secondary">
                                     @board.Description
                                 </MudText>
                             </MudCardContent>
@@ -101,7 +117,6 @@
             </MudGrid>
         }
 
-        @* Create Button at the bottom *@
         <div class="d-flex justify-end mt-8">
 
             <MudFab Color=@Color.Secondary

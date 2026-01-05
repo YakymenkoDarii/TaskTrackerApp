@@ -2,6 +2,7 @@
 using MudBlazor;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
+using TaskTrackerApp.Frontend.Domain.Results;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages;
@@ -83,6 +84,35 @@ public partial class Boards
             else
             {
                 SnackBar.Add(createResult.Error.Message, Severity.Error);
+            }
+        }
+    }
+
+    private void ArchiveBoard(int boardId)
+    {
+        SnackBar.Add("Archived (Not implemented yet)", Severity.Info);
+    }
+
+    private async Task DeleteBoard(int boardId)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Delete Board",
+            "Are you sure you want to delete this board? This cannot be undone.",
+            yesText: "Delete", cancelText: "Cancel");
+
+        if (result == true)
+        {
+            var deleteResult = await BoardsService.DeleteAsync(boardId);
+
+            if (deleteResult.IsSuccess)
+            {
+                SnackBar.Add("Board deleted", Severity.Success);
+                await LoadBoardsAsync();
+                StateHasChanged();
+            }
+            else
+            {
+                SnackBar.Add("Failed to delete board", Severity.Error);
             }
         }
     }

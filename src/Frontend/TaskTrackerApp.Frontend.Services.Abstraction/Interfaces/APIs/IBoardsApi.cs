@@ -10,4 +10,7 @@ public interface IBoardsApi
 
     [Post("/api/Boards")]
     Task<IApiResponse> CreateAsync(CreateBoardDto boardDto);
+
+    [Delete("/api/Boards")]
+    Task<IApiResponse> DeleteAsync(int id);
 }
