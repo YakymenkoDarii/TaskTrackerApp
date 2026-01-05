@@ -1,6 +1,6 @@
-﻿namespace TaskTrackerApp.Domain.Errors;
+﻿namespace TaskTrackerApp.Domain.Errors.Auth;
 
-public static class SignupError
+public static class SignupErrors
 {
     public static readonly Error EmailInUse = new(
         "Signup.EmailInUse", "This email is already used");

@@ -59,3 +59,63 @@ html, body {
     display: flex;
     flex-direction: column;
 }
+
+.board-container {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - var(--mud-appbar-height));
+    background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.board-header-text {
+    color: white !important;
+    text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.8);
+    font-weight: 700;
+}
+
+.board-canvas {
+    flex-grow: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 100%;
+    align-items: flex-start;
+}
+
+.board-column {
+    width: 272px;
+    min-width: 272px;
+}
+
+.column-paper {
+    background-color: #f1f2f4;
+    max-height: calc(100vh - 140px);
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+}
+
+.task-list {
+    overflow-y: auto;
+    min-height: 10px;
+}
+
+.add-list-btn {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    color: white !important;
+}
+
+    .add-list-btn:hover {
+        background-color: rgba(255, 255, 255, 0.4) !important;
+    }
+
+.text-secondary-custom {
+    color: #44546f;
+    text-transform: none;
+    font-weight: 500;
+}

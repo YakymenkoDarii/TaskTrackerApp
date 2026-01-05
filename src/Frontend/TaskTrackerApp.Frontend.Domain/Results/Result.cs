@@ -4,8 +4,11 @@ namespace TaskTrackerApp.Frontend.Domain.Results;
 
 public class Result
 {
-    public bool IsSuccess { get; }
-    public Error Error { get; }
+    public bool IsSuccess { get; init; }
+    public Error Error { get; init; }
+
+    public Result()
+    { }
 
     protected Result(bool isSuccess, Error error)
     {
@@ -20,7 +23,10 @@ public class Result
 
 public class Result<T> : Result
 {
-    public T? Value { get; }
+    public T? Value { get; init; }
+
+    public Result()
+    { }
 
     private Result(T? value, bool isSuccess, Error error)
         : base(isSuccess, error)

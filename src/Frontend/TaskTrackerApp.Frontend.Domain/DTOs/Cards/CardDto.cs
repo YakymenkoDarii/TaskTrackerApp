@@ -1,4 +1,4 @@
-﻿namespace TaskTrackerApp.Domain.DTOs.Card;
+﻿namespace TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 
 public class CardDto
 {

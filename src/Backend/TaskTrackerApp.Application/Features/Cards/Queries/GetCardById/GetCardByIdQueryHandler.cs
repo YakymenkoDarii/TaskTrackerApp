@@ -31,9 +31,9 @@ public class GetCardByIdQueryHandler : IRequestHandler<GetCardByIdQuery, CardDto
             Description = card.Description,
             DueDate = card.DueDate,
             ColumnId = card.ColumnId,
-            BoardId = card.BoardId,
             AssigneeId = card.AssigneeId,
-            CreatedAt = card.CreatedAt
+            CreatedAt = card.CreatedAt,
+            IsCompleted = card.IsCompleted,
         };
     }
 }

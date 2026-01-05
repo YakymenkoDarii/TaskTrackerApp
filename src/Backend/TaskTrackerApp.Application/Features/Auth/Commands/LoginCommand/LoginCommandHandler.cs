@@ -2,7 +2,7 @@
 using TaskTrackerApp.Application.Interfaces.Auth;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.DTOs.Auth.Responses;
-using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.Errors.Auth;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Auth.Commands.LoginCommand;
@@ -32,12 +32,12 @@ internal class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginR
 
         if (user is null)
         {
-            return LoginError.UserNotFound;
+            return LoginErrors.UserNotFound;
         }
 
         if (!_passwordHasher.Verify(request.Password, user.PasswordHash))
         {
-            return LoginError.InvalidPassword;
+            return LoginErrors.InvalidPassword;
         }
 
         var accessToken = _tokenService.CreateAccessToken(user, out var accessTokenExpiration);

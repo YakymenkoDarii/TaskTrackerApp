@@ -6,6 +6,7 @@ using TaskTrackerApp.Application.Features.Auth.Commands.SignupCommand;
 using TaskTrackerApp.Domain.DTOs.Auth;
 using TaskTrackerApp.Domain.DTOs.Auth.Requests;
 using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.Errors.Auth;
 
 namespace TaskTrackerApp.Presentation.Controllers;
 
@@ -42,7 +43,7 @@ public class AuthController : ControllerBase
         }
 
         result.Value.RefreshToken = null;
-        return Ok(result.Value);
+        return Ok(result);
     }
 
     [HttpPost("refresh")]
@@ -74,7 +75,7 @@ public class AuthController : ControllerBase
         }
 
         result.Value.RefreshToken = null;
-        return Ok(result.Value);
+        return Ok(result);
     }
 
     [HttpPost("signup")]
@@ -92,8 +93,8 @@ public class AuthController : ControllerBase
         {
             return result.Error.Code switch
             {
-                var code when code == SignupError.EmailInUse.Code => Unauthorized(result.Error),
-                var code when code == SignupError.TagInUse.Code => Unauthorized(result.Error),
+                var code when code == SignupErrors.EmailInUse.Code => Unauthorized(result.Error),
+                var code when code == SignupErrors.TagInUse.Code => Unauthorized(result.Error),
                 _ => BadRequest(result.Error)
             };
         }

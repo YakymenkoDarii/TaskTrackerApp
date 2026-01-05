@@ -1,4 +1,4 @@
-﻿namespace TaskTrackerApp.Domain.DTOs.Column;
+﻿namespace TaskTrackerApp.Frontend.Domain.DTOs.Columns;
 
 public class ColumnDto
 {

@@ -1,0 +1,49 @@
+﻿@using TaskTrackerApp.Frontend.Domain.DTOs.Cards
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="model.Title"
+                      Label="Card Title"
+                      Required="true"
+                      AutoFocus="true" />
+
+        <MudTextField @bind-Value="model.Description"
+                      Label="Description"
+                      Lines="3"
+                      Class="mt-3" />
+
+        <MudDatePicker Label="Due Date"
+                       @bind-Date="date"
+                       Class="mt-3"
+                       Color="Color.Primary" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Submit">Create Card</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private CreateCardDto model = new();
+
+    private DateTime? date;
+
+    void Submit()
+    {
+        model.DueDate = date;
+
+        if (string.IsNullOrWhiteSpace(model.Title)) 
+        {
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(model));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

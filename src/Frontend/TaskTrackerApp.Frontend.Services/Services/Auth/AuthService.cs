@@ -1,10 +1,8 @@
-﻿using Refit;
-using System.Text.Json;
+﻿using System.Text.Json;
 using TaskTrackerApp.Frontend.Domain.DTOs.Auth.Requests;
 using TaskTrackerApp.Frontend.Domain.DTOs.Auth.Responses;
 using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Results;
-using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.APIs;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.Services.Services.Auth;
@@ -34,25 +32,45 @@ public class AuthService : IAuthService
             return result.ToResult();
         }
 
-        _tokenStorage.SetAccessToken(result.Content.AccessToken);
+        _tokenStorage.SetAccessToken(result.Content.Value.AccessToken);
 
         return result.ToResult();
     }
 
     public async Task<Result<LoginResponse>> RefreshAsync()
     {
+        Console.WriteLine("DEBUG: Starting RefreshAsync...");
+
         var result = await _authApi.RefreshAsync(new RefreshTokenRequest
         {
             Tag = "silent-refresh"
         });
 
+        // 1. Check HTTP Status
+        Console.WriteLine($"DEBUG: HTTP Status: {result.StatusCode}");
+
         if (!result.IsSuccessStatusCode || result.Content is null)
         {
-            return Result<LoginResponse>.Failure(
-                new Error("Auth.RefreshFailed", "Session expired"));
+            Console.WriteLine("DEBUG: Refresh failed (HTTP Error or Null Content)");
+            return Result<LoginResponse>.Failure(new Error("Auth.RefreshFailed", "Session expired"));
         }
 
-        _tokenStorage.SetAccessToken(result.Content.AccessToken);
+        // 2. Check the "Box" (The Wrapper)
+        Console.WriteLine($"DEBUG: Wrapper IsSuccess: {result.Content.IsSuccess}");
+
+        // 3. Check the "Shoes" (The Data inside)
+        if (result.Content.Value == null)
+        {
+            Console.WriteLine("DEBUG: CRITICAL FAILURE - content.Value is NULL. Deserialization issue!");
+        }
+        else
+        {
+            var token = result.Content.Value.AccessToken;
+            Console.WriteLine($"DEBUG: AccessToken found: {(string.IsNullOrEmpty(token) ? "EMPTY" : token.Substring(0, 10) + "...")}");
+        }
+
+        // Attempt to set token
+        _tokenStorage.SetAccessToken(result.Content.Value?.AccessToken);
 
         return result.ToResult();
     }

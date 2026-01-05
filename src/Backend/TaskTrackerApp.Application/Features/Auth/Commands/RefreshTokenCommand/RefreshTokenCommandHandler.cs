@@ -2,7 +2,7 @@
 using TaskTrackerApp.Application.Interfaces.Auth;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.DTOs.Auth.Responses;
-using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.Errors.Auth;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Auth.Commands.RefreshTokenCommand;
@@ -25,17 +25,17 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         var user = await uow.UserRepository.GetByRefreshTokenAsync(request.RefreshToken);
         if (user == null)
         {
-            return LoginError.UserNotFound;
+            return LoginErrors.UserNotFound;
         }
 
         if (user.RefreshToken != request.RefreshToken)
         {
-            return LoginError.InvalidRefreshToken;
+            return LoginErrors.InvalidRefreshToken;
         }
 
         if (user.RefreshTokenExpiration < DateTime.UtcNow)
         {
-            return LoginError.RefreshTokenExpired;
+            return LoginErrors.RefreshTokenExpired;
         }
 
         var accessToken = _tokenService.CreateAccessToken(user, out var accessTokenExpiration);

@@ -1,6 +1,6 @@
-﻿namespace TaskTrackerApp.Domain.Errors;
+﻿namespace TaskTrackerApp.Domain.Errors.Auth;
 
-public static class LoginError
+public static class LoginErrors
 {
     public static readonly Error InvalidPassword = new(
         "Login.InvalidPassword", "Invalid password.");

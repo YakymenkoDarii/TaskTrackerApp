@@ -2,7 +2,6 @@
 using MudBlazor;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
-using TaskTrackerApp.Frontend.Domain.Results;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages;
@@ -17,6 +16,9 @@ public partial class Boards
 
     [Inject]
     public ISnackbar SnackBar { private get; set; } = default!;
+
+    [Inject]
+    public NavigationManager Nav { private get; set; } = default!;
 
     private IEnumerable<BoardDto> lastOpenedBoards = Enumerable.Empty<BoardDto>();
     private IEnumerable<BoardDto> allBoards = Enumerable.Empty<BoardDto>();
@@ -58,9 +60,7 @@ public partial class Boards
 
     private void HandleBoardClick(int boardId)
     {
-        SnackBar.Add(
-            "BOARD CLICKED",
-            Severity.Info);
+        Nav.NavigateTo($"/board/{boardId}");
     }
 
     private async void HandleCreateBoard()

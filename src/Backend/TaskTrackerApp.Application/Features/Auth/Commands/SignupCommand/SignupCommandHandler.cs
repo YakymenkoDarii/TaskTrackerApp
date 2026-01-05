@@ -4,7 +4,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.DTOs.Auth;
 using TaskTrackerApp.Domain.Entities;
 using TaskTrackerApp.Domain.Enums;
-using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.Errors.Auth;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Auth.Commands.SignupCommand;
@@ -30,11 +30,11 @@ internal class SignupCommandHandler : IRequestHandler<SignupCommand, Result<Auth
 
         if (await uow.UserRepository.GetByEmailAsync(request.Email) is not null)
         {
-            return SignupError.EmailInUse;
+            return SignupErrors.EmailInUse;
         }
         if (await uow.UserRepository.GetByTagAsync(request.Tag) is not null)
         {
-            return SignupError.TagInUse;
+            return SignupErrors.TagInUse;
         }
 
         var passwordHash = _passwordHasher.Generate(request.Password);

@@ -29,4 +29,12 @@ builder.Services.AddRefitClient<IBoardsApi>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!))
     .AddHttpMessageHandler<AuthMessageHandler>();
 
+builder.Services.AddRefitClient<IColumnsApi>()
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!))
+    .AddHttpMessageHandler<AuthMessageHandler>();
+
+builder.Services.AddRefitClient<ICardsApi>()
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!))
+    .AddHttpMessageHandler<AuthMessageHandler>();
+
 await builder.Build().RunAsync();

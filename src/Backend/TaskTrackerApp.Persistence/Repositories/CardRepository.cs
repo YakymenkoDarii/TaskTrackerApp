@@ -17,4 +17,11 @@ public class CardRepository : Repository<Card, int>, ICardRepository
             .Where(c => c.BoardId == boardId)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Card>> GetCardsByColumnIdAsync(int columnId)
+    {
+        return await _dbSet
+            .Where(c => c.ColumnId == columnId)
+            .ToListAsync();
+    }
 }

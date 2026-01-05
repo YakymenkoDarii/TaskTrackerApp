@@ -36,10 +36,10 @@ public class BoardsController : ControllerBase
         var query = new GetAllBoardsQuery(userId);
         var result = await _mediator.Send(query);
 
-        return result is null ? NotFound() : Ok(result.Value);
+        return result is null ? NotFound() : Ok(result);
     }
 
-    [HttpGet("id")]
+    [HttpGet("{boardId}")]
     public async Task<IActionResult> GetByIdAsync(int boardId)
     {
         var query = new GetBoardByIdQuery(boardId);

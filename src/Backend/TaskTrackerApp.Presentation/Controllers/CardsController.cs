@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TaskTrackerApp.Application.Features.Cards.Commands.CreateCard;
 using TaskTrackerApp.Application.Features.Cards.Commands.DeleteCard;
 using TaskTrackerApp.Application.Features.Cards.Commands.UpdateCards;
+using TaskTrackerApp.Application.Features.Cards.Queries.GetCardsByColumnId;
 using TaskTrackerApp.Domain.DTOs.Card;
 
 namespace TaskTrackerApp.Presentation.Controllers;
@@ -67,5 +68,15 @@ public class CardsController : ControllerBase
         await _mediator.Send(command);
 
         return NoContent();
+    }
+
+    [HttpGet("{columnId}")]
+    public async Task<IActionResult> GetCardsByColumnId(int columnId)
+    {
+        var query = new GetCardsByColumnIdQuery(columnId);
+
+        var result = await _mediator.Send(query);
+
+        return Ok(result);
     }
 }

@@ -10,4 +10,6 @@ public interface IBoardsService
     Task<Result> CreateAsync(CreateBoardDto board);
 
     Task<Result> DeleteAsync(int boardId);
+
+    Task<Result<BoardDto>> GetBoardByIdAsync(int boardId);
 }

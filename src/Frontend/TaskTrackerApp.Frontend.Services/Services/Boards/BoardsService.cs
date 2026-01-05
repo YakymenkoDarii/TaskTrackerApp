@@ -3,7 +3,6 @@ using System.Text.Json;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Results;
-using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.APIs;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.Services.Services.Boards;
@@ -54,7 +53,6 @@ public class BoardsService : IBoardsService
         try
         {
             await _boardsApi.DeleteAsync(id);
-            Console.WriteLine("This method called");
             return Result.Success();
         }
         catch (ApiException ex)
@@ -64,6 +62,23 @@ public class BoardsService : IBoardsService
         catch (Exception ex)
         {
             return Result.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
+
+    public async Task<Result<BoardDto>> GetBoardByIdAsync(int boardId)
+    {
+        try
+        {
+            var board = await _boardsApi.GetByIdAsync(boardId);
+            return board.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result<BoardDto>.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result<BoardDto>.Failure(new Error("UnknownError", ex.Message));
         }
     }
 }
