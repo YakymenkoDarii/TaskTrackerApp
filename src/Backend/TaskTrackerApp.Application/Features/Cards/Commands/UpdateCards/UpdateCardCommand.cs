@@ -21,4 +21,6 @@ public class UpdateCardCommand : IRequest<Result<CardDto>>
     public int? AssigneeId { get; set; }
 
     public int UpdatedById { get; set; }
+
+    public bool IsCompleted { get; set; }
 }

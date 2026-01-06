@@ -27,6 +27,7 @@ internal class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, Res
         card.AssigneeId = request.AssigneeId;
         card.UpdatedById = request.UpdatedById;
         card.UpdatedAt = DateTime.UtcNow;
+        card.IsCompleted = request.IsCompleted;
 
         await uow.CardRepository.UpdateAsync(card);
 

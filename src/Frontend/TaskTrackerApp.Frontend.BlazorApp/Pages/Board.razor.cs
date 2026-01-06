@@ -167,6 +167,7 @@ public partial class Board
 
     private async Task HandleCardClick(CardDto card)
     {
+        Console.WriteLine("THE CARD IS CLICKED, YOU JUST STUPID");
         var parameters = new DialogParameters<CardDetailsDialog>
         {
             { x => x.Card, card },

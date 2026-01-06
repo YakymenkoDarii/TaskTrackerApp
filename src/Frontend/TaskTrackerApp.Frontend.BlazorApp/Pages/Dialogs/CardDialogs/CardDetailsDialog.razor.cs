@@ -10,19 +10,18 @@ namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
 
 public partial class CardDetailsDialog
 {
-    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
-
-    [Parameter] public CardDto Card { get; set; } = default!;
-
-    [Parameter] public int BoardId { get; set; }
-
     [Inject] private ICardsService CardsService { get; set; }
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
     [Inject] private ISnackbar Snackbar { get; set; }
 
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public CardDto Card { get; set; } = default!;
+    [Parameter] public int BoardId { get; set; }
+
     private string title = string.Empty;
     private string description = string.Empty;
     private DateTime? dueDate;
+    private bool isCompleted;
 
     protected override void OnInitialized()
     {
@@ -31,6 +30,7 @@ public partial class CardDetailsDialog
             title = Card.Title;
             description = Card.Description;
             dueDate = Card.DueDate;
+            isCompleted = Card.IsCompleted;
         }
     }
 
@@ -61,11 +61,11 @@ public partial class CardDetailsDialog
             DueDate = dueDate,
             ColumnId = Card.ColumnId,
             BoardId = BoardId,
+            IsCompleted = isCompleted,
             UpdatedById = userId,
             AssigneeId = Card.AssigneeId
         };
 
-        // 3. Call Service
         var result = await CardsService.UpdateAsync(Card.Id, updateDto);
 
         if (result.IsSuccess)

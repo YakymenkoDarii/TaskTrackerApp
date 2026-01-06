@@ -17,4 +17,6 @@ public class UpdateCardDto
     public int? AssigneeId { get; set; }
 
     public int UpdatedById { get; set; }
+
+    public bool IsCompleted { get; set; }
 }

@@ -50,6 +50,7 @@ public class CardsController : ControllerBase
             BoardId = cardDto.BoardId,
             AssigneeId = cardDto.AssigneeId,
             UpdatedById = cardDto.UpdatedById,
+            IsCompleted = cardDto.IsCompleted,
         };
 
         var updatedCard = await _mediator.Send(command);
