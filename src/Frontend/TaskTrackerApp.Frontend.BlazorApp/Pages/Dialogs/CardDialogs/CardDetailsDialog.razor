@@ -9,14 +9,10 @@
         <MudContainer MaxWidth=@MaxWidth.False
                       Class="pa-4">
             <MudGrid>
-                @* --- LEFT COLUMN --- *@
                 <MudItem xs=12
                          sm=9>
-
-                    @* Title Row with Mark Complete *@
                     <div class="d-flex align-center gap-2 mb-4">
 
-                        @* --- NEW: Mark Complete Button --- *@
                         <MudTooltip Text="@(isCompleted ? "Mark incomplete" : "Mark complete")">
                             <MudCheckBox @bind-Value=@isCompleted
                                          Color=@Color.Success
@@ -26,7 +22,6 @@
                                          Class="mr-2" />
                         </MudTooltip>
 
-                        @* Title Input *@
                         <MudIcon Icon=@Icons.Material.Filled.WebAsset
                                  Class="mud-text-secondary" />
 
@@ -39,7 +34,6 @@
                                       Style="font-weight: 700;" />
                     </div>
 
-                    @* Description *@
                     <div class="d-flex align-center gap-2 mb-2">
                         <MudIcon Icon=@Icons.Material.Filled.Description
                                  Class="mud-text-secondary" />
@@ -54,7 +48,6 @@
                                   Class="mb-4" />
                 </MudItem>
 
-                @* --- RIGHT COLUMN --- *@
                 <MudItem xs=12
                          sm=3>
 
