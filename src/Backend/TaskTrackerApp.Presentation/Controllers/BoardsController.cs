@@ -26,24 +26,20 @@ public class BoardsController : ControllerBase
     [HttpGet("boards")]
     public async Task<IActionResult> GetAllAsync()
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userId))
+        if (!int.TryParse(userIdString, out int userId))
         {
-            return Unauthorized("Id was not found in the token");
+            return Unauthorized("Invalid Token: User ID is missing or not a number.");
         }
-        int id = int.Parse(userId);
 
-        var query = new GetAllBoardsQuery(id);
-
+        var query = new GetAllBoardsQuery(userId);
         var result = await _mediator.Send(query);
 
-        return result is null
-            ? NotFound()
-            : Ok(result.Value);
+        return result is null ? NotFound() : Ok(result);
     }
 
-    [HttpGet("id")]
+    [HttpGet("{boardId}")]
     public async Task<IActionResult> GetByIdAsync(int boardId)
     {
         var query = new GetBoardByIdQuery(boardId);
@@ -62,7 +58,7 @@ public class BoardsController : ControllerBase
         {
             Title = boardDto.Title,
             Description = boardDto.Description,
-            CreatedById = boardDto.CreatedById
+            CreatedById = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value)
         };
 
         var result = await _mediator.Send(command);

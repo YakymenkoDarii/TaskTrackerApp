@@ -12,7 +12,5 @@ public interface IUnitOfWork : IDisposable
 
     IUserRepository UserRepository { get; }
 
-    IRefreshTokenRepository RefreshTokenRepository { get; }
-
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

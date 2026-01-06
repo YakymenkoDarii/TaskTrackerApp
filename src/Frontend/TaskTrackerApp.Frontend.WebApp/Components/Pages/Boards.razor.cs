@@ -17,41 +17,38 @@ public partial class Boards
     private IEnumerable<BoardDto> allBoards = Enumerable.Empty<BoardDto>();
     private bool isLoading = true;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (firstRender)
-        {
-            await LoadBoardsAsync();
-
-            StateHasChanged();
-        }
+        await LoadBoardsAsync();
     }
 
     private async Task LoadBoardsAsync()
     {
         isLoading = true;
-
-        var result = await BoardsService.GetAllAsync();
-
-        if (result.IsSuccess && result.Value is not null)
+        try
         {
-            var data = result.Value.ToList();
+            var result = await BoardsService.GetAllAsync();
 
-            lastOpenedBoards = data
-                .OrderByDescending(x => x.LastTimeOpenned)
-                .Take(4);
+            if (result.IsSuccess && result.Value is not null)
+            {
+                var data = result.Value.ToList();
 
-            allBoards = data
-                .OrderBy(x => x.Title);
+                lastOpenedBoards = data
+                    .OrderByDescending(x => x.LastTimeOpenned)
+                    .Take(4);
+
+                allBoards = data
+                    .OrderBy(x => x.Title);
+            }
+            else
+            {
+                SnackBar.Add(result.Error.Message, Severity.Error);
+            }
         }
-        else if (!result.IsSuccess)
+        finally
         {
-            SnackBar.Add(
-                result.Error.Message,
-                Severity.Error);
+            isLoading = false;
         }
-
-        isLoading = false;
     }
 
     private void HandleBoardClick(int boardId)

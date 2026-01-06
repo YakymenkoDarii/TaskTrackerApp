@@ -15,7 +15,6 @@ public class TaskTrackerDbContext : DbContext
     public DbSet<BoardMember> BoardMembers { get; set; }
     public DbSet<Column> Columns { get; set; }
     public DbSet<Card> Cards { get; set; }
-    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -71,21 +70,13 @@ public class TaskTrackerDbContext : DbContext
                 .HasConversion<string>();
         });
 
-        modelBuilder.Entity<RefreshToken>(entity =>
-        {
-            entity.HasOne(c => c.User)
-                .WithMany()
-                .HasForeignKey(c => c.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
         modelBuilder.Entity<BoardMember>(entity =>
         {
             entity.HasIndex(bm => new { bm.BoardId, bm.UserId })
-                  .IsUnique();
+                        .IsUnique();
 
             entity.Property(bm => bm.Role)
-                  .HasConversion<string>();
+                    .HasConversion<string>();
 
             entity.HasOne(bm => bm.Board)
               .WithMany(b => b.Members)
@@ -93,9 +84,9 @@ public class TaskTrackerDbContext : DbContext
               .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(bm => bm.User)
-              .WithMany()
-              .HasForeignKey(bm => bm.UserId)
-              .OnDelete(DeleteBehavior.Restrict);
+                  .WithMany(u => u.BoardMemberships)
+                  .HasForeignKey(bm => bm.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

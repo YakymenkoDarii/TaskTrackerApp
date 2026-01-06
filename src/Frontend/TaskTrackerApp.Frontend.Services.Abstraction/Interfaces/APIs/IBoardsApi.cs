@@ -1,10 +1,18 @@
 ﻿using Refit;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
-
-namespace TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.APIs;
+using TaskTrackerApp.Frontend.Domain.Results;
 
 public interface IBoardsApi
 {
     [Get("/api/Boards/boards")]
-    Task<IApiResponse<IEnumerable<BoardDto>>> GetAllAsync();
+    Task<IApiResponse<Result<IEnumerable<BoardDto>>>> GetAllAsync();
+
+    [Get("/api/Boards/{boardId}")]
+    Task<IApiResponse<Result<BoardDto>>> GetByIdAsync(int boardId);
+
+    [Post("/api/Boards")]
+    Task<IApiResponse<Result>> CreateAsync(CreateBoardDto boardDto);
+
+    [Delete("/api/Boards")]
+    Task<IApiResponse<Result>> DeleteAsync(int id);
 }

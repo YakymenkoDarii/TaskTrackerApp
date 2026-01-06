@@ -1,16 +1,19 @@
 ﻿using Refit;
-using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
-
-namespace TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.APIs;
+using TaskTrackerApp.Frontend.Domain.DTOs.Auth.Requests;
+using TaskTrackerApp.Frontend.Domain.DTOs.Auth.Responses;
+using TaskTrackerApp.Frontend.Domain.Results;
 
 public interface IAuthApi
 {
     [Post("/api/Auth/signup")]
-    Task<IApiResponse<AuthResponse?>> SignupAsync([Body] SignupRequest request);
+    Task<IApiResponse<Result>> SignupAsync([Body] SignupRequest request);
 
     [Post("/api/Auth/login")]
-    Task<IApiResponse<AuthResponse?>> LoginAsync([Body] LoginRequest request);
+    Task<IApiResponse<Result<LoginResponse>>> LoginAsync([Body] LoginRequest request);
 
     [Post("/api/Auth/refresh")]
-    Task<IApiResponse<AuthResponse?>> RefreshAsync([Body] RefreshRequest request);
+    Task<IApiResponse<Result<LoginResponse>>> RefreshAsync([Body] RefreshTokenRequest request);
+
+    [Post("/api/Auth/logout")]
+    Task<IApiResponse<Result>> LogoutAsync();
 }

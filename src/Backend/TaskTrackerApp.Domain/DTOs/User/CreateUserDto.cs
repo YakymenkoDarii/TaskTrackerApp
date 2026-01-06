@@ -1,4 +1,5 @@
 ﻿namespace TaskTrackerApp.Domain.DTOs.User;
+
 public class CreateUserDto
 {
     public string Email { get; set; }

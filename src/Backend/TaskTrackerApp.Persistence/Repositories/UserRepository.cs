@@ -22,4 +22,10 @@ public class UserRepository : Repository<User, int>, IUserRepository
         return await _dbSet
             .FirstOrDefaultAsync(x => x.Tag == tag);
     }
+
+    public async Task<User?> GetByRefreshTokenAsync(string refreshToken)
+    {
+        return await _context.Users
+            .SingleOrDefaultAsync(u => u.RefreshToken == refreshToken);
+    }
 }

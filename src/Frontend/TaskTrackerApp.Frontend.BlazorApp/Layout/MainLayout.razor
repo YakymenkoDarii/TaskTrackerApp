@@ -1,0 +1,72 @@
+﻿@using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
+@using TaskTrackerApp.Frontend.Services.Services.Auth
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+@inject IAuthService Auth
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="@((e) => DrawerToggle())" />
+
+        <MudText Typo="Typo.h5" Class="ml-3">Task Tracker</MudText>
+        <MudSpacer />
+
+        <AuthorizeView>
+            <Authorized>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Error"
+                           OnClick="LogoutAsync">
+                    Logout
+                </MudButton>
+            </Authorized>
+
+            <NotAuthorized>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           OnClick="@(() => Navigation.NavigateTo("/login"))">
+                    Login
+                </MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
+
+        <MudAvatar Color="Color.Secondary">U</MudAvatar>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen"
+               ClipMode="DrawerClipMode.Always"
+               Elevation="2">
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent>
+            @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+    [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private async Task LogoutAsync()
+    {
+        await Auth.LogoutAsync();
+
+        ((CustomAuthStateProvider)AuthStateProvider)
+            .NotifyUserLogout();
+
+        Navigation.NavigateTo("/login", true);
+    }
+}

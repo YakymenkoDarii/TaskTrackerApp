@@ -1,7 +1,10 @@
-﻿@using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
+@using TaskTrackerApp.Frontend.Services.Services.Auth
 @inherits LayoutComponentBase
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
 
 <MudThemeProvider />
 <MudDialogProvider />
@@ -45,6 +48,11 @@
     {
         await AuthService.LogoutAsync();
 
-        Navigation.NavigateTo("/login");
+        if (AuthStateProvider is AuthStateProvider apiAuth)
+        {
+            apiAuth.NotifyUserLoggedOut();
+        }
+
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 }

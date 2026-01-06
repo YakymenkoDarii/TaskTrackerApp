@@ -1,28 +1,28 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.Auth;
 using TaskTrackerApp.Application.Interfaces.UoW;
-using TaskTrackerApp.Domain.DTOs.Auth;
-using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.DTOs.Auth.Responses;
+using TaskTrackerApp.Domain.Errors.Auth;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Auth.Commands.LoginCommand;
 
-internal class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
+internal class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginResponse>>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
-    private readonly IJwtTokenService _jwtTokenGenerator;
+    private readonly ITokenService _tokenService;
     private readonly IPasswordHasher _passwordHasher;
 
     public LoginCommandHandler(IUnitOfWorkFactory uowFactory,
         IPasswordHasher passwordHasher,
-        IJwtTokenService jwtTokenGenerator)
+        ITokenService tokenService)
     {
         _uowFactory = uowFactory;
         _passwordHasher = passwordHasher;
-        _jwtTokenGenerator = jwtTokenGenerator;
+        _tokenService = tokenService;
     }
 
-    public async Task<Result<AuthResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<Result<LoginResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();
 
@@ -32,27 +32,31 @@ internal class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthRe
 
         if (user is null)
         {
-            return LoginError.UserNotFound;
+            return LoginErrors.UserNotFound;
         }
 
         if (!_passwordHasher.Verify(request.Password, user.PasswordHash))
         {
-            return LoginError.InvalidPassword;
+            return LoginErrors.InvalidPassword;
         }
 
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
-        var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
+        var accessToken = _tokenService.CreateAccessToken(user, out var accessTokenExpiration);
+        var (refreshToken, refreshExpiry) = _tokenService.CreateRefreshToken();
 
-        refreshToken.UserId = user.Id;
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiration = refreshExpiry;
 
-        await uow.RefreshTokenRepository.AddAsync(refreshToken);
+        await uow.UserRepository.UpdateAsync(user);
+        await uow.SaveChangesAsync(cancellationToken);
 
-        await uow.SaveChangesAsync();
-
-        return new AuthResponse
+        return new LoginResponse
         {
+            Tag = user.Tag,
+            Role = user.Role,
             AccessToken = accessToken,
-            RefreshToken = refreshToken.Token
+            RefreshToken = refreshToken,
+            AccessTokenExpiration = accessTokenExpiration,
+            RefreshTokenExpiration = refreshExpiry
         };
     }
 }

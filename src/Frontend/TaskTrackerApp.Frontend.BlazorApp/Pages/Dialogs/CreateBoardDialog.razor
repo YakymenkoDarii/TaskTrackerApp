@@ -1,0 +1,29 @@
+﻿@using TaskTrackerApp.Frontend.Domain.DTOs.Boards
+@using MudBlazor
+@using Microsoft.AspNetCore.Components.Web
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField T=@string
+                      Label="Board Title"
+                      @bind-Value=@model.Title
+                      Required=@true
+                      RequiredError="Title is required!"
+                      Immediate=@true
+                      OnKeyDown=@HandleKeyDown />
+
+        <MudTextField T=@string
+                      Label="Description"
+                      @bind-Value=@model.Description
+                      Lines=3
+                      Class="mt-3" />
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick=@Cancel>Cancel</MudButton>
+
+        <MudButton Color=@Color.Primary
+                   Variant=@Variant.Filled
+                   OnClick=@Submit>Create</MudButton>
+    </DialogActions>
+</MudDialog>

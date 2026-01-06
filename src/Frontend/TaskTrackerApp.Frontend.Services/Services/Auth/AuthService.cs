@@ -1,11 +1,8 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using Refit;
-using System.Text.Json;
-using TaskTrackerApp.Frontend.Domain.DTOs.Auth;
+﻿using System.Text.Json;
+using TaskTrackerApp.Frontend.Domain.DTOs.Auth.Requests;
+using TaskTrackerApp.Frontend.Domain.DTOs.Auth.Responses;
 using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Results;
-using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.APIs;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.Services.Services.Auth;
@@ -13,110 +10,75 @@ namespace TaskTrackerApp.Frontend.Services.Services.Auth;
 public class AuthService : IAuthService
 {
     private readonly IAuthApi _authApi;
-    private readonly JsonSerializerOptions _jsonOptions;
-    private readonly ISessionCacheService _sessionCache;
-    private readonly ProtectedLocalStorage _localStorage;
-    private readonly AuthenticationStateProvider _authStateProvider;
+    private readonly ITokenStorage _tokenStorage;
 
-    public AuthService(IAuthApi authApi,
-        ISessionCacheService sessionCache,
-        ProtectedLocalStorage localStorage,
-        AuthenticationStateProvider authStateProvider)
+    private readonly JsonSerializerOptions _jsonOptions =
+        new() { PropertyNameCaseInsensitive = true };
+
+    public AuthService(
+        IAuthApi authApi,
+        ITokenStorage tokenStorage)
     {
         _authApi = authApi;
-        _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        _sessionCache = sessionCache;
-        _localStorage = localStorage;
-        _authStateProvider = authStateProvider;
+        _tokenStorage = tokenStorage;
     }
 
-    public async Task<Result<AuthResponse>> LoginAsync(LoginRequest loginRequest)
+    public async Task<Result<LoginResponse>> LoginAsync(LoginRequest request)
     {
-        try
-        {
-            var response = await _authApi.LoginAsync(loginRequest);
-            var result = ParseResponse(response);
+        var result = await _authApi.LoginAsync(request);
 
-            if (result.IsSuccess)
-            {
-                await StartUserSessionAsync(result.Value);
-            }
-
-            return result;
-        }
-        catch (ApiException)
+        if (!result.IsSuccessStatusCode || result.Content is null)
         {
-            return Result<AuthResponse>.Failure(ClientErrors.NetworkError);
+            return result.ToResult();
         }
+
+        _tokenStorage.SetAccessToken(result.Content.Value.AccessToken);
+
+        return result.ToResult();
     }
 
-    public async Task<Result<AuthResponse>> SignupAsync(SignupRequest signupRequest)
+    public async Task<Result<LoginResponse>> RefreshAsync()
     {
-        try
+        var result = await _authApi.RefreshAsync(new RefreshTokenRequest
         {
-            var response = await _authApi.SignupAsync(signupRequest);
-            var result = ParseResponse(response);
+            Tag = "silent-refresh"
+        });
 
-            if (result.IsSuccess)
-            {
-                await StartUserSessionAsync(result.Value);
-            }
-
-            return result;
-        }
-        catch (ApiException)
+        if (!result.IsSuccessStatusCode || result.Content is null)
         {
-            return Result<AuthResponse>.Failure(ClientErrors.NetworkError);
+            return Result<LoginResponse>.Failure(new Error("Auth.RefreshFailed", "Session expired"));
         }
+
+        _tokenStorage.SetAccessToken(result.Content.Value?.AccessToken);
+
+        return result.ToResult();
+    }
+
+    public async Task<Result> SignupAsync(SignupRequest request)
+    {
+        var result = await _authApi.SignupAsync(request);
+
+        if (result.IsSuccessStatusCode)
+        {
+            return Result.Success();
+        }
+
+        if (result.Error?.Content != null)
+        {
+            var error = JsonSerializer.Deserialize<Error>(
+                result.Error.Content, _jsonOptions);
+
+            if (error != null)
+                return Result.Failure(error);
+        }
+
+        return Result.Failure(
+            new Error("NetworkError", result.ReasonPhrase ?? "Unknown error"));
     }
 
     public async Task LogoutAsync()
     {
-        if (!string.IsNullOrEmpty(_sessionCache.CurrentSessionId))
-        {
-            _sessionCache.RemoveSession(_sessionCache.CurrentSessionId);
-            _sessionCache.CurrentSessionId = null;
-        }
-
-        await _localStorage.DeleteAsync("auth_token");
-
-        ((AuthStateProvider)_authStateProvider).NotifyAuthStatusChanged();
-    }
-
-    private async Task StartUserSessionAsync(AuthResponse authResponse)
-    {
-        var userData = new AuthUserDataDto { AccessToken = authResponse.AccessToken };
-        var sessionId = _sessionCache.CreateSession(userData);
-
-        _sessionCache.CurrentSessionId = sessionId;
-        await _localStorage.SetAsync("auth_token", authResponse.AccessToken);
-
-        ((AuthStateProvider)_authStateProvider).NotifyAuthStatusChanged();
-    }
-
-    private Result<AuthResponse> ParseResponse(IApiResponse<AuthResponse> response)
-    {
-        if (response.IsSuccessStatusCode && response.Content is not null)
-        {
-            return Result<AuthResponse>.Success(response.Content);
-        }
-
-        if (response.Error?.Content is not null)
-        {
-            var backendError = JsonSerializer.Deserialize<Error>(
-                response.Error.Content,
-                _jsonOptions);
-
-            if (backendError is not null)
-            {
-                return Result<AuthResponse>.Failure(backendError);
-            }
-        }
-
-        return Result<AuthResponse>.Failure(
-            new Error(
-                ClientErrors.NetworkError.Code,
-
-                response.ReasonPhrase ?? ClientErrors.UnknownNetworkError.Message));
+        _tokenStorage.ClearAccessToken();
+        await _authApi.LogoutAsync();
     }
 }
