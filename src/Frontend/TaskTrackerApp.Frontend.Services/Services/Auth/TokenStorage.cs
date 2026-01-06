@@ -1,14 +1,20 @@
-﻿using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
+﻿using Blazored.SessionStorage;
+using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.Services.Services.Auth;
 
 public class TokenStorage : ITokenStorage
 {
-    private string? _accessToken;
+    private readonly ISyncSessionStorageService _sessionStorage;
 
-    public string? GetAccessToken() => _accessToken;
+    public TokenStorage(ISyncSessionStorageService sessionStorage)
+    {
+        _sessionStorage = sessionStorage;
+    }
 
-    public void SetAccessToken(string token) => _accessToken = token;
+    public string? GetAccessToken() => _sessionStorage.GetItem<string>("authToken");
 
-    public void ClearAccessToken() => _accessToken = null;
+    public void SetAccessToken(string token) => _sessionStorage.SetItem("authToken", token);
+
+    public void ClearAccessToken() => _sessionStorage.RemoveItem("authToken");
 }

@@ -1,5 +1,4 @@
 ﻿using Refit;
-using System.Text.Json;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Results;
@@ -10,12 +9,10 @@ namespace TaskTrackerApp.Frontend.Services.Services.Boards;
 public class BoardsService : IBoardsService
 {
     private readonly IBoardsApi _boardsApi;
-    private readonly JsonSerializerOptions _jsonSerializerOptions;
 
     public BoardsService(IBoardsApi boardsApi)
     {
         _boardsApi = boardsApi;
-        _jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
     }
 
     public async Task<Result<IEnumerable<BoardDto>>> GetAllAsync()

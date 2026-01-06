@@ -3,64 +3,72 @@
 @using TaskTrackerApp.Frontend.Domain.DTOs.Columns
 @using TaskTrackerApp.Frontend.Domain.DTOs.Cards
 @using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
-@inject IBoardsService BoardsService
-@inject IColumnsService ColumnsService
-@inject ICardsService CardsService
-@inject ISnackbar Snackbar
-@inject IDialogService DialogService
+
 
 <PageTitle>@(board?.Title ?? "Loading...")</PageTitle>
 
 @if (isLoading)
 {
-    <MudContainer Class="d-flex justify-center align-center" Style="height: 80vh;">
-        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    <MudContainer Class="d-flex justify-center align-center"
+                  Style="height: 80vh;">
+        <MudProgressCircular Color=@Color.Primary
+                             Indeterminate=@true />
     </MudContainer>
 }
 else if (board == null)
 {
-    <MudAlert Severity="Severity.Error">Board not found.</MudAlert>
+    <MudAlert Severity=@Severity.Error>Board not found.</MudAlert>
 }
 else
 {
     <div class="board-container">
         <div class="board-header px-4 py-3 d-flex flex-column align-start gap-1">
-            <MudText Typo="Typo.h5" Class="board-header-text">@board.Title</MudText>
+            <MudText Typo=@Typo.h5
+                     Class="board-header-text">@board.Title</MudText>
+
             @if (!string.IsNullOrEmpty(board.Description))
             {
-                <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.7); font-weight: 400; max-width: 600px;">
+                <MudText Typo=@Typo.body2
+                         Style="color: rgba(255, 255, 255, 0.7); font-weight: 400; max-width: 600px;">
                     @board.Description
                 </MudText>
             }
         </div>
 
         <div class="board-canvas d-flex gap-4 px-4 pb-4">
-            @* --- COLUMNS LOOP --- *@
             @foreach (var column in columns)
             {
                 <div class="board-column">
-                    <MudPaper Class="column-paper pa-2" Elevation="0">
+                    <MudPaper Class="column-paper pa-2"
+                              Elevation=0>
 
                         <div class="d-flex justify-space-between align-start mb-2 px-2">
-                            <div class="d-flex flex-column" style="max-width: 85%;">
-                                <MudText Typo="Typo.subtitle1" Class="fw-bold text-truncate">@column.Title</MudText>
+                            <div class="d-flex flex-column"
+                                 style="max-width: 85%;">
+                                <MudText Typo=@Typo.subtitle1
+                                         Class="fw-bold text-truncate">@column.Title</MudText>
 
                                 @if (!string.IsNullOrWhiteSpace(column.Description))
                                 {
-                                    <MudText Typo="Typo.caption" Class="mud-text-secondary text-truncate" Style="font-size: 0.75rem;">
+                                    <MudText Typo=@Typo.caption
+                                             Class="mud-text-secondary text-truncate"
+                                             Style="font-size: 0.75rem;">
                                         @column.Description
                                     </MudText>
                                 }
                             </div>
 
-                            <MudMenu Icon="@Icons.Material.Filled.MoreHoriz" Size="Size.Small" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-                                <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" OnClick="@(() => HandleDeleteColumn(column.Id))">Delete List</MudMenuItem>
+                            <MudMenu Icon=@Icons.Material.Filled.MoreHoriz
+                                     Size=@Size.Small
+                                     AnchorOrigin=@Origin.BottomRight
+                                     TransformOrigin=@Origin.TopRight>
+                                <MudMenuItem Icon=@Icons.Material.Filled.Delete
+                                             IconColor=@Color.Error
+                                             OnClick=@(() => HandleDeleteColumn(column.Id))>Delete List</MudMenuItem>
                             </MudMenu>
                         </div>
 
-                        @* --- CARDS LOOP (Inside the Column) --- *@
                         <div class="task-list mb-2 px-1">
-
                             @{
                                 var columnCards = cardsByColumn.GetValueOrDefault(column.Id);
                             }
@@ -69,34 +77,35 @@ else
                             {
                                 @foreach (var card in columnCards)
                                 {
-                                    <MudCard Class="@($"mb-2 cursor-pointer hover-effect {(IsOverdue(card) ? "border-solid border-2 mud-border-error" : "")}")"
-                                             Elevation="1"
-                                             OnClick="@(() => HandleCardClick(card))">
+                                    <MudCard Class=@($"mb-2 cursor-pointer hover-effect {(IsOverdue(card) ? "border-solid border-2 mud-border-error" : "")}")
+                                             Elevation=1
+                                             OnClick=@(() => HandleCardClick(card))>
                                         <MudCardContent Class="pa-2">
-                                            <MudText Typo="Typo.body2" Class="fw-bold"
-                                                     Style="@(card.IsCompleted ? "text-decoration: line-through; color: gray;" : "")">
+                                            <MudText Typo=@Typo.body2
+                                                     Class="fw-bold"
+                                                     Style=@(card.IsCompleted ? "text-decoration: line-through; color: gray;" : "")>
                                                 @card.Title
                                             </MudText>
 
                                             @if (!string.IsNullOrWhiteSpace(card.Description))
                                             {
-                                                <MudText Typo="Typo.caption" Class="d-block mud-text-secondary mt-1 text-truncate"
-                                                         Style="@(card.IsCompleted ? "text-decoration: line-through;" : "")">
+                                                <MudText Typo=@Typo.caption
+                                                         Class="d-block mud-text-secondary mt-1 text-truncate"
+                                                         Style=@(card.IsCompleted ? "text-decoration: line-through;" : "")>
                                                     @card.Description
                                                 </MudText>
                                             }
 
-                                            @* Due Date *@
                                             @if (card.DueDate.HasValue)
                                             {
                                                 <div class="d-flex align-center gap-1 mt-2">
-                                                    <MudIcon Icon="@Icons.Material.Filled.Schedule"
-                                                             Size="Size.Small"
-                                                             Color="@(IsOverdue(card) ? Color.Error : Color.Default)"
+                                                    <MudIcon Icon=@Icons.Material.Filled.Schedule
+                                                             Size=@Size.Small
+                                                             Color=@(IsOverdue(card) ? Color.Error : Color.Default)
                                                              Style="font-size: 0.8rem;" />
 
-                                                    <MudText Typo="Typo.caption"
-                                                             Color="@(IsOverdue(card) ? Color.Error : Color.Default)">
+                                                    <MudText Typo=@Typo.caption
+                                                             Color=@(IsOverdue(card) ? Color.Error : Color.Default)>
                                                         @card.DueDate.Value.ToString("MMM dd")
                                                     </MudText>
                                                 </div>
@@ -107,28 +116,26 @@ else
                             }
                         </div>
 
-                        <MudButton StartIcon="@Icons.Material.Filled.Add"
-                                   FullWidth="true"
-                                   OnClick="@(() => HandleAddCard(column.Id))"
+                        <MudButton StartIcon=@Icons.Material.Filled.Add
+                                   FullWidth=@true
+                                   OnClick=@(() => HandleAddCard(column.Id))
                                    Class="justify-start text-secondary-custom">
                             Add a card
                         </MudButton>
-
                     </MudPaper>
                 </div>
             }
 
             <div class="board-column">
-                <MudButton Variant="Variant.Filled"
-                           Color="Color.Surface"
+                <MudButton Variant=@Variant.Filled
+                           Color=@Color.Surface
                            Class="add-list-btn justify-start gap-2"
-                           FullWidth="true"
-                           OnClick="HandleAddColumn"
-                           StartIcon="@Icons.Material.Filled.Add">
+                           FullWidth=@true
+                           OnClick=@HandleAddColumn
+                           StartIcon=@Icons.Material.Filled.Add>
                     Add another list
                 </MudButton>
             </div>
-
         </div>
     </div>
 }

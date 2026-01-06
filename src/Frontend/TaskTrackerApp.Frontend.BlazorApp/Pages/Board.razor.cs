@@ -5,6 +5,7 @@ using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Columns;
+using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages;
 
@@ -13,6 +14,11 @@ public partial class Board
     [Parameter] public int BoardId { get; set; }
 
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+    [Inject] private IBoardsService BoardsService { get; set; }
+    [Inject] private IColumnsService ColumnsService { get; set; }
+    [Inject] private ICardsService CardsService { get; set; }
+    [Inject] private ISnackbar Snackbar { get; set; }
+    [Inject] private IDialogService DialogService { get; set; }
 
     private BoardDto? board;
     private List<ColumnDto> columns = new();

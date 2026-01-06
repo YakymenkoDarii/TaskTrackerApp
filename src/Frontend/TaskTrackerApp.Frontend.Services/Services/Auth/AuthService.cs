@@ -39,37 +39,16 @@ public class AuthService : IAuthService
 
     public async Task<Result<LoginResponse>> RefreshAsync()
     {
-        Console.WriteLine("DEBUG: Starting RefreshAsync...");
-
         var result = await _authApi.RefreshAsync(new RefreshTokenRequest
         {
             Tag = "silent-refresh"
         });
 
-        // 1. Check HTTP Status
-        Console.WriteLine($"DEBUG: HTTP Status: {result.StatusCode}");
-
         if (!result.IsSuccessStatusCode || result.Content is null)
         {
-            Console.WriteLine("DEBUG: Refresh failed (HTTP Error or Null Content)");
             return Result<LoginResponse>.Failure(new Error("Auth.RefreshFailed", "Session expired"));
         }
 
-        // 2. Check the "Box" (The Wrapper)
-        Console.WriteLine($"DEBUG: Wrapper IsSuccess: {result.Content.IsSuccess}");
-
-        // 3. Check the "Shoes" (The Data inside)
-        if (result.Content.Value == null)
-        {
-            Console.WriteLine("DEBUG: CRITICAL FAILURE - content.Value is NULL. Deserialization issue!");
-        }
-        else
-        {
-            var token = result.Content.Value.AccessToken;
-            Console.WriteLine($"DEBUG: AccessToken found: {(string.IsNullOrEmpty(token) ? "EMPTY" : token.Substring(0, 10) + "...")}");
-        }
-
-        // Attempt to set token
         _tokenStorage.SetAccessToken(result.Content.Value?.AccessToken);
 
         return result.ToResult();

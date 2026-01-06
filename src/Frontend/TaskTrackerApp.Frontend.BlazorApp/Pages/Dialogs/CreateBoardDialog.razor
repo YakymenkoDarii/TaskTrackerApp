@@ -4,50 +4,26 @@
 
 <MudDialog>
     <DialogContent>
-        <MudTextField T="string"
+        <MudTextField T=@string
                       Label="Board Title"
-                      @bind-Value="model.Title"
-                      Required="true"
+                      @bind-Value=@model.Title
+                      Required=@true
                       RequiredError="Title is required!"
-                      Immediate="true"
-                      OnKeyDown="HandleKeyDown" />
+                      Immediate=@true
+                      OnKeyDown=@HandleKeyDown />
 
-        <MudTextField T="string"
+        <MudTextField T=@string
                       Label="Description"
-                      @bind-Value="model.Description"
-                      Lines="3"
+                      @bind-Value=@model.Description
+                      Lines=3
                       Class="mt-3" />
     </DialogContent>
+
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary"
-                   Variant="Variant.Filled"
-                   OnClick="Submit">Create</MudButton>
+        <MudButton OnClick=@Cancel>Cancel</MudButton>
+
+        <MudButton Color=@Color.Primary
+                   Variant=@Variant.Filled
+                   OnClick=@Submit>Create</MudButton>
     </DialogActions>
 </MudDialog>
-
-@code {
-    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
-
-    private CreateBoardDto model = new CreateBoardDto();
-
-    private void Cancel() => MudDialog.Cancel();
-
-    private void HandleKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" || e.Key == "NumpadEnter")
-        {
-            Submit();
-        }
-    }
-
-    private void Submit()
-    {
-        if (string.IsNullOrWhiteSpace(model.Title))
-        {
-            return;
-        }
-
-        MudDialog.Close(DialogResult.Ok(model));
-    }
-}

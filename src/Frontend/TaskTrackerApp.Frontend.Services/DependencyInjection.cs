@@ -1,5 +1,9 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
+﻿using Blazored.SessionStorage;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Refit;
+using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.APIs;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 using TaskTrackerApp.Frontend.Services.Services.Auth;
 using TaskTrackerApp.Frontend.Services.Services.Boards;
@@ -10,19 +14,38 @@ namespace TaskTrackerApp.Frontend.Services;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddProjectServices(this IServiceCollection services)
+    public static IServiceCollection AddProjectServices(this IServiceCollection services, IConfiguration configuration)
     {
+        var apiBaseUrl = configuration["BaseUri"];
+
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IBoardsService, BoardsService>();
         services.AddScoped<IColumnsService, ColumnsService>();
         services.AddScoped<ICardsService, CardsService>();
 
+        services.AddBlazoredSessionStorage();
         services.AddScoped<ITokenStorage, TokenStorage>();
 
         services.AddTransient<AuthMessageHandler>();
         services.AddTransient<CookieHandler>();
 
         services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
+
+        services.AddRefitClient<IAuthApi>()
+            .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!))
+            .AddHttpMessageHandler<CookieHandler>();
+
+        services.AddRefitClient<IBoardsApi>()
+            .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!))
+            .AddHttpMessageHandler<AuthMessageHandler>();
+
+        services.AddRefitClient<IColumnsApi>()
+            .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!))
+            .AddHttpMessageHandler<AuthMessageHandler>();
+
+        services.AddRefitClient<ICardsApi>()
+            .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!))
+            .AddHttpMessageHandler<AuthMessageHandler>();
 
         return services;
     }
