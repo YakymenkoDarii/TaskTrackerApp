@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
-using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs;
+using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
+using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.ColumnDialogs;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Columns;
@@ -164,8 +165,43 @@ public partial class Board
         return card.DueDate.Value < DateTime.Now;
     }
 
-    private void HandleCardClick(CardDto card)
+    private async Task HandleCardClick(CardDto card)
     {
-        Snackbar.Add($"Clicked card: {card.Title}", Severity.Info);
+        var parameters = new DialogParameters<CardDetailsDialog>
+        {
+            { x => x.Card, card },
+            { x => x.BoardId, BoardId }
+        };
+
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            NoHeader = true
+        };
+
+        var dialog = await DialogService.ShowAsync<CardDetailsDialog>("Card Details", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is CardDto updatedCard)
+        {
+            if (cardsByColumn.TryGetValue(card.ColumnId, out var oldList))
+            {
+                var existingItem = oldList.FirstOrDefault(c => c.Id == card.Id);
+                if (existingItem != null) oldList.Remove(existingItem);
+            }
+
+            if (cardsByColumn.TryGetValue(updatedCard.ColumnId, out var newList))
+            {
+                newList.Add(updatedCard);
+            }
+            else
+            {
+                cardsByColumn[updatedCard.ColumnId] = new List<CardDto> { updatedCard };
+            }
+
+            StateHasChanged();
+        }
     }
 }

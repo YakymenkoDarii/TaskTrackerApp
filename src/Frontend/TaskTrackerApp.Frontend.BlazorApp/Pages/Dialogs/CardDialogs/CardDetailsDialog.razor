@@ -1,0 +1,85 @@
+﻿@using TaskTrackerApp.Frontend.Domain.DTOs.Cards
+@using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+
+
+<MudDialog Class="card-details-dialog"
+           DisableSidePadding=@true>
+    <DialogContent>
+        <MudContainer MaxWidth=@MaxWidth.False
+                      Class="pa-4">
+            <MudGrid>
+                <MudItem xs=12
+                         sm=9>
+                    
+                    <div class="d-flex align-center gap-2 mb-4">
+                        <MudIcon Icon=@Icons.Material.Filled.WebAsset
+                                 Class="mud-text-secondary" />
+                        
+                        <MudTextField @bind-Value=@title
+                                      T=@string
+                                      Variant=@Variant.Text
+                                      Typo=@Typo.h5
+                                      Class="fw-bold"
+                                      DisableUnderLine=@true
+                                      Style="font-weight: 700;" />
+                    </div>
+
+                    <div class="d-flex align-center gap-2 mb-2">
+                        <MudIcon Icon=@Icons.Material.Filled.Description
+                                 Class="mud-text-secondary" />
+                        <MudText Typo=@Typo.h6>Description</MudText>
+                    </div>
+
+                    <MudTextField @bind-Value=@description
+                                  T=@string
+                                  Variant=@Variant.Outlined
+                                  Lines=8
+                                  Placeholder="Add a more detailed description..."
+                                  Class="mb-4" />
+                </MudItem>
+
+                <MudItem xs=12
+                         sm=3>
+                    
+                    <MudText Typo=@Typo.caption
+                             Class="text-uppercase fw-bold text-secondary mb-2 d-block">
+                        Add to card
+                    </MudText>
+
+                    <MudDatePicker Label="Due Date"
+                                   @bind-Date=@dueDate
+                                   Color=@Color.Primary
+                                   Variant=@Variant.Outlined
+                                   Class="mb-3" />
+
+                    <MudText Typo=@Typo.caption
+                             Class="text-uppercase fw-bold text-secondary mb-2 d-block mt-4">
+                        Actions
+                    </MudText>
+
+                    <MudButton Variant=@Variant.Filled
+                               Color=@Color.Primary
+                               FullWidth=@true
+                               OnClick=@SaveChanges
+                               Class="mb-2">
+                        Save
+                    </MudButton>
+
+                    <MudButton Variant=@Variant.Outlined
+                               Color=@Color.Secondary
+                               FullWidth=@true
+                               OnClick=@Cancel>
+                        Close
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudContainer>
+    </DialogContent>
+</MudDialog>
+
+<style>
+    .card-details-dialog .mud-dialog-title {
+        display: none;
+</style>

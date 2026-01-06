@@ -2,7 +2,7 @@
 using MudBlazor;
 using TaskTrackerApp.Frontend.Domain.DTOs.Columns;
 
-namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs;
+namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.ColumnDialogs;
 
 public partial class CreateColumnDialog
 {

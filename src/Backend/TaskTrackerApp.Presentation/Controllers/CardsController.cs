@@ -52,9 +52,9 @@ public class CardsController : ControllerBase
             UpdatedById = cardDto.UpdatedById,
         };
 
-        await _mediator.Send(command);
+        var updatedCard = await _mediator.Send(command);
 
-        return Ok(command);
+        return Ok(updatedCard);
     }
 
     [HttpDelete]

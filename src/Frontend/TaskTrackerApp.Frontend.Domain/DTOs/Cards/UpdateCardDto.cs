@@ -1,10 +1,12 @@
-﻿using MediatR;
-using TaskTrackerApp.Domain.DTOs.Card;
-using TaskTrackerApp.Domain.Results;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace TaskTrackerApp.Application.Features.Cards.Commands.UpdateCards;
+namespace TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 
-public class UpdateCardCommand : IRequest<Result<CardDto>>
+public class UpdateCardDto
 {
     public int Id { get; set; }
 
