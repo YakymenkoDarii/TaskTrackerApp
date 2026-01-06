@@ -50,11 +50,12 @@ public class CardsController : ControllerBase
             BoardId = cardDto.BoardId,
             AssigneeId = cardDto.AssigneeId,
             UpdatedById = cardDto.UpdatedById,
+            IsCompleted = cardDto.IsCompleted,
         };
 
-        await _mediator.Send(command);
+        var updatedCard = await _mediator.Send(command);
 
-        return Ok(command);
+        return Ok(updatedCard);
     }
 
     [HttpDelete]

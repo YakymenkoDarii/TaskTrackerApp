@@ -79,7 +79,7 @@ else
                                 {
                                     <MudCard Class=@($"mb-2 cursor-pointer hover-effect {(IsOverdue(card) ? "border-solid border-2 mud-border-error" : "")}")
                                              Elevation=1
-                                             OnClick=@(() => HandleCardClick(card))>
+                                             onclick=@(() => HandleCardClick(card))>
                                         <MudCardContent Class="pa-2">
                                             <MudText Typo=@Typo.body2
                                                      Class="fw-bold"

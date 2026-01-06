@@ -14,4 +14,7 @@ public interface ICardsApi
 
     [Delete("/api/Cards")]
     Task<IApiResponse<Result>> DeleteAsync(int cardId);
+
+    [Put("/api/Cards/{id}")]
+    Task<IApiResponse<Result<CardDto>>> UpdateAsync(int id, UpdateCardDto cardDto);
 }

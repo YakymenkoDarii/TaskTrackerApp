@@ -2,7 +2,7 @@
 using MudBlazor;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 
-namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs;
+namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
 
 public partial class CreateCardDialog
 {

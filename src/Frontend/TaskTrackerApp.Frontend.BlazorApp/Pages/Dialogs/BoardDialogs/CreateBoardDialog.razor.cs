@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 
-namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs;
+namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.BoardDialogs;
 
 public partial class CreateBoardDialog
 {

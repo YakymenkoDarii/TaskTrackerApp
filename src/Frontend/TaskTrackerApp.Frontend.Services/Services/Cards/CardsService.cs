@@ -62,4 +62,17 @@ public class CardsService : ICardsService
             return Result<IEnumerable<CardDto>>.Failure(ClientErrors.NetworkError);
         }
     }
+
+    public async Task<Result<CardDto>> UpdateAsync(int id, UpdateCardDto updateCardDto)
+    {
+        try
+        {
+            var response = await _cardsApi.UpdateAsync(id, updateCardDto);
+            return response.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result<CardDto>.Failure(ClientErrors.NetworkError);
+        }
+    }
 }

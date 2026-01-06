@@ -10,4 +10,6 @@ public interface ICardsService
     Task<Result> CreateCardAsync(CreateCardDto cardDto);
 
     Task<Result> DeleteCardAsync(int id);
+
+    Task<Result<CardDto>> UpdateAsync(int id, UpdateCardDto updateCardDto);
 }

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs;
+using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.BoardDialogs;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
