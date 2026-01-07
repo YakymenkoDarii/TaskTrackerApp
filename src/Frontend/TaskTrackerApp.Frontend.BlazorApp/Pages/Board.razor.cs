@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
+using System.Security.Claims;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.ColumnDialogs;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
@@ -15,16 +16,22 @@ public partial class Board
     [Parameter] public int BoardId { get; set; }
 
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+
     [Inject] private IBoardsService BoardsService { get; set; }
+
     [Inject] private IColumnsService ColumnsService { get; set; }
+
     [Inject] private ICardsService CardsService { get; set; }
+
     [Inject] private ISnackbar Snackbar { get; set; }
+
     [Inject] private IDialogService DialogService { get; set; }
 
     private BoardDto? board;
     private List<ColumnDto> columns = new();
     private bool isLoading = true;
     private Dictionary<int, List<CardDto>> cardsByColumn = new();
+    private MudDropContainer<ColumnDto> _dropContainer;
 
     protected override async Task OnInitializedAsync()
     {
@@ -70,6 +77,40 @@ public partial class Board
         }
     }
 
+    private async Task ColumnDropped(MudItemDropInfo<ColumnDto> dropItem)
+    {
+        columns.Remove(dropItem.Item);
+        columns.Insert(dropItem.IndexInZone, dropItem.Item);
+
+        StateHasChanged();
+
+        int userId = 0;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null) int.TryParse(userIdClaim.Value, out userId);
+        }
+
+        var updateDto = new UpdateColumnDto
+        {
+            Id = dropItem.Item.Id,
+            Title = dropItem.Item.Title,
+            Description = dropItem.Item.Description,
+            BoardId = BoardId,
+            UpdatedById = userId,
+            Position = dropItem.IndexInZone
+        };
+
+        var result = await ColumnsService.UpdateColumnAsync(dropItem.Item.Id, updateDto);
+
+        if (!result.IsSuccess)
+        {
+            Snackbar.Add("Failed to save column order", Severity.Error);
+        }
+    }
+
     private async Task HandleAddColumn()
     {
         var dialog = await DialogService.ShowAsync<CreateColumnDialog>("Add List");
@@ -83,7 +124,21 @@ public partial class Board
 
             if (apiResult.IsSuccess)
             {
-                await LoadBoardDataAsync();
+                var nextPosition = columns.Any() ? columns.Max(c => c.Position) + 1 : 0;
+
+                var newColumn = new ColumnDto
+                {
+                    Id = apiResult.Value,
+                    Title = newColumnDto.Title,
+                    Description = newColumnDto.Description,
+                    Position = nextPosition
+                };
+
+                columns.Add(newColumn);
+                cardsByColumn[newColumn.Id] = new List<CardDto>();
+
+                _dropContainer.Refresh();
+                StateHasChanged();
             }
             else
             {
@@ -94,32 +149,31 @@ public partial class Board
 
     private async Task HandleAddCard(int columnId)
     {
-        var dialog = await DialogService.ShowAsync<CreateCardDialog>("Add Card");
+        var dialog = await DialogService.ShowAsync<CreateColumnDialog>("Add List");
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is CreateCardDto cardData)
+        if (!result.Canceled && result.Data is CreateColumnDto newColumnDto)
         {
-            cardData.ColumnId = columnId;
-            cardData.BoardId = BoardId;
+            newColumnDto.BoardId = BoardId;
 
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity is not null && user.Identity.IsAuthenticated)
-            {
-                var userIdClaim = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-
-                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
-                {
-                    cardData.CreatedById = userId;
-                }
-            }
-
-            var apiResult = await CardsService.CreateCardAsync(cardData);
+            var apiResult = await ColumnsService.CreateColumnAsync(newColumnDto);
 
             if (apiResult.IsSuccess)
             {
-                await LoadBoardDataAsync();
+                var nextPosition = columns.Any() ? columns.Max(c => c.Position) + 1 : 0;
+
+                var newColumn = new ColumnDto
+                {
+                    Id = apiResult.Value,
+                    Title = newColumnDto.Title,
+                    Description = newColumnDto.Description,
+                    Position = nextPosition
+                };
+
+                columns.Add(newColumn);
+                cardsByColumn[newColumn.Id] = new List<CardDto>();
+
+                StateHasChanged();
             }
             else
             {
@@ -140,12 +194,19 @@ public partial class Board
             var result = await ColumnsService.DeleteColumnAsync(columnId);
             if (result.IsSuccess)
             {
-                await LoadBoardDataAsync();
-                Snackbar.Add("List deleted", Severity.Success);
-            }
-            else
-            {
-                Snackbar.Add(result.Error.Message, Severity.Error);
+                var columnToRemove = columns.FirstOrDefault(c => c.Id == columnId);
+                if (columnToRemove != null)
+                {
+                    columns.Remove(columnToRemove);
+                    cardsByColumn.Remove(columnId);
+
+                    if (_dropContainer != null)
+                    {
+                        _dropContainer.Refresh();
+                    }
+
+                    StateHasChanged();
+                }
             }
         }
     }

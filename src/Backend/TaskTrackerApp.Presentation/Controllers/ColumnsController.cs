@@ -28,7 +28,7 @@ public class ColumnsController : ControllerBase
         {
             Title = columnDto.Title,
             Description = columnDto.Description,
-            BoardId = columnDto.BoardId
+            BoardId = columnDto.BoardId,
         };
 
         var result = await _mediator.Send(command);
@@ -44,12 +44,13 @@ public class ColumnsController : ControllerBase
             Title = columnDto.Title,
             Description = columnDto.Description,
             BoardId = columnDto.BoardId,
-            UpdatedById = columnDto.UpdatedById
+            UpdatedById = columnDto.UpdatedById,
+            Position = columnDto.Position
         };
 
-        await _mediator.Send(command);
+        var result = await _mediator.Send(command);
 
-        return Ok(command);
+        return result.IsSuccess ? Ok(result) : BadRequest(result);
     }
 
     [HttpDelete("{id}")]

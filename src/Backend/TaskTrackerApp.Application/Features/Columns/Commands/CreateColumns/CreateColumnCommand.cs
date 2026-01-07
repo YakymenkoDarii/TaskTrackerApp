@@ -1,8 +1,9 @@
 ﻿using MediatR;
+using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Columns.Commands.CreateColumns;
 
-public class CreateColumnCommand : IRequest<int>
+public class CreateColumnCommand : IRequest<Result<int>>
 {
     public string Title { get; set; }
 

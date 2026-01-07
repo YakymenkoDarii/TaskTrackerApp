@@ -15,20 +15,20 @@ public class ColumnsService : IColumnsService
         _columnsApi = columnsApi;
     }
 
-    public async Task<Result> CreateColumnAsync(CreateColumnDto columnDto)
+    public async Task<Result<int>> CreateColumnAsync(CreateColumnDto columnDto)
     {
         try
         {
-            await _columnsApi.CreateAsync(columnDto);
-            return Result.Success();
+            var response = await _columnsApi.CreateAsync(columnDto);
+            return response.ToResult();
         }
         catch (ApiException ex)
         {
-            return Result.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+            return Result<int>.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
         }
         catch (Exception ex)
         {
-            return Result.Failure(new Error("UnknownError", ex.Message));
+            return Result<int>.Failure(new Error("UnknownError", ex.Message));
         }
     }
 
@@ -54,5 +54,12 @@ public class ColumnsService : IColumnsService
         var columns = await _columnsApi.GetByBoardIdAsync(boardId);
 
         return columns.ToResult();
+    }
+
+    public async Task<Result> UpdateColumnAsync(int id, UpdateColumnDto columnDto)
+    {
+        var result = await _columnsApi.UpdateAsync(id, columnDto);
+
+        return result.ToResult();
     }
 }

@@ -28,8 +28,11 @@ public class GetColumnsByBoardIdQueryHandler : IRequestHandler<GetColumnsByBoard
         {
             Id = c.Id,
             Title = c.Title,
-            Description = c.Description
-        }).ToList();
+            Description = c.Description,
+            Position = c.Position,
+        })
+        .OrderBy(p => p.Position)
+        .ToList();
         return columnDtos;
     }
 }
