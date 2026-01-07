@@ -7,7 +7,7 @@ public interface ICardsService
 {
     Task<Result<IEnumerable<CardDto>>> GetCardsByColumnId(int columnId);
 
-    Task<Result> CreateCardAsync(CreateCardDto cardDto);
+    Task<Result<int>> CreateCardAsync(CreateCardDto cardDto);
 
     Task<Result> DeleteCardAsync(int id);
 

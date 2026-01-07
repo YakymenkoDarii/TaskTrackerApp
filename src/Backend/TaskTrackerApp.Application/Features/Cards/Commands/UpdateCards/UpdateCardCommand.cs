@@ -23,4 +23,6 @@ public class UpdateCardCommand : IRequest<Result<CardDto>>
     public int UpdatedById { get; set; }
 
     public bool IsCompleted { get; set; }
+
+    public int Position { get; set; }
 }

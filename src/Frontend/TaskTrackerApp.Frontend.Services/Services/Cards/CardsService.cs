@@ -16,20 +16,20 @@ public class CardsService : ICardsService
         _cardsApi = cardsApi;
     }
 
-    public async Task<Result> CreateCardAsync(CreateCardDto cardDto)
+    public async Task<Result<int>> CreateCardAsync(CreateCardDto cardDto)
     {
         try
         {
-            await _cardsApi.CreateAsync(cardDto);
-            return Result.Success();
+            var response = await _cardsApi.CreateAsync(cardDto);
+            return response.ToResult();
         }
         catch (ApiException ex)
         {
-            return Result.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+            return Result<int>.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
         }
         catch (Exception ex)
         {
-            return Result.Failure(new Error("UnknownError", ex.Message));
+            return Result<int>.Failure(new Error("UnknownError", ex.Message));
         }
     }
 

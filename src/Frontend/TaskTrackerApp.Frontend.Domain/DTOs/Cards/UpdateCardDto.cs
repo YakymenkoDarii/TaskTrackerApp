@@ -25,4 +25,6 @@ public class UpdateCardDto
     public int UpdatedById { get; set; }
 
     public bool IsCompleted { get; set; }
+
+    public int Position { get; set; }
 }

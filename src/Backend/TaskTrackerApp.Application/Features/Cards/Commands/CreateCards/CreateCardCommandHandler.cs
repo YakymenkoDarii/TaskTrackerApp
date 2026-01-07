@@ -1,10 +1,11 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Entities;
+using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Cards.Commands.CreateCard;
 
-internal class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, int>
+internal class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, Result<int>>
 {
     private readonly IUnitOfWorkFactory _unitOfWorkFactory;
 
@@ -13,9 +14,21 @@ internal class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, int
         _unitOfWorkFactory = unitOfWorkFactory;
     }
 
-    public async Task<int> Handle(CreateCardCommand request, CancellationToken cancellationToken)
+    public async Task<Result<int>> Handle(CreateCardCommand request, CancellationToken cancellationToken)
     {
         using var uow = _unitOfWorkFactory.Create();
+
+        var cards = await uow.CardRepository.GetCardsByBoardIdAsync(request.BoardId);
+        int newLastPosition;
+
+        if (cards.Any())
+        {
+            newLastPosition = cards.Max(c => c.Position) + 1;
+        }
+        else
+        {
+            newLastPosition = 0;
+        }
 
         var card = new Card
         {
@@ -26,13 +39,14 @@ internal class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, int
             BoardId = request.BoardId,
             AssigneeId = request.AssigneeId,
             CreatedById = request.CreatedById,
-            UpdatedById = request.CreatedById
+            UpdatedById = request.CreatedById,
+            Position = newLastPosition,
         };
 
-        var newId = await uow.CardRepository.AddAsync(card);
+        await uow.CardRepository.AddAsync(card);
 
         await uow.SaveChangesAsync(cancellationToken);
 
-        return newId;
+        return card.Id;
     }
 }

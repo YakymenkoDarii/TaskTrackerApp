@@ -17,4 +17,6 @@ public class CardDto
     public bool IsCompleted { get; set; }
 
     public int ColumnId { get; set; }
+
+    public int Position { get; set; }
 }

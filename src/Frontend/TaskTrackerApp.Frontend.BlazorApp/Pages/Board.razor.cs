@@ -28,10 +28,18 @@ public partial class Board
     [Inject] private IDialogService DialogService { get; set; }
 
     private BoardDto? board;
+
     private List<ColumnDto> columns = new();
+
+    private List<CardDto> _allCards = new();
+
     private bool isLoading = true;
-    private Dictionary<int, List<CardDto>> cardsByColumn = new();
-    private MudDropContainer<ColumnDto> _dropContainer;
+
+    private bool _isLayoutMode = false;
+
+    private MudDropContainer<ColumnDto> _columnDropContainer;
+
+    private MudDropContainer<CardDto> _cardDropContainer;
 
     protected override async Task OnInitializedAsync()
     {
@@ -50,19 +58,15 @@ public partial class Board
             var columnsResult = await ColumnsService.GetByBoardIdAsync(BoardId);
             if (columnsResult.IsSuccess && columnsResult.Value != null)
             {
-                columns = columnsResult.Value.ToList();
+                columns = columnsResult.Value.OrderBy(c => c.Position).ToList();
 
-                cardsByColumn.Clear();
+                _allCards.Clear();
                 foreach (var col in columns)
                 {
                     var cardsResult = await CardsService.GetCardsByColumnId(col.Id);
-                    if (cardsResult.IsSuccess)
+                    if (cardsResult.IsSuccess && cardsResult.Value != null)
                     {
-                        cardsByColumn[col.Id] = cardsResult.Value.ToList();
-                    }
-                    else
-                    {
-                        cardsByColumn[col.Id] = new List<CardDto>();
+                        _allCards.AddRange(cardsResult.Value.OrderBy(c => c.Position));
                     }
                 }
             }
@@ -79,10 +83,9 @@ public partial class Board
 
     private async Task ColumnDropped(MudItemDropInfo<ColumnDto> dropItem)
     {
+        // 1. UI Update
         columns.Remove(dropItem.Item);
         columns.Insert(dropItem.IndexInZone, dropItem.Item);
-
-        StateHasChanged();
 
         int userId = 0;
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -111,6 +114,39 @@ public partial class Board
         }
     }
 
+    private async Task CardDropped(MudItemDropInfo<CardDto> dropItem)
+    {
+        dropItem.Item.ColumnId = int.Parse(dropItem.DropzoneIdentifier);
+
+        int userId = 0;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null) int.TryParse(userIdClaim.Value, out userId);
+        }
+
+        var updateDto = new UpdateCardDto
+        {
+            Id = dropItem.Item.Id,
+            Title = dropItem.Item.Title,
+            Description = dropItem.Item.Description,
+            ColumnId = int.Parse(dropItem.DropzoneIdentifier),
+            BoardId = BoardId,
+            UpdatedById = userId,
+            Position = dropItem.IndexInZone
+        };
+
+        var result = await CardsService.UpdateAsync(dropItem.Item.Id, updateDto);
+
+        if (!result.IsSuccess)
+        {
+            Snackbar.Add("Failed to move card", Severity.Error);
+            await LoadBoardDataAsync();
+        }
+    }
+
     private async Task HandleAddColumn()
     {
         var dialog = await DialogService.ShowAsync<CreateColumnDialog>("Add List");
@@ -119,13 +155,11 @@ public partial class Board
         if (!result.Canceled && result.Data is CreateColumnDto newColumnDto)
         {
             newColumnDto.BoardId = BoardId;
-
             var apiResult = await ColumnsService.CreateColumnAsync(newColumnDto);
 
             if (apiResult.IsSuccess)
             {
                 var nextPosition = columns.Any() ? columns.Max(c => c.Position) + 1 : 0;
-
                 var newColumn = new ColumnDto
                 {
                     Id = apiResult.Value,
@@ -135,9 +169,7 @@ public partial class Board
                 };
 
                 columns.Add(newColumn);
-                cardsByColumn[newColumn.Id] = new List<CardDto>();
-
-                _dropContainer.Refresh();
+                if (_columnDropContainer != null) _columnDropContainer.Refresh();
                 StateHasChanged();
             }
             else
@@ -149,30 +181,40 @@ public partial class Board
 
     private async Task HandleAddCard(int columnId)
     {
-        var dialog = await DialogService.ShowAsync<CreateColumnDialog>("Add List");
+        var dialog = await DialogService.ShowAsync<CreateColumnDialog>("Add Card");
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is CreateColumnDto newColumnDto)
+        if (!result.Canceled && result.Data is CreateColumnDto newCardInput)
         {
-            newColumnDto.BoardId = BoardId;
+            var newCardDto = new CreateCardDto
+            {
+                Title = newCardInput.Title,
+                Description = newCardInput.Description,
+                ColumnId = columnId,
+                BoardId = BoardId
+            };
 
-            var apiResult = await ColumnsService.CreateColumnAsync(newColumnDto);
+            var apiResult = await CardsService.CreateCardAsync(newCardDto);
 
             if (apiResult.IsSuccess)
             {
-                var nextPosition = columns.Any() ? columns.Max(c => c.Position) + 1 : 0;
+                // Calculate position based on flat list
+                var nextPosition = _allCards.Any(c => c.ColumnId == columnId)
+                    ? _allCards.Where(c => c.ColumnId == columnId).Max(c => c.Position) + 1
+                    : 0;
 
-                var newColumn = new ColumnDto
+                var newCard = new CardDto
                 {
                     Id = apiResult.Value,
-                    Title = newColumnDto.Title,
-                    Description = newColumnDto.Description,
-                    Position = nextPosition
+                    Title = newCardInput.Title,
+                    Description = newCardInput.Description,
+                    ColumnId = columnId,
+                    Position = nextPosition,
                 };
 
-                columns.Add(newColumn);
-                cardsByColumn[newColumn.Id] = new List<CardDto>();
+                _allCards.Add(newCard);
 
+                if (_cardDropContainer != null) _cardDropContainer.Refresh();
                 StateHasChanged();
             }
             else
@@ -198,13 +240,7 @@ public partial class Board
                 if (columnToRemove != null)
                 {
                     columns.Remove(columnToRemove);
-                    cardsByColumn.Remove(columnId);
-
-                    if (_dropContainer != null)
-                    {
-                        _dropContainer.Refresh();
-                    }
-
+                    _allCards.RemoveAll(c => c.ColumnId == columnId);
                     StateHasChanged();
                 }
             }
@@ -213,22 +249,13 @@ public partial class Board
 
     private bool IsOverdue(CardDto card)
     {
-        if (card.IsCompleted)
-        {
-            return false;
-        }
-
-        if (card.DueDate == null)
-        {
-            return false;
-        }
-
+        if (card.IsCompleted) return false;
+        if (card.DueDate == null) return false;
         return card.DueDate.Value < DateTime.Now;
     }
 
     private async Task HandleCardClick(CardDto card)
     {
-        Console.WriteLine("THE CARD IS CLICKED, YOU JUST STUPID");
         var parameters = new DialogParameters<CardDetailsDialog>
         {
             { x => x.Card, card },
@@ -248,21 +275,14 @@ public partial class Board
 
         if (!result.Canceled && result.Data is CardDto updatedCard)
         {
-            if (cardsByColumn.TryGetValue(card.ColumnId, out var oldList))
+            var existingItem = _allCards.FirstOrDefault(c => c.Id == card.Id);
+            if (existingItem != null)
             {
-                var existingItem = oldList.FirstOrDefault(c => c.Id == card.Id);
-                if (existingItem != null) oldList.Remove(existingItem);
+                _allCards.Remove(existingItem);
             }
+            _allCards.Add(updatedCard);
 
-            if (cardsByColumn.TryGetValue(updatedCard.ColumnId, out var newList))
-            {
-                newList.Add(updatedCard);
-            }
-            else
-            {
-                cardsByColumn[updatedCard.ColumnId] = new List<CardDto> { updatedCard };
-            }
-
+            if (_cardDropContainer != null) _cardDropContainer.Refresh();
             StateHasChanged();
         }
     }

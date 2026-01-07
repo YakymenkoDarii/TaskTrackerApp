@@ -1,8 +1,9 @@
 ﻿using MediatR;
+using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Cards.Commands.CreateCard;
 
-public class CreateCardCommand : IRequest<int>
+public class CreateCardCommand : IRequest<Result<int>>
 {
     public string Title { get; set; }
     public string Description { get; set; }

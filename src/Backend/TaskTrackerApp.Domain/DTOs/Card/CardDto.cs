@@ -9,5 +9,6 @@ public class CardDto
     public int? AssigneeId { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsCompleted { get; set; }
+    public int Position { get; set; }
     public int ColumnId { get; set; }
 }
