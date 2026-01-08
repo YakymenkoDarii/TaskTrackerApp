@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
@@ -8,9 +9,11 @@ using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Columns;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
+using TaskTrackerApp.Frontend.Services.Services.Boards;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages;
 
+[Authorize]
 public partial class Board
 {
     [Parameter] public int BoardId { get; set; }
@@ -132,6 +135,8 @@ public partial class Board
             Title = dropItem.Item.Title,
             Description = dropItem.Item.Description,
             ColumnId = int.Parse(dropItem.DropzoneIdentifier),
+            DueDate = dropItem.Item.DueDate,
+            IsCompleted = dropItem.Item.IsCompleted,
             BoardId = BoardId,
             UpdatedById = userId,
             Position = dropItem.IndexInZone
@@ -299,16 +304,7 @@ public partial class Board
     {
         card.IsCompleted = !card.IsCompleted;
 
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        int userId = 0;
-
-        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim != null)
-        {
-            int.TryParse(userIdClaim.Value, out userId);
-        }
+        int userId = await GetUserId();
 
         var updateCard = new UpdateCardDto
         {
@@ -328,5 +324,52 @@ public partial class Board
 
         _cardDropContainer.Refresh();
         StateHasChanged();
+    }
+
+    private async Task SaveColumn(ColumnDto column)
+    {
+        int userId = await GetUserId();
+        var updateDto = new UpdateColumnDto
+        {
+            Id = column.Id,
+            Title = column.Title,
+            Description = column.Description,
+            BoardId = BoardId,
+            Position = column.Position,
+            UpdatedById = userId,
+        };
+
+        await ColumnsService.UpdateColumnAsync(column.Id, updateDto);
+    }
+
+    private async Task UpdateBoardDetails(string val)
+    {
+        int userId = await GetUserId();
+
+        var updateDto = new UpdateBoardDto
+        {
+            Id = board.Id,
+            Title = board.Title,
+            Description = board.Description,
+            UpdatedById = userId,
+        };
+
+        await BoardsService.UpdateAsync(board.Id, updateDto);
+    }
+
+    private async Task<int> GetUserId()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        int userId = 0;
+
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim != null)
+        {
+            int.TryParse(userIdClaim.Value, out userId);
+        }
+
+        return userId;
     }
 }

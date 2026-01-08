@@ -12,4 +12,6 @@ public interface IBoardsService
     Task<Result> DeleteAsync(int boardId);
 
     Task<Result<BoardDto>> GetBoardByIdAsync(int boardId);
+
+    Task<Result> UpdateAsync(int id, UpdateBoardDto dto);
 }

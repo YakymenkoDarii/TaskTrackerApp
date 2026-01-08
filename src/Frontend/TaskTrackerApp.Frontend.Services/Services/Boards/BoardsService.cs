@@ -78,4 +78,21 @@ public class BoardsService : IBoardsService
             return Result<BoardDto>.Failure(new Error("UnknownError", ex.Message));
         }
     }
+
+    public async Task<Result> UpdateAsync(int id, UpdateBoardDto dto)
+    {
+        try
+        {
+            var response = await _boardsApi.UpdateAsync(id, dto);
+            return response.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
 }

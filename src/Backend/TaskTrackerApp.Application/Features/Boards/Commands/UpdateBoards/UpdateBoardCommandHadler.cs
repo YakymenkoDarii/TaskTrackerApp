@@ -1,9 +1,11 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.UoW;
+using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Boards.Commands.UpdateBoards;
 
-internal class UpdateBoardCommandHandler : IRequestHandler<UpdateBoardCommand>
+internal class UpdateBoardCommandHandler : IRequestHandler<UpdateBoardCommand, Result>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 
@@ -12,12 +14,16 @@ internal class UpdateBoardCommandHandler : IRequestHandler<UpdateBoardCommand>
         _uowFactory = uowFactory;
     }
 
-    public async Task Handle(UpdateBoardCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(UpdateBoardCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();
 
         var board = await uow.BoardRepository.GetAsync(request.Id);
 
+        if (board == null)
+        {
+            return Result.Failure(new Error("Board.NotFound", "Board not found"));
+        }
         board.Title = request.Title;
         board.Description = request.Description;
         board.UpdatedById = request.UpdatedById;
@@ -26,5 +32,7 @@ internal class UpdateBoardCommandHandler : IRequestHandler<UpdateBoardCommand>
         await uow.BoardRepository.UpdateAsync(board);
 
         await uow.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
     }
 }

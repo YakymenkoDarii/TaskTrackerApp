@@ -1,8 +1,10 @@
 ﻿@page "/board/{BoardId:int}"
+@using TaskTrackerApp.Frontend.BlazorApp.Components
 @using TaskTrackerApp.Frontend.Domain.DTOs.Boards
 @using TaskTrackerApp.Frontend.Domain.DTOs.Columns
 @using TaskTrackerApp.Frontend.Domain.DTOs.Cards
 @using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
+
 
 <PageTitle>@(board?.Title ?? "Loading...")</PageTitle>
 
@@ -23,19 +25,17 @@ else
     <div class="board-container d-flex flex-column h-100">
         <div class="board-header px-4 py-3 d-flex align-center justify-space-between flex-shrink-0">
             <div>
-                <MudText Typo=@Typo.h5
-                         Class="board-header-text"
-                         Style="color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.6);">
-                    @board.Title
-                </MudText>
+                <EditableLabel @bind-Value=@board.Title
+                               OnCommit=@UpdateBoardDetails
+                               Typo=Typo.h5
+                               Style="color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); font-weight: bold;" />
 
-                @if (!string.IsNullOrEmpty(board.Description))
-                {
-                    <MudText Typo=@Typo.body2
-                             Style="color: rgba(255, 255, 255, 0.9); text-shadow: 0px 0px 2px black;">
-                        @board.Description
-                    </MudText>
-                }
+                <EditableLabel @bind-Value=@board.Description
+                               OnCommit=@UpdateBoardDetails
+                               Typo=Typo.body2
+                               Multiline=true
+                               Placeholder="Add a description..."
+                               Style="color: rgba(255, 255, 255, 0.9); text-shadow: 0px 0px 2px black;" />
             </div>
 
             <div class="d-flex align-center rounded pa-2"
@@ -105,14 +105,19 @@ else
                                           Style="max-height: 100%; background-color: #f0f2f5;">
 
                                     <div class="d-flex justify-space-between align-start mb-2 px-2">
-                                        <div class="d-flex flex-column"
-                                             style="max-width: 85%;">
-                                            <MudText Typo=@Typo.subtitle1
-                                                     Class="fw-bold text-truncate"
-                                                     Color=@Color.Dark>
-                                                @col.Title
-                                            </MudText>
-                                        </div>
+                                        <EditableLabel Value="@col.Title"
+                                                       ValueChanged="@((val) => col.Title = val)"
+                                                       OnCommit="@(() => SaveColumn(col))"
+                                                       Typo="Typo.subtitle1"
+                                                       Style="font-weight: 700; color: #424242;" />
+
+                                        <EditableLabel Value="@col.Description"
+                                                       ValueChanged="@((val) => col.Description = val)"
+                                                       OnCommit="@(() => SaveColumn(col))"
+                                                       Typo="Typo.caption"
+                                                       Placeholder="Add description..."
+                                                       Multiline="true"
+                                                       Style="color: #757575; font-style: italic;" />
 
                                         <MudMenu Icon=@Icons.Material.Filled.MoreHoriz
                                                  Size=@Size.Small>
