@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.ColumnDialogs;
+using TaskTrackerApp.Frontend.Domain;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Columns;
@@ -30,6 +32,8 @@ public partial class Board
 
     [Inject] private IDialogService DialogService { get; set; }
 
+    [Inject] private ILocalStorageService LocalStorage { get; set; }
+
     private BoardDto? board;
 
     private List<ColumnDto> columns = new();
@@ -46,6 +50,8 @@ public partial class Board
 
     protected override async Task OnInitializedAsync()
     {
+        await AddToRecentBoardsAsync(BoardId);
+
         await LoadBoardDataAsync();
     }
 
@@ -371,5 +377,22 @@ public partial class Board
         }
 
         return userId;
+    }
+
+    private async Task AddToRecentBoardsAsync(int boardId)
+    {
+        var userId = await GetUserId();
+        var key = $"recentBoardsState-{userId}";
+
+        var recent = await LocalStorage.GetItemAsync<List<RecentBoardItem>>(key) ?? new();
+
+        var existing = recent.FirstOrDefault(x => x.BoardId == boardId);
+        if (existing != null) recent.Remove(existing);
+
+        recent.Insert(0, new RecentBoardItem { BoardId = boardId, LastViewed = DateTime.UtcNow });
+
+        if (recent.Count > 5) recent = recent.Take(5).ToList();
+
+        await LocalStorage.SetItemAsync(key, recent);
     }
 }
