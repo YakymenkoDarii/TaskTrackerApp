@@ -1,8 +1,10 @@
 ﻿using MediatR;
+using TaskTrackerApp.Domain.DTOs.Column;
+using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Columns.Commands.UpdateColumns;
 
-public class UpdateColumnCommand : IRequest
+public class UpdateColumnCommand : IRequest<Result>
 {
     public int Id { get; set; }
 
@@ -13,4 +15,6 @@ public class UpdateColumnCommand : IRequest
     public int BoardId { get; set; }
 
     public int UpdatedById { get; set; }
+
+    public int Position { get; set; }
 }

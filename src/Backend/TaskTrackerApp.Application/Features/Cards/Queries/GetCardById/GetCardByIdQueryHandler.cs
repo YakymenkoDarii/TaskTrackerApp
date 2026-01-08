@@ -34,6 +34,7 @@ public class GetCardByIdQueryHandler : IRequestHandler<GetCardByIdQuery, CardDto
             AssigneeId = card.AssigneeId,
             CreatedAt = card.CreatedAt,
             IsCompleted = card.IsCompleted,
+            Position = card.Position,
         };
     }
 }

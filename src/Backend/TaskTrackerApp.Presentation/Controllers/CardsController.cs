@@ -1,5 +1,7 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TaskTrackerApp.Application.Features.Cards.Commands.CreateCard;
 using TaskTrackerApp.Application.Features.Cards.Commands.DeleteCard;
 using TaskTrackerApp.Application.Features.Cards.Commands.UpdateCards;
@@ -10,6 +12,7 @@ namespace TaskTrackerApp.Presentation.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CardsController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -22,6 +25,13 @@ public class CardsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateAsync([FromBody] CreateCardDto cardDto)
     {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(userIdString, out int userId))
+        {
+            return Unauthorized();
+        }
+
         var command = new CreateCardCommand
         {
             Title = cardDto.Title,
@@ -30,7 +40,7 @@ public class CardsController : ControllerBase
             ColumnId = cardDto.ColumnId,
             BoardId = cardDto.BoardId,
             AssigneeId = cardDto.AssigneeId,
-            CreatedById = cardDto.CreatedById,
+            CreatedById = userId,
         };
 
         var result = await _mediator.Send(command);
@@ -51,6 +61,7 @@ public class CardsController : ControllerBase
             AssigneeId = cardDto.AssigneeId,
             UpdatedById = cardDto.UpdatedById,
             IsCompleted = cardDto.IsCompleted,
+            Position = cardDto.Position
         };
 
         var updatedCard = await _mediator.Send(command);

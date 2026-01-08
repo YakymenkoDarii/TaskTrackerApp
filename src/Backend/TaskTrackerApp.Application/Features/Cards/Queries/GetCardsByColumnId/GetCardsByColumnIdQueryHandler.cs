@@ -35,7 +35,8 @@ public class GetCardsByColumnIdQueryHandler : IRequestHandler<GetCardsByColumnId
             CreatedAt = x.CreatedAt,
             IsCompleted = x.IsCompleted,
             ColumnId = x.ColumnId,
-        }).ToList();
+            Position = x.Position,
+        }).OrderBy(c => c.Position).ToList();
 
         return cardDtos;
     }

@@ -10,7 +10,7 @@ public interface ICardsApi
     Task<IApiResponse<Result<IEnumerable<CardDto>>>> GetByColumnIdAsync(int columnId);
 
     [Post("/api/Cards")]
-    Task<IApiResponse<Result>> CreateAsync(CreateCardDto columnDto);
+    Task<IApiResponse<Result<int>>> CreateAsync(CreateCardDto columnDto);
 
     [Delete("/api/Cards")]
     Task<IApiResponse<Result>> DeleteAsync(int cardId);

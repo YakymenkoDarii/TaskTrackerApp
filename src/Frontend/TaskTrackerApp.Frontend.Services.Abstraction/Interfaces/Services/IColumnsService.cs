@@ -7,7 +7,9 @@ public interface IColumnsService
 {
     Task<Result<IEnumerable<ColumnDto>>> GetByBoardIdAsync(int boardId);
 
-    Task<Result> CreateColumnAsync(CreateColumnDto columnDto);
+    Task<Result<int>> CreateColumnAsync(CreateColumnDto columnDto);
 
     Task<Result> DeleteColumnAsync(int id);
+
+    Task<Result> UpdateColumnAsync(int id, UpdateColumnDto columnDto);
 }

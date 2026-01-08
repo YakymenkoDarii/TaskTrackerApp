@@ -11,4 +11,6 @@ public class UpdateColumnDto
     public int BoardId { get; set; }
 
     public int UpdatedById { get; set; }
+
+    public int Position { get; set; }
 }
