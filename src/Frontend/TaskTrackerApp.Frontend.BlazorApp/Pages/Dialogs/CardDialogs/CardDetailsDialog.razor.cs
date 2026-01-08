@@ -11,11 +11,17 @@ namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
 public partial class CardDetailsDialog
 {
     [Inject] private ICardsService CardsService { get; set; }
+
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+
     [Inject] private ISnackbar Snackbar { get; set; }
 
+    [Inject] private IDialogService DialogService { get; set; }
+
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
     [Parameter] public CardDto Card { get; set; } = default!;
+
     [Parameter] public int BoardId { get; set; }
 
     private string title = string.Empty;
@@ -63,7 +69,8 @@ public partial class CardDetailsDialog
             BoardId = BoardId,
             IsCompleted = isCompleted,
             UpdatedById = userId,
-            AssigneeId = Card.AssigneeId
+            AssigneeId = Card.AssigneeId,
+            Position = Card.Position,
         };
 
         var result = await CardsService.UpdateAsync(Card.Id, updateDto);
@@ -76,6 +83,29 @@ public partial class CardDetailsDialog
         else
         {
             Snackbar.Add(result.Error.Code, Severity.Error);
+        }
+    }
+
+    private async Task DeleteCard()
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Delete Card",
+            "Are you sure you want to delete this card? This cannot be undone.",
+            yesText: "Delete", cancelText: "Cancel");
+
+        if (result != true)
+            return;
+
+        var deleteResult = await CardsService.DeleteCardAsync(Card.Id);
+
+        if (deleteResult.IsSuccess)
+        {
+            Snackbar.Add("Card deleted", Severity.Success);
+            MudDialog.Close(DialogResult.Ok("Deleted"));
+        }
+        else
+        {
+            Snackbar.Add(deleteResult.Error.Code, Severity.Error);
         }
     }
 }

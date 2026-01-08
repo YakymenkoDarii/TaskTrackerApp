@@ -70,11 +70,11 @@ public class CardsController : ControllerBase
     }
 
     [HttpDelete]
-    public async Task<IActionResult> DeleteAsync(int id)
+    public async Task<IActionResult> DeleteAsync(int cardId)
     {
         var command = new DeleteCardCommand
         {
-            Id = id
+            Id = cardId
         };
 
         await _mediator.Send(command);

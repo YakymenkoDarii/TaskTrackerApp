@@ -156,16 +156,28 @@ else
                                  Elevation=1
                                  onclick=@(() => HandleCardClick(context))>
                             <MudCardContent Class="pa-2">
-                                <MudText Typo=@Typo.body2
-                                         Class="fw-bold"
-                                         Style=@(context.IsCompleted ? "text-decoration: line-through; color: gray;" : "")>
-                                    @context.Title
-                                </MudText>
+
+                                <div class="d-flex align-center gap-2">
+                                    <div @onclick:stopPropagation>
+                                        <MudTooltip Text="@(context.IsCompleted ? "Mark incomplete" : "Mark complete")">
+                                            <MudIconButton Icon="@(context.IsCompleted? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.Circle)"
+                                                           Color="@(context.IsCompleted ? Color.Success : Color.Default)"
+                                                           Size="Size.Small"
+                                                           OnClick="@(() => HandleToggleComplete(context))" />
+                                        </MudTooltip>
+                                    </div>
+
+                                    <MudText Typo=@Typo.body2
+                                             Class="fw-bold flex-grow-1"
+                                             Style=@(context.IsCompleted ? "text-decoration: line-through; color: gray;" : "")>
+                                        @context.Title
+                                    </MudText>
+                                </div>
 
                                 @if (!string.IsNullOrWhiteSpace(context.Description))
                                 {
                                     <MudText Typo=@Typo.caption
-                                             Class="d-block mud-text-secondary mt-1 text-truncate"
+                                             Class="d-block mud-text-secondary mt-1 text-truncate pl-10"
                                              Style=@(context.IsCompleted ? "text-decoration: line-through;" : "")>
                                         @context.Description
                                     </MudText>
@@ -173,7 +185,7 @@ else
 
                                 @if (context.DueDate.HasValue)
                                 {
-                                    <div class="d-flex align-center gap-1 mt-2">
+                                    <div class="d-flex align-center gap-1 mt-2 pl-9">
                                         <MudIcon Icon=@Icons.Material.Filled.Schedule
                                                  Size=@Size.Small
                                                  Color=@(IsOverdue(context) ? Color.Error : Color.Default)

@@ -83,7 +83,6 @@ public partial class Board
 
     private async Task ColumnDropped(MudItemDropInfo<ColumnDto> dropItem)
     {
-        // 1. UI Update
         columns.Remove(dropItem.Item);
         columns.Insert(dropItem.IndexInZone, dropItem.Item);
 
@@ -198,7 +197,6 @@ public partial class Board
 
             if (apiResult.IsSuccess)
             {
-                // Calculate position based on flat list
                 var nextPosition = _allCards.Any(c => c.ColumnId == columnId)
                     ? _allCards.Where(c => c.ColumnId == columnId).Max(c => c.Position) + 1
                     : 0;
@@ -273,17 +271,62 @@ public partial class Board
         var dialog = await DialogService.ShowAsync<CardDetailsDialog>("Card Details", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is CardDto updatedCard)
+        if (!result.Canceled)
         {
-            var existingItem = _allCards.FirstOrDefault(c => c.Id == card.Id);
-            if (existingItem != null)
+            if (result.Data is CardDto updatedCard)
             {
-                _allCards.Remove(existingItem);
+                var index = _allCards.FindIndex(c => c.Id == updatedCard.Id);
+                if (index != -1) _allCards[index] = updatedCard;
+                else _allCards.Add(updatedCard);
+
+                _allCards = _allCards.OrderBy(c => c.Position).ToList();
             }
-            _allCards.Add(updatedCard);
+            else if (result.Data is string action && action == "Deleted")
+            {
+                var itemToRemove = _allCards.FirstOrDefault(c => c.Id == card.Id);
+                if (itemToRemove != null)
+                {
+                    _allCards.Remove(itemToRemove);
+                }
+            }
 
             if (_cardDropContainer != null) _cardDropContainer.Refresh();
             StateHasChanged();
         }
+    }
+
+    private async Task HandleToggleComplete(CardDto card)
+    {
+        card.IsCompleted = !card.IsCompleted;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        int userId = 0;
+
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim != null)
+        {
+            int.TryParse(userIdClaim.Value, out userId);
+        }
+
+        var updateCard = new UpdateCardDto
+        {
+            Id = card.Id,
+            Title = card.Title,
+            Description = card.Description,
+            DueDate = card.DueDate,
+            ColumnId = card.ColumnId,
+            BoardId = BoardId,
+            AssigneeId = card.AssigneeId,
+            UpdatedById = userId,
+            IsCompleted = card.IsCompleted,
+            Position = card.Position,
+        };
+
+        await CardsService.UpdateAsync(card.Id, updateCard);
+
+        _cardDropContainer.Refresh();
+        StateHasChanged();
     }
 }
