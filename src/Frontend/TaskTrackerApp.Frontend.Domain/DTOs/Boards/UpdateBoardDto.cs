@@ -1,4 +1,10 @@
-﻿namespace TaskTrackerApp.Domain.DTOs.Board;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 
 public class UpdateBoardDto
 {

@@ -1,0 +1,32 @@
+﻿@using MudBlazor
+
+<div class="@Class cursor-pointer" @onclick="EnableEdit" style="min-height: 2rem;">
+    @if (_isEditing)
+    {
+        <MudTextField T="string"
+                      @ref="_textField"
+                      Value="@Value"
+                      ValueChanged="@OnValueChanged"
+                      OnBlur="@FinishEdit"
+                      OnKeyDown="@HandleKeyDown"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Lines="@(Multiline ? 3 : 1)"
+                      Style="background-color: white;"
+                      AutoGrow="@Multiline"
+                      Immediate="true" />
+    }
+    else
+    {
+        <MudText Typo="@Typo" Style="@Style">
+            @if (string.IsNullOrWhiteSpace(Value))
+            {
+                <span class="mud-text-secondary font-italic">@Placeholder</span>
+            }
+            else
+            {
+                @Value
+            }
+        </MudText>
+    }
+</div>

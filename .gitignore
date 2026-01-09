@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/src/Frontend/TemplateEngineHost/vs/.vstemplates.global.etag
+/src/Frontend/TemplateEngineHost/vs/.vstemplates.local
+/src/Frontend/TemplateEngineHost/vs/.vstemplates.local.etag
+/src/Frontend/TemplateEngineHost/vs/templatecache.json

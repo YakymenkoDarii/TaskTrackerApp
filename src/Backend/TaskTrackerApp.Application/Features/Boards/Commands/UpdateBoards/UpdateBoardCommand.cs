@@ -1,8 +1,9 @@
 ﻿using MediatR;
+using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Boards.Commands.UpdateBoards;
 
-public class UpdateBoardCommand : IRequest
+public class UpdateBoardCommand : IRequest<Result>
 {
     public int Id { get; set; }
 

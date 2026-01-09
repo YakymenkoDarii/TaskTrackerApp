@@ -1,16 +1,21 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.ColumnDialogs;
+using TaskTrackerApp.Frontend.Domain;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Columns;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
+using TaskTrackerApp.Frontend.Services.Services.Boards;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages;
 
+[Authorize]
 public partial class Board
 {
     [Parameter] public int BoardId { get; set; }
@@ -26,6 +31,8 @@ public partial class Board
     [Inject] private ISnackbar Snackbar { get; set; }
 
     [Inject] private IDialogService DialogService { get; set; }
+
+    [Inject] private ILocalStorageService LocalStorage { get; set; }
 
     private BoardDto? board;
 
@@ -43,6 +50,8 @@ public partial class Board
 
     protected override async Task OnInitializedAsync()
     {
+        await AddToRecentBoardsAsync(BoardId);
+
         await LoadBoardDataAsync();
     }
 
@@ -83,7 +92,6 @@ public partial class Board
 
     private async Task ColumnDropped(MudItemDropInfo<ColumnDto> dropItem)
     {
-        // 1. UI Update
         columns.Remove(dropItem.Item);
         columns.Insert(dropItem.IndexInZone, dropItem.Item);
 
@@ -133,6 +141,8 @@ public partial class Board
             Title = dropItem.Item.Title,
             Description = dropItem.Item.Description,
             ColumnId = int.Parse(dropItem.DropzoneIdentifier),
+            DueDate = dropItem.Item.DueDate,
+            IsCompleted = dropItem.Item.IsCompleted,
             BoardId = BoardId,
             UpdatedById = userId,
             Position = dropItem.IndexInZone
@@ -198,7 +208,6 @@ public partial class Board
 
             if (apiResult.IsSuccess)
             {
-                // Calculate position based on flat list
                 var nextPosition = _allCards.Any(c => c.ColumnId == columnId)
                     ? _allCards.Where(c => c.ColumnId == columnId).Max(c => c.Position) + 1
                     : 0;
@@ -273,17 +282,117 @@ public partial class Board
         var dialog = await DialogService.ShowAsync<CardDetailsDialog>("Card Details", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is CardDto updatedCard)
+        if (!result.Canceled)
         {
-            var existingItem = _allCards.FirstOrDefault(c => c.Id == card.Id);
-            if (existingItem != null)
+            if (result.Data is CardDto updatedCard)
             {
-                _allCards.Remove(existingItem);
+                var index = _allCards.FindIndex(c => c.Id == updatedCard.Id);
+                if (index != -1) _allCards[index] = updatedCard;
+                else _allCards.Add(updatedCard);
+
+                _allCards = _allCards.OrderBy(c => c.Position).ToList();
             }
-            _allCards.Add(updatedCard);
+            else if (result.Data is string action && action == "Deleted")
+            {
+                var itemToRemove = _allCards.FirstOrDefault(c => c.Id == card.Id);
+                if (itemToRemove != null)
+                {
+                    _allCards.Remove(itemToRemove);
+                }
+            }
 
             if (_cardDropContainer != null) _cardDropContainer.Refresh();
             StateHasChanged();
         }
+    }
+
+    private async Task HandleToggleComplete(CardDto card)
+    {
+        card.IsCompleted = !card.IsCompleted;
+
+        int userId = await GetUserId();
+
+        var updateCard = new UpdateCardDto
+        {
+            Id = card.Id,
+            Title = card.Title,
+            Description = card.Description,
+            DueDate = card.DueDate,
+            ColumnId = card.ColumnId,
+            BoardId = BoardId,
+            AssigneeId = card.AssigneeId,
+            UpdatedById = userId,
+            IsCompleted = card.IsCompleted,
+            Position = card.Position,
+        };
+
+        await CardsService.UpdateAsync(card.Id, updateCard);
+
+        _cardDropContainer.Refresh();
+        StateHasChanged();
+    }
+
+    private async Task SaveColumn(ColumnDto column)
+    {
+        int userId = await GetUserId();
+        var updateDto = new UpdateColumnDto
+        {
+            Id = column.Id,
+            Title = column.Title,
+            Description = column.Description,
+            BoardId = BoardId,
+            Position = column.Position,
+            UpdatedById = userId,
+        };
+
+        await ColumnsService.UpdateColumnAsync(column.Id, updateDto);
+    }
+
+    private async Task UpdateBoardDetails(string val)
+    {
+        int userId = await GetUserId();
+
+        var updateDto = new UpdateBoardDto
+        {
+            Id = board.Id,
+            Title = board.Title,
+            Description = board.Description,
+            UpdatedById = userId,
+        };
+
+        await BoardsService.UpdateAsync(board.Id, updateDto);
+    }
+
+    private async Task<int> GetUserId()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        int userId = 0;
+
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim != null)
+        {
+            int.TryParse(userIdClaim.Value, out userId);
+        }
+
+        return userId;
+    }
+
+    private async Task AddToRecentBoardsAsync(int boardId)
+    {
+        var userId = await GetUserId();
+        var key = $"recentBoardsState-{userId}";
+
+        var recent = await LocalStorage.GetItemAsync<List<RecentBoardItem>>(key) ?? new();
+
+        var existing = recent.FirstOrDefault(x => x.BoardId == boardId);
+        if (existing != null) recent.Remove(existing);
+
+        recent.Insert(0, new RecentBoardItem { BoardId = boardId, LastViewed = DateTime.UtcNow });
+
+        if (recent.Count > 5) recent = recent.Take(5).ToList();
+
+        await LocalStorage.SetItemAsync(key, recent);
     }
 }

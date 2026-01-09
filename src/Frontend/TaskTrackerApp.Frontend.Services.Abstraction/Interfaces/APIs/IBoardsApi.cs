@@ -15,4 +15,7 @@ public interface IBoardsApi
 
     [Delete("/api/Boards")]
     Task<IApiResponse<Result>> DeleteAsync(int id);
+
+    [Put("/api/Boards/{id}")]
+    Task<IApiResponse<Result>> UpdateAsync(int id, UpdateBoardDto boardDto);
 }
