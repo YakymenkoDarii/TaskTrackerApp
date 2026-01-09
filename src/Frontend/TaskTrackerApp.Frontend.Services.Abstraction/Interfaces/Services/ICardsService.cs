@@ -12,4 +12,8 @@ public interface ICardsService
     Task<Result> DeleteCardAsync(int id);
 
     Task<Result<CardDto>> UpdateAsync(int id, UpdateCardDto updateCardDto);
+
+    Task<Result> UpdateStatus(int id, bool isCompleted);
+
+    Task<Result<IEnumerable<UpcomingCardDto>>> GetUpcoming(DateTime weekStart, DateTime weekEnd, bool includeOverdue);
 }

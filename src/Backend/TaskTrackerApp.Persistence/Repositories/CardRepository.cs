@@ -24,4 +24,31 @@ public class CardRepository : Repository<Card, int>, ICardRepository
             .Where(c => c.ColumnId == columnId)
             .ToListAsync();
     }
+
+    public async Task UpdateCardStatus(int id, bool isComplete)
+    {
+        await _dbSet.Where(c => c.Id == id)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(c => c.IsCompleted, isComplete));
+    }
+
+    public async Task<IEnumerable<Card>> GetUpcomingCardsAsync(int userId, DateTime start, DateTime end, bool includeOverdue)
+    {
+        var query = _dbSet.AsQueryable();
+
+        query = query.Where(c => c.AssigneeId == userId && c.DueDate.HasValue);
+
+        if (includeOverdue)
+        {
+            query = query.Where(c =>
+                (c.DueDate >= start && c.DueDate <= end) ||
+                (c.DueDate < start && !c.IsCompleted));
+        }
+        else
+        {
+            query = query.Where(c => c.DueDate >= start && c.DueDate <= end);
+        }
+
+        return await query.ToListAsync();
+    }
 }

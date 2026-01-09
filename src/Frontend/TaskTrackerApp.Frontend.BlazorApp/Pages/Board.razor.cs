@@ -33,6 +33,9 @@ public partial class Board
 
     [Inject] private ILocalStorageService LocalStorage { get; set; }
 
+    [SupplyParameterFromQuery]
+    public int? OpenCard { get; set; }
+
     private BoardDto? board;
 
     private List<ColumnDto> columns = new();
@@ -52,6 +55,12 @@ public partial class Board
         await AddToRecentBoardsAsync(BoardId);
 
         await LoadBoardDataAsync();
+
+        if (OpenCard.HasValue)
+        {
+            var cardToOpen = _allCards.FirstOrDefault(x => x.Id == OpenCard.Value);
+            if (cardToOpen != null) HandleCardClick(cardToOpen);
+        }
     }
 
     private async Task LoadBoardDataAsync()

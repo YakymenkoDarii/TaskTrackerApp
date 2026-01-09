@@ -17,4 +17,10 @@ public interface ICardsApi
 
     [Put("/api/Cards/{id}")]
     Task<IApiResponse<Result<CardDto>>> UpdateAsync(int id, UpdateCardDto cardDto);
+
+    [Get("/api/Cards/upcoming")]
+    Task<IApiResponse<Result<IEnumerable<UpcomingCardDto>>>> GetUpcoming(DateTime weekStart, DateTime weekEnd, bool includeOverdue);
+
+    [Put("/api/Cards/status/{id}")]
+    Task<IApiResponse<Result>> UpdateStatus(int id, bool isCompleted);
 }

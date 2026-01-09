@@ -1,14 +1,103 @@
 ﻿@page "/"
-@using Microsoft.AspNetCore.Authorization
-@inject NavigationManager Nav
-@attribute [Authorize]
+@using System.Globalization
+@using TaskTrackerApp.Frontend.BlazorApp.Components
+@using TaskTrackerApp.Frontend.Domain.DTOs.Cards
+@using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
 
-<MudThemeProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<PageTitle>Home - Upcoming</PageTitle>
 
-<MudLayout>
-	<MudText>
-		Here you will see due tasks and etc.
-	</MudText>
-</MudLayout>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-8">
+
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Class="fw-bold">Upcoming</MudText>
+            <MudText Typo="Typo.body1" Class="mud-text-secondary">
+                @_weekStart.ToString("MMM dd") - @_weekEnd.ToString("MMM dd, yyyy")
+            </MudText>
+        </div>
+
+        <div class="d-flex align-center gap-2">
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" 
+                           OnClick="PreviousWeek" 
+                           Variant="Variant.Outlined" />
+            
+            <MudButton Variant="Variant.Outlined" 
+                       OnClick="GoToToday"
+                       Disabled="@IsCurrentWeek()">
+                Today
+            </MudButton>
+
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" 
+                           OnClick="NextWeek" 
+                           Variant="Variant.Outlined" />
+        </div>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="d-flex justify-center mt-10">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </div>
+    }
+    else
+    {
+        @if (_overdueTasks.Any() && IsCurrentWeek())
+        {
+            <MudExpansionPanel Text="Overdue" Class="mb-6 border-solid border-1 mud-border-error" IsExpanded="true">
+                <TitleContent>
+                    <div class="d-flex align-center gap-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Small"/>
+                        <MudText Color="Color.Error" Class="fw-bold">Overdue (@_overdueTasks.Count)</MudText>
+                    </div>
+                </TitleContent>
+                <ChildContent>
+                     @foreach (var task in _overdueTasks)
+                     {
+                         <TaskRowItem Task="task" OnTaskClick="NavigateToTask" OnToggleComplete="ToggleComplete" />
+                     }
+                </ChildContent>
+            </MudExpansionPanel>
+        }
+
+        <MudStack Spacing="4">
+            @for (int i = 0; i < 7; i++)
+            {
+                var currentDay = _weekStart.AddDays(i);
+                var isToday = currentDay.Date == DateTime.Today;
+                var dayTasks = _tasks.Where(t => t.DueDate.HasValue && t.DueDate.Value.Date == currentDay.Date).ToList();
+
+                <div class="mt-4">
+                    <div class="d-flex align-center gap-2 mb-2 pb-1" style="border-bottom: 1px solid var(--mud-palette-divider);">
+                        <MudText Typo="Typo.h6" Class="@(isToday ? "text-primary fw-bold" : "")">
+                            @currentDay.ToString("dddd") 
+                            <span class="mud-text-secondary" style="font-size: 0.8em; margin-left: 4px;">
+                                @currentDay.ToString("MMM dd")
+                            </span>
+                        </MudText>
+                        @if (isToday)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Label="true" Class="ml-2">Today</MudChip>
+                        }
+                    </div>
+
+                    @if (dayTasks.Any())
+                    {
+                        <MudStack Spacing="2">
+                            @foreach (var task in dayTasks)
+                            {
+                                <TaskRowItem Task="task" OnTaskClick="NavigateToTask" OnToggleComplete="ToggleComplete" />
+                            }
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary font-italic ml-2 py-2">
+                            No tasks scheduled
+                        </MudText>
+                    }
+                </div>
+            }
+        </MudStack>
+    }
+
+</MudContainer>
