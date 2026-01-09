@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using TaskTrackerApp.Domain.DTOs.Column;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Columns.Commands.UpdateColumns;

@@ -11,7 +11,6 @@ using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Columns;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
-using TaskTrackerApp.Frontend.Services.Services.Boards;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages;
 

@@ -4,7 +4,6 @@ using MudBlazor;
 using System.Security.Claims;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
-using TaskTrackerApp.Frontend.Services.Services.Cards;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
 

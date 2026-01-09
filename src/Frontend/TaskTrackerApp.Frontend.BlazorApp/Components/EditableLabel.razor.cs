@@ -22,6 +22,8 @@ public partial class EditableLabel
 
     [Parameter] public bool Multiline { get; set; } = false;
 
+    [Parameter] public bool FullWidth { get; set; } = false;
+
     private bool _isEditing;
     private MudTextField<string>? _textField;
 
