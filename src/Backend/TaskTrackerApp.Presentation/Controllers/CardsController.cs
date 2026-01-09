@@ -5,7 +5,9 @@ using System.Security.Claims;
 using TaskTrackerApp.Application.Features.Cards.Commands.CreateCard;
 using TaskTrackerApp.Application.Features.Cards.Commands.DeleteCard;
 using TaskTrackerApp.Application.Features.Cards.Commands.UpdateCards;
+using TaskTrackerApp.Application.Features.Cards.Commands.UpdateStatusCards;
 using TaskTrackerApp.Application.Features.Cards.Queries.GetCardsByColumnId;
+using TaskTrackerApp.Application.Features.Cards.Queries.GetUpcomingCardsByDate;
 using TaskTrackerApp.Domain.DTOs.Card;
 
 namespace TaskTrackerApp.Presentation.Controllers;
@@ -88,6 +90,43 @@ public class CardsController : ControllerBase
         var query = new GetCardsByColumnIdQuery(columnId);
 
         var result = await _mediator.Send(query);
+
+        return Ok(result);
+    }
+
+    [HttpGet("upcoming")]
+    public async Task<IActionResult> GetUpcoming(DateTime weekStart, DateTime weekEnd, bool includeOverdue)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(userIdString, out int userId))
+        {
+            return Unauthorized();
+        }
+
+        var query = new GetUpcomingCardsByDateQuery
+        {
+            UserId = userId,
+            StartDate = weekStart,
+            EndDate = weekEnd,
+            IncludeOverdue = includeOverdue
+        };
+
+        var result = await _mediator.Send(query);
+
+        return Ok(result);
+    }
+
+    [HttpPut("status/{id}")]
+    public async Task<IActionResult> UpdateStatus(int id, bool isCompleted)
+    {
+        var command = new UpdateCardStatusCommand
+        {
+            Id = id,
+            IsCompleted = isCompleted
+        };
+
+        var result = await _mediator.Send(command);
 
         return Ok(result);
     }

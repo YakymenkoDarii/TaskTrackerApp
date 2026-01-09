@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.DTOs.Card;
-using TaskTrackerApp.Domain.Entities;
 using TaskTrackerApp.Domain.Errors;
 using TaskTrackerApp.Domain.Results;
 

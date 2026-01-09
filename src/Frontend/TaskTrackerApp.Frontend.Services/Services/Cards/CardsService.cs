@@ -75,4 +75,38 @@ public class CardsService : ICardsService
             return Result<CardDto>.Failure(ClientErrors.NetworkError);
         }
     }
+
+    public async Task<Result<IEnumerable<UpcomingCardDto>>> GetUpcoming(DateTime weekStart, DateTime weekEnd, bool includeOverdue)
+    {
+        try
+        {
+            var response = await _cardsApi.GetUpcoming(weekStart, weekEnd, includeOverdue);
+            return response.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result<IEnumerable<UpcomingCardDto>>.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result<IEnumerable<UpcomingCardDto>>.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
+
+    public async Task<Result> UpdateStatus(int id, bool isCompleted)
+    {
+        try
+        {
+            var response = await _cardsApi.UpdateStatus(id, isCompleted);
+            return response.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
 }
