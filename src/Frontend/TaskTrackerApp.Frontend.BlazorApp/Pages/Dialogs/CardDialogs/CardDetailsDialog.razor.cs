@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
+using TaskTrackerApp.Frontend.Domain.DTOs.BoardMembers;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
@@ -19,6 +20,8 @@ public partial class CardDetailsDialog
 
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
 
+    [Inject] private IBoardMembersService BoardMembersService { get; set; }
+
     [Parameter] public CardDto Card { get; set; } = default!;
 
     [Parameter] public int BoardId { get; set; }
@@ -28,7 +31,10 @@ public partial class CardDetailsDialog
     private DateTime? dueDate;
     private bool isCompleted;
 
-    protected override void OnInitialized()
+    private int? _assigneeId;
+    private List<BoardMemberDto> _boardMembers = new();
+
+    protected override async void OnInitialized()
     {
         if (Card != null)
         {
@@ -36,6 +42,19 @@ public partial class CardDetailsDialog
             description = Card.Description;
             dueDate = Card.DueDate;
             isCompleted = Card.IsCompleted;
+
+            _assigneeId = Card.AssigneeId;
+        }
+
+        await LoadBoardMembers();
+    }
+
+    private async Task LoadBoardMembers()
+    {
+        var result = await BoardMembersService.GetMembersAsync(BoardId);
+        if (result.IsSuccess)
+        {
+            _boardMembers = result.Value.ToList();
         }
     }
 
@@ -68,7 +87,7 @@ public partial class CardDetailsDialog
             BoardId = BoardId,
             IsCompleted = isCompleted,
             UpdatedById = userId,
-            AssigneeId = Card.AssigneeId,
+            AssigneeId = _assigneeId,
             Position = Card.Position,
         };
 

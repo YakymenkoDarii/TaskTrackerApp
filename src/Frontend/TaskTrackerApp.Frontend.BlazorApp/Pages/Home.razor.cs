@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
+using MudBlazor;
+using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.InvitationDialogs;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
@@ -10,6 +12,10 @@ public partial class Home
 
     [Inject] private ICardsService CardService { get; set; }
 
+    [Inject] private IDialogService DialogService { get; set; }
+
+    [Inject] private IBoardInvitationsService InvitationService { get; set; }
+
     private DateTime _anchorDate = DateTime.Today;
     private DateTime _weekStart;
     private DateTime _weekEnd;
@@ -19,10 +25,36 @@ public partial class Home
 
     private List<UpcomingCardDto> _overdueTasks = new();
 
+    private int _pendingInvitesCount = 0;
+
     protected override async Task OnInitializedAsync()
     {
         CalculateWeekRange();
-        await LoadDataAsync();
+        await Task.WhenAll(LoadDataAsync(), UpdateInvitationCount());
+    }
+
+    private async Task UpdateInvitationCount()
+    {
+        var result = await InvitationService.GetMyPendingInvitations();
+        if (result.IsSuccess)
+        {
+            _pendingInvitesCount = result.Value.Count();
+        }
+    }
+
+    private async Task OpenInvitationsDialog()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true
+        };
+
+        var dialog = DialogService.Show<InvitationsDialog>("My Invitations", options);
+        var result = await dialog.Result;
+
+        await UpdateInvitationCount();
     }
 
     private void CalculateWeekRange()

@@ -28,4 +28,15 @@ public class UserRepository : Repository<User, int>, IUserRepository
         return await _context.Users
             .SingleOrDefaultAsync(u => u.RefreshToken == refreshToken);
     }
+
+    public async Task<IEnumerable<User>> SearchAsync(string term)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(u =>
+                u.DisplayName.Contains(term) ||
+                u.Tag.Contains(term) ||
+                u.Email.Contains(term))
+            .ToListAsync();
+    }
 }

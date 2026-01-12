@@ -9,4 +9,6 @@ public interface IUserRepository : IRepository<User, int>
     Task<User> GetByTagAsync(string tag);
 
     Task<User?> GetByRefreshTokenAsync(string refreshToken);
+
+    Task<IEnumerable<User>> SearchAsync(string term);
 }

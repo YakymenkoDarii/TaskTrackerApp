@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Entities;
+using TaskTrackerApp.Domain.Enums;
 
 namespace TaskTrackerApp.Application.Features.Boards.Commands.CreateBoards;
 
@@ -23,12 +24,22 @@ internal class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, i
             Description = request.Description,
             CreatedById = request.CreatedById,
             UpdatedById = request.CreatedById,
+            Members = new List<BoardMember>()
         };
 
-        var newId = await uow.BoardRepository.AddAsync(board);
-
+        await uow.BoardRepository.AddAsync(board);
         await uow.SaveChangesAsync(cancellationToken);
 
-        return newId;
+        var adminMember = new BoardMember
+        {
+            BoardId = board.Id,
+            UserId = request.CreatedById,
+            Role = BoardRole.Admin
+        };
+
+        await uow.BoardMembersRepository.AddAsync(adminMember);
+        await uow.SaveChangesAsync(cancellationToken);
+
+        return board.Id;
     }
 }

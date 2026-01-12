@@ -13,6 +13,8 @@ public class UnitOfWork : IUnitOfWork, IDisposable
     private IBoardRepository? _boardRepository;
     private IColumnRepository? _columnRepository;
     private IUserRepository? _userRepository;
+    private IBoardMembersRepository _boardMembersRepository;
+    private IBoardInvitationsRepository _boardInvintationsRepository;
 
     public UnitOfWork(TaskTrackerDbContext dbContext)
     {
@@ -30,6 +32,12 @@ public class UnitOfWork : IUnitOfWork, IDisposable
 
     public IUserRepository UserRepository =>
     _userRepository ??= new UserRepository(_dbContext);
+
+    public IBoardMembersRepository BoardMembersRepository =>
+        _boardMembersRepository ??= new BoardMembersRepository(_dbContext);
+
+    public IBoardInvitationsRepository BoardInvitationsRepository =>
+        _boardInvintationsRepository ??= new BoardInvitationsRepository(_dbContext);
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

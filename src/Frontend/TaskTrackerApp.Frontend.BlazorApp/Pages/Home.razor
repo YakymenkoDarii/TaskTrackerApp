@@ -16,20 +16,36 @@
             </MudText>
         </div>
 
-        <div class="d-flex align-center gap-2">
-            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" 
-                           OnClick="PreviousWeek" 
-                           Variant="Variant.Outlined" />
-            
-            <MudButton Variant="Variant.Outlined" 
-                       OnClick="GoToToday"
-                       Disabled="@IsCurrentWeek()">
-                Today
-            </MudButton>
+        <div class="d-flex align-center gap-4">
+            <MudBadge Content="@_pendingInvitesCount"
+                      Color="Color.Error"
+                      Overlap="true"
+                      Visible="@(_pendingInvitesCount > 0)"
+                      Class="cursor-pointer mr-2">
 
-            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" 
-                           OnClick="NextWeek" 
-                           Variant="Variant.Outlined" />
+                <MudButton Variant="Variant.Filled"
+                           StartIcon="@Icons.Material.Filled.Mail"
+                           Color="Color.Primary"
+                           OnClick="OpenInvitationsDialog">
+                    Invitations
+                </MudButton>
+            </MudBadge>
+
+            <div class="d-flex align-center gap-2">
+                <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                               OnClick="PreviousWeek"
+                               Variant="Variant.Outlined" />
+
+                <MudButton Variant="Variant.Outlined"
+                           OnClick="GoToToday"
+                           Disabled="@IsCurrentWeek()">
+                    Today
+                </MudButton>
+
+                <MudIconButton Icon="@Icons.Material.Filled.ChevronRight"
+                               OnClick="NextWeek"
+                               Variant="Variant.Outlined" />
+            </div>
         </div>
     </div>
 

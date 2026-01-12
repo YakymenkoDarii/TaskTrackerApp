@@ -12,5 +12,9 @@ public interface IUnitOfWork : IDisposable
 
     IUserRepository UserRepository { get; }
 
+    IBoardMembersRepository BoardMembersRepository { get; }
+
+    IBoardInvitationsRepository BoardInvitationsRepository { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

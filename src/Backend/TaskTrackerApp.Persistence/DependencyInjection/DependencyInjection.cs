@@ -21,7 +21,6 @@ public static class DependencyInjection
         services.AddScoped<TaskTrackerDbContext>(p =>
             p.GetRequiredService<IDbContextFactory<TaskTrackerDbContext>>().CreateDbContext());
 
-        services.AddScoped<ICardRepository, CardRepository>();
         services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 

@@ -11,10 +11,16 @@ public class TaskTrackerDbContext : DbContext
     }
 
     public DbSet<User> Users { get; set; }
+
     public DbSet<Board> Boards { get; set; }
+
     public DbSet<BoardMember> BoardMembers { get; set; }
+
     public DbSet<Column> Columns { get; set; }
+
     public DbSet<Card> Cards { get; set; }
+
+    public DbSet<BoardInvitation> BoardInvitations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -88,5 +94,9 @@ public class TaskTrackerDbContext : DbContext
                   .HasForeignKey(bm => bm.UserId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<BoardInvitation>()
+        .Property(b => b.Role)
+        .HasConversion<string>();
     }
 }
