@@ -9,7 +9,7 @@
                              Label="Email address or name"
                              @bind-Value="SelectedUser"
                              SearchFunc="@SearchUsers"
-                             ToStringFunc="@(u => u?.DisplayName ?? u?.Email)"
+                             ToStringFunc=@(u => u?.Email)
                              DebounceInterval="500"
                              AdornmentIcon="@Icons.Material.Filled.Search"
                              Placeholder="Type to search..."
