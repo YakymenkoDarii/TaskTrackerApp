@@ -22,11 +22,11 @@ public class UsersService : IUsersService
         _usersApi = usersApi;
     }
 
-    public async Task<Result<IEnumerable<UserSummaryDto>>> SearchUsersAsync(string searchTerm, CancellationToken cancellationToken)
+    public async Task<Result<IEnumerable<UserSummaryDto>>> SearchUsersAsync(string searchTerm, CancellationToken token, int? excludeBoardId = null)
     {
         try
         {
-            var response = await _usersApi.SearchUsersAsync(searchTerm, cancellationToken);
+            var response = await _usersApi.SearchUsersAsync(searchTerm, excludeBoardId, token);
 
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {

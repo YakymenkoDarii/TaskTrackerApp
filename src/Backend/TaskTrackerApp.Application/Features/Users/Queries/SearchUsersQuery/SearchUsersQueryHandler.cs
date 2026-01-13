@@ -28,7 +28,7 @@ public class SearchUsersQueryHandler : IRequestHandler<SearchUsersQuery, Result<
 
         using var uow = _uowFactory.Create();
 
-        var users = await uow.UserRepository.SearchAsync(request.SearchTerm);
+        var users = await uow.UserRepository.SearchAsync(request.SearchTerm, request.ExcludeBoard);
 
         var userDtos = users.Select(u => new UserSummaryDto
         {

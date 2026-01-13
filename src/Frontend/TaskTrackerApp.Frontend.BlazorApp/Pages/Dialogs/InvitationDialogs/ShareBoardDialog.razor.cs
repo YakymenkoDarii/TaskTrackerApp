@@ -57,7 +57,7 @@ public partial class ShareBoardDialog
             return Enumerable.Empty<UserSummaryDto>();
         }
 
-        var result = await UsersService.SearchUsersAsync(value, token);
+        var result = await UsersService.SearchUsersAsync(value, token, BoardId);
 
         if (result.IsSuccess)
         {

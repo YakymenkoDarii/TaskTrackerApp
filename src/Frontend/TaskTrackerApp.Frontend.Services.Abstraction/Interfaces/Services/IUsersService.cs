@@ -10,5 +10,5 @@ namespace TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 public interface IUsersService
 {
-    Task<Result<IEnumerable<UserSummaryDto>>> SearchUsersAsync(string searchTerm, CancellationToken cancellationToken);
+    Task<Result<IEnumerable<UserSummaryDto>>> SearchUsersAsync(string searchTerm, CancellationToken token, int? excludeBoardId = null);
 }
