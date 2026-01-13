@@ -51,6 +51,45 @@
                 <MudItem xs=12
                          sm=3>
 
+                    <MudText Typo=@Typo.caption Class="text-uppercase fw-bold text-secondary mb-2 d-block">
+                        Assignee
+                    </MudText>
+
+                    <MudSelect T="int?"
+                               @bind-Value="@_assigneeId"
+                               Label="@(_assigneeId == null ? "Unassigned" : "")"
+                               Variant="Variant.Outlined"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Class="mb-4"
+                               ToStringFunc="@(id => _boardMembers.FirstOrDefault(m => m.UserId == id)?.Name)">
+
+                        <MudSelectItem T="int?" Value="null">
+                            <div class="d-flex align-center gap-2">
+                                <MudIcon Icon="@Icons.Material.Outlined.PersonOff" Size="Size.Small" />
+                                <MudText>Unassigned</MudText>
+                            </div>
+                        </MudSelectItem>
+
+                        @foreach (var member in _boardMembers)
+                        {
+                            <MudSelectItem T="int?" Value="@member.UserId">
+                                <div class="d-flex align-center gap-2">
+                                    <MudAvatar Size="Size.Small" Color="Color.Primary">
+                                        @if (!string.IsNullOrEmpty(member.AvatarUrl))
+                                        {
+                                            <MudImage Src="@member.AvatarUrl" />
+                                        }
+                                        else
+                                        {
+                                            @(member.Name?.FirstOrDefault() ?? '?')
+                                        }
+                                    </MudAvatar>
+                                    <MudText>@member.Name</MudText>
+                                </div>
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+
                     <MudText Typo=@Typo.caption
                              Class="text-uppercase fw-bold text-secondary mb-2 d-block">
                         Add to card

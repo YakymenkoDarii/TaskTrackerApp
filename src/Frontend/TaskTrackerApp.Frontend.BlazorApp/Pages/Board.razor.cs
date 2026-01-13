@@ -6,6 +6,7 @@ using MudBlazor;
 using System.Security.Claims;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.ColumnDialogs;
+using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.InvitationDialogs;
 using TaskTrackerApp.Frontend.Domain;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
@@ -402,5 +403,21 @@ public partial class Board
         if (recent.Count > 5) recent = recent.Take(5).ToList();
 
         await LocalStorage.SetItemAsync(key, recent);
+    }
+
+    private void OpenShareDialog()
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("BoardId", BoardId);
+
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            Position = DialogPosition.Center
+        };
+
+        DialogService.ShowAsync<ShareBoardDialog>("Invite Members", parameters, options);
     }
 }

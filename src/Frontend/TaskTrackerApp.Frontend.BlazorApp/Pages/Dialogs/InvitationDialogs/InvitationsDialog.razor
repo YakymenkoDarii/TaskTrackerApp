@@ -1,0 +1,73 @@
+﻿@using TaskTrackerApp.Frontend.Domain.DTOs.BoardInvitations
+
+<MudDialog>
+    <DialogContent>
+        @if (_isLoading)
+        {
+            <div class="d-flex justify-center my-4">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            </div>
+        }
+        else if (!_invitations.Any())
+        {
+            <MudAlert Severity="Severity.Info" Class="my-2" NoIcon="false">
+                You have no pending invitations.
+            </MudAlert>
+        }
+        else
+        {
+            <MudList T=@MyInvitationDto Clickable="false">
+                @foreach (var invite in _invitations)
+                {
+                    <MudListItem T=@MyInvitationDto DisableRipple="true">
+                        <div class="d-flex align-center justify-space-between w-100 gap-4">
+                            @* 1. Sender & Board Info *@
+                            <div class="d-flex align-center gap-3 overflow-hidden">
+                                <MudAvatar Color="Color.Primary" Size="Size.Medium">
+                                    @if(!string.IsNullOrEmpty(invite.SenderAvatarUrl))
+                                    {
+                                        <MudImage Src="@invite.SenderAvatarUrl"/>
+                                    }
+                                    else
+                                    {
+                                        @(invite.BoardTitle?.FirstOrDefault() ?? '?')
+                                    }
+                                </MudAvatar>
+                                
+                                <div class="d-flex flex-column">
+                                    <MudText Typo="Typo.subtitle2" Class="fw-bold">@invite.BoardTitle</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                        Invited by @(invite.SenderName ?? "Unknown")
+                                    </MudText>
+                                </div>
+                            </div>
+
+                            @* 2. Action Buttons *@
+                            <div class="d-flex gap-2">
+                                <MudTooltip Text="Accept">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Check"
+                                                   Color="Color.Success"
+                                                   Variant="Variant.Filled"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => Respond(invite.Id, true))" />
+                                </MudTooltip>
+
+                                <MudTooltip Text="Decline">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                                   Color="Color.Error"
+                                                   Variant="Variant.Outlined"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => Respond(invite.Id, false))" />
+                                </MudTooltip>
+                            </div>
+                        </div>
+                    </MudListItem>
+                    <MudDivider />
+                }
+            </MudList>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Close</MudButton>
+    </DialogActions>
+</MudDialog>

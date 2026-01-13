@@ -18,16 +18,17 @@ public class GetAllBoardsQueryHandler : IRequestHandler<GetAllBoardsQuery, Resul
     {
         using var uow = _unitOfWorkFactory.Create();
 
-        var boards = await uow.BoardRepository.GetAllWithOwnerAsync(request.UserId);
+        var memberships = await uow.BoardMembersRepository.GetByUserIdAsync(request.UserId);
 
-        var boardDtos = boards.Select(b => new BoardDto
+        var boardDtos = memberships.Select(m => new BoardDto
         {
-            Id = b.Id,
-            Title = b.Title,
-            Description = b.Description,
-            LastTimeOpenned = b.LastTimeOpenned,
+            Id = m.Board.Id,
+            Title = m.Board.Title,
+            Description = m.Board.Description,
+            // You might map the user's role here too if needed
+            // Role = m.Role.ToString()
         });
 
-        return boardDtos.ToList();
+        return Result<IEnumerable<BoardDto>>.Success(boardDtos);
     }
 }

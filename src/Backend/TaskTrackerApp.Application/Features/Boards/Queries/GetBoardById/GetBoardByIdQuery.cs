@@ -8,8 +8,5 @@ public class GetBoardByIdQuery : IRequest<Result<BoardDto>>
 {
     public int Id { get; set; }
 
-    public GetBoardByIdQuery(int id)
-    {
-        Id = id;
-    }
+    public int CurrentUserId { get; set; }
 }

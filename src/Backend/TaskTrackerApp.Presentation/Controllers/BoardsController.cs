@@ -42,13 +42,31 @@ public class BoardsController : ControllerBase
     [HttpGet("{boardId}")]
     public async Task<IActionResult> GetByIdAsync(int boardId)
     {
-        var query = new GetBoardByIdQuery(boardId);
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized();
+        }
+        var query = new GetBoardByIdQuery
+        {
+            Id = boardId,
+            CurrentUserId = userId
+        };
 
         var result = await _mediator.Send(query);
 
-        return result is null
-            ? NotFound()
-            : Ok(result);
+        if (!result.IsSuccess)
+        {
+            if (result.Error?.Code == "Unauthorized")
+                return StatusCode(403, result.Error);
+
+            if (result.Error?.Code == "NotFound")
+                return NotFound(result.Error);
+
+            return BadRequest(result.Error);
+        }
+
+        return Ok(result);
     }
 
     [HttpPost]

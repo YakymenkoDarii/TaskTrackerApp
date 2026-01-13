@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TaskTrackerApp.Application.Features.Users.Commands.CreateUsers;
 using TaskTrackerApp.Application.Features.Users.Commands.DeleteUsers;
 using TaskTrackerApp.Application.Features.Users.Commands.UpdateUsers;
+using TaskTrackerApp.Application.Features.Users.Queries.SearchUsersQuery;
 using TaskTrackerApp.Domain.DTOs.User;
 
 namespace TaskTrackerApp.Presentation.Controllers;
@@ -63,5 +64,18 @@ public class UsersController : ControllerBase
         await _mediator.Send(command);
 
         return NoContent();
+    }
+
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchAsync([FromQuery] string term)
+    {
+        var query = new SearchUsersQuery
+        {
+            SearchTerm = term
+        };
+
+        var result = await _mediator.Send(query);
+
+        return Ok(result);
     }
 }
