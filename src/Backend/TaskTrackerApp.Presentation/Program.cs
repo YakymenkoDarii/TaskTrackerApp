@@ -19,6 +19,8 @@ builder.Services
     .AddPersistence(builder.Configuration)
     .AddInfrastructure();
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

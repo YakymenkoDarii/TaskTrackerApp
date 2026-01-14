@@ -1,9 +1,4 @@
 ﻿using Refit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TaskTrackerApp.Frontend.Domain.DTOs.Users;
 using TaskTrackerApp.Frontend.Domain.Results;
 
