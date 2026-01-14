@@ -3,18 +3,17 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 
-<MudDialog Class="card-details-dialog"
-           DisableSidePadding=@true>
+<MudDialog Class="card-details-dialog" DisableSidePadding=@true>
     <DialogContent>
-        <MudContainer MaxWidth=@MaxWidth.False
-                      Class="pa-4">
+        <MudContainer MaxWidth=@MaxWidth.False Class="pa-4">
             <MudGrid>
-                <MudItem xs=12
-                         sm=9>
+                <MudItem xs=12 sm=9>
                     <div class="d-flex align-center gap-2 mb-4">
 
                         <MudTooltip Text="@(isCompleted ? "Mark incomplete" : "Mark complete")">
-                            <MudCheckBox @bind-Value=@isCompleted
+                            <MudCheckBox T="bool"
+                                         Value="@isCompleted"
+                                         ValueChanged="@OnCompletionToggled"
                                          Color=@Color.Success
                                          CheckedIcon=@Icons.Material.Filled.CheckCircle
                                          UncheckedIcon=@Icons.Material.Outlined.Circle
@@ -22,8 +21,7 @@
                                          Class="mr-2" />
                         </MudTooltip>
 
-                        <MudIcon Icon=@Icons.Material.Filled.WebAsset
-                                 Class="mud-text-secondary" />
+                        <MudIcon Icon=@Icons.Material.Filled.WebAsset Class="mud-text-secondary" />
 
                         <MudTextField @bind-Value=@title
                                       T=@string
@@ -31,12 +29,12 @@
                                       Typo=@Typo.h5
                                       Class=@($"fw-bold {(isCompleted ? "strikethrough-text" : "")}")
                                       DisableUnderLine=@true
-                                      Style="font-weight: 700;" />
+                                      Style="font-weight: 700;"
+                                      ReadOnly="@IsReadOnly" />
                     </div>
 
                     <div class="d-flex align-center gap-2 mb-2">
-                        <MudIcon Icon=@Icons.Material.Filled.Description
-                                 Class="mud-text-secondary" />
+                        <MudIcon Icon=@Icons.Material.Filled.Description Class="mud-text-secondary" />
                         <MudText Typo=@Typo.h6>Description</MudText>
                     </div>
 
@@ -44,12 +42,12 @@
                                   T=@string
                                   Variant=@Variant.Outlined
                                   Lines=8
-                                  Placeholder="Add a more detailed description..."
-                                  Class="mb-4" />
+                                  Placeholder="@(IsReadOnly ? "No description provided." : "Add a more detailed description...")"
+                                  Class="mb-4"
+                                  ReadOnly="@IsReadOnly" />
                 </MudItem>
 
-                <MudItem xs=12
-                         sm=3>
+                <MudItem xs=12 sm=3>
 
                     <MudText Typo=@Typo.caption Class="text-uppercase fw-bold text-secondary mb-2 d-block">
                         Assignee
@@ -61,7 +59,8 @@
                                Variant="Variant.Outlined"
                                AnchorOrigin="Origin.BottomCenter"
                                Class="mb-4"
-                               ToStringFunc="@(id => _boardMembers.FirstOrDefault(m => m.UserId == id)?.Name)">
+                               ToStringFunc="@(id => _boardMembers.FirstOrDefault(m => m.UserId == id)?.Name)"
+                               Disabled="@IsReadOnly">
 
                         <MudSelectItem T="int?" Value="null">
                             <div class="d-flex align-center gap-2">
@@ -90,8 +89,7 @@
                         }
                     </MudSelect>
 
-                    <MudText Typo=@Typo.caption
-                             Class="text-uppercase fw-bold text-secondary mb-2 d-block">
+                    <MudText Typo=@Typo.caption Class="text-uppercase fw-bold text-secondary mb-2 d-block">
                         Add to card
                     </MudText>
 
@@ -99,20 +97,23 @@
                                    @bind-Date=@dueDate
                                    Color=@Color.Primary
                                    Variant=@Variant.Outlined
-                                   Class="mb-3" />
+                                   Class="mb-3"
+                                   ReadOnly="@IsReadOnly" />
 
-                    <MudText Typo=@Typo.caption
-                             Class="text-uppercase fw-bold text-secondary mb-2 d-block mt-4">
+                    <MudText Typo=@Typo.caption Class="text-uppercase fw-bold text-secondary mb-2 d-block mt-4">
                         Actions
                     </MudText>
 
-                    <MudButton Variant=@Variant.Filled
-                               Color=@Color.Primary
-                               FullWidth=@true
-                               OnClick=@SaveChanges
-                               Class="mb-2">
-                        Save
-                    </MudButton>
+                    @if (!IsReadOnly)
+                    {
+                        <MudButton Variant=@Variant.Filled
+                                   Color=@Color.Primary
+                                   FullWidth=@true
+                                   OnClick=@SaveChanges
+                                   Class="mb-2">
+                            Save
+                        </MudButton>
+                    }
 
                     <MudButton Variant=@Variant.Outlined
                                Color=@Color.Secondary
@@ -121,13 +122,16 @@
                         Close
                     </MudButton>
 
-                    <MudButton Variant=@Variant.Outlined
-                               Color=@Color.Error
-                               FullWidth=@true
-                               OnClick=@DeleteCard
-                               Class="mt-2">
-                        Delete Card
-                    </MudButton>
+                    @if (!IsReadOnly)
+                    {
+                        <MudButton Variant=@Variant.Outlined
+                                   Color=@Color.Error
+                                   FullWidth=@true
+                                   OnClick=@DeleteCard
+                                   Class="mt-2">
+                            Delete Card
+                        </MudButton>
+                    }
                 </MudItem>
             </MudGrid>
         </MudContainer>
@@ -138,6 +142,7 @@
     .card-details-dialog .mud-dialog-title {
         display: none;
     }
+
     .strikethrough-text input {
         text-decoration: line-through;
         color: gray;

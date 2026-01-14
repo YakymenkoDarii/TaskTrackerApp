@@ -26,6 +26,8 @@ public partial class CardDetailsDialog
 
     [Parameter] public int BoardId { get; set; }
 
+    [Parameter] public bool IsReadOnly { get; set; }
+
     private string title = string.Empty;
     private string description = string.Empty;
     private DateTime? dueDate;
@@ -62,6 +64,8 @@ public partial class CardDetailsDialog
 
     private async Task SaveChanges()
     {
+        if (IsReadOnly) return;
+
         if (string.IsNullOrWhiteSpace(title))
         {
             Snackbar.Add("Title is required", Severity.Warning);
@@ -106,6 +110,8 @@ public partial class CardDetailsDialog
 
     private async Task DeleteCard()
     {
+        if (IsReadOnly) return;
+
         bool? result = await DialogService.ShowMessageBox(
             "Delete Card",
             "Are you sure you want to delete this card? This cannot be undone.",
@@ -124,6 +130,42 @@ public partial class CardDetailsDialog
         else
         {
             Snackbar.Add(deleteResult.Error.Code, Severity.Error);
+        }
+    }
+
+    private async Task OnCompletionToggled(bool newValue)
+    {
+        isCompleted = newValue;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userIdStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int.TryParse(userIdStr, out int userId);
+
+        var updateDto = new UpdateCardDto
+        {
+            Id = Card.Id,
+            Title = title,
+            Description = description,
+            DueDate = dueDate,
+            ColumnId = Card.ColumnId,
+            BoardId = BoardId,
+            IsCompleted = isCompleted,
+            UpdatedById = userId,
+            AssigneeId = _assigneeId,
+            Position = Card.Position,
+        };
+
+        var result = await CardsService.UpdateAsync(Card.Id, updateDto);
+
+        if (result.IsSuccess)
+        {
+            Snackbar.Add(isCompleted ? "Marked as complete" : "Marked as incomplete", Severity.Success);
+            Card.IsCompleted = isCompleted;
+        }
+        else
+        {
+            isCompleted = !newValue;
+            Snackbar.Add("Failed to update status", Severity.Error);
         }
     }
 }

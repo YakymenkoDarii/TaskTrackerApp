@@ -3,6 +3,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Entities;
 using TaskTrackerApp.Domain.Enums;
 using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.Errors.BoardMember;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.BoardInvitations.Commands.SendBoardInvitation;
@@ -19,6 +20,14 @@ public class SendBoardInvitationCommandHandler : IRequestHandler<SendBoardInvita
     public async Task<Result<int>> Handle(SendBoardInvitationCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();
+
+        var boardMembers = await uow.BoardMembersRepository.GetByBoardId(request.BoardId);
+        var senderMember = boardMembers.FirstOrDefault(m => m.UserId == request.SenderId);
+
+        if (senderMember == null || senderMember.Role != BoardRole.Admin)
+        {
+            return Result<int>.Failure(BoardMemberErrors.NotAuthorized);
+        }
 
         var existingUser = await uow.UserRepository.GetByEmailAsync(request.InviteeEmail);
 
