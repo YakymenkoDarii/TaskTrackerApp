@@ -29,14 +29,23 @@ public class UserRepository : Repository<User, int>, IUserRepository
             .SingleOrDefaultAsync(u => u.RefreshToken == refreshToken);
     }
 
-    public async Task<IEnumerable<User>> SearchAsync(string term)
+    public async Task<IEnumerable<User>> SearchAsync(string term, int? excludeBoardId = null)
     {
-        return await _dbSet
-            .AsNoTracking()
-            .Where(u =>
-                u.DisplayName.Contains(term) ||
-                u.Tag.Contains(term) ||
-                u.Email.Contains(term))
+        var query = _dbSet.AsQueryable();
+
+        string lowerTerm = term.ToLower();
+
+        query = query.Where(u => u.DisplayName.ToLower().Contains(lowerTerm) ||
+                                 u.Email.ToLower().Contains(lowerTerm) ||
+                                 u.Tag.ToLower().Contains(lowerTerm));
+
+        if (excludeBoardId.HasValue)
+        {
+            query = query.Where(u => !u.BoardMemberships.Any(m => m.BoardId == excludeBoardId.Value));
+        }
+
+        return await query
+            .Take(10)
             .ToListAsync();
     }
 }

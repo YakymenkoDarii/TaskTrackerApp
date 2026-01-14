@@ -67,11 +67,12 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("search")]
-    public async Task<IActionResult> SearchAsync([FromQuery] string term)
+    public async Task<IActionResult> SearchAsync([FromQuery] string term, [FromQuery] int? excludeBoardId)
     {
         var query = new SearchUsersQuery
         {
-            SearchTerm = term
+            SearchTerm = term,
+            ExcludeBoard = excludeBoardId
         };
 
         var result = await _mediator.Send(query);
