@@ -11,4 +11,8 @@ public interface ICardRepository : IRepository<Card, int>
     Task UpdateCardStatus(int id, bool isComplete);
 
     Task<IEnumerable<Card>> GetUpcomingCardsAsync(int userId, DateTime start, DateTime end, bool includeOverdue);
+
+    Task<IEnumerable<Card>> GetCardsByAsigneeIdAsync(int userId);
+
+    IQueryable<Card> GetQueryable();
 }

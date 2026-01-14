@@ -19,4 +19,6 @@ public class CardDto
     public int ColumnId { get; set; }
 
     public int Position { get; set; }
+
+    public int BoardId { get; set; }
 }

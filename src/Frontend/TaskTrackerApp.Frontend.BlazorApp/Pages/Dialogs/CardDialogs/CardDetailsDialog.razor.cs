@@ -36,7 +36,7 @@ public partial class CardDetailsDialog
     private int? _assigneeId;
     private List<BoardMemberDto> _boardMembers = new();
 
-    protected override async void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (Card != null)
         {
@@ -44,7 +44,6 @@ public partial class CardDetailsDialog
             description = Card.Description;
             dueDate = Card.DueDate;
             isCompleted = Card.IsCompleted;
-
             _assigneeId = Card.AssigneeId;
         }
 
@@ -57,6 +56,7 @@ public partial class CardDetailsDialog
         if (result.IsSuccess)
         {
             _boardMembers = result.Value.ToList();
+            StateHasChanged();
         }
     }
 

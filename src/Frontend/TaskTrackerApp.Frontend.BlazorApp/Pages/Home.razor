@@ -17,6 +17,13 @@
         </div>
 
         <div class="d-flex align-center gap-4">
+
+            <div style="width: 250px;">
+                <TaskSearch AssigneeId="@_currentUserId"
+                            Placeholder="Search my tasks..."
+                            OnTaskChanged=@LoadDataAsync />
+            </div>
+
             <MudBadge Content="@_pendingInvitesCount"
                       Color="Color.Error"
                       Overlap="true"

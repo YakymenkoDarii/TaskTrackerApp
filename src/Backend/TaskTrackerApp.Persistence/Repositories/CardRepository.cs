@@ -51,4 +51,21 @@ public class CardRepository : Repository<Card, int>, ICardRepository
 
         return await query.ToListAsync();
     }
+
+    public async Task<IEnumerable<Card>> GetCardsByAsigneeIdAsync(int userId)
+    {
+        var query = _dbSet.AsQueryable();
+
+        query = query.Where(c => c.AssigneeId == userId);
+
+        return await query.ToListAsync();
+    }
+
+    public IQueryable<Card> GetQueryable()
+    {
+        return _dbSet
+            .Include(c => c.Column)
+            .AsNoTracking()
+            .AsQueryable();
+    }
 }

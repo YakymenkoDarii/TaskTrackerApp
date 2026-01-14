@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
+using System.Security.Claims;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.InvitationDialogs;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
@@ -16,6 +18,8 @@ public partial class Home
 
     [Inject] private IBoardInvitationsService InvitationService { get; set; }
 
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+
     private DateTime _anchorDate = DateTime.Today;
     private DateTime _weekStart;
     private DateTime _weekEnd;
@@ -26,9 +30,17 @@ public partial class Home
     private List<UpcomingCardDto> _overdueTasks = new();
 
     private int _pendingInvitesCount = 0;
+    private int _currentUserId;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity.IsAuthenticated)
+        {
+            int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out _currentUserId);
+        }
+
         CalculateWeekRange();
         await Task.WhenAll(LoadDataAsync(), UpdateInvitationCount());
     }

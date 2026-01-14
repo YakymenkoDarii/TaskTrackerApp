@@ -8,6 +8,7 @@ using TaskTrackerApp.Application.Features.Cards.Commands.UpdateCards;
 using TaskTrackerApp.Application.Features.Cards.Commands.UpdateStatusCards;
 using TaskTrackerApp.Application.Features.Cards.Queries.GetCardsByColumnId;
 using TaskTrackerApp.Application.Features.Cards.Queries.GetUpcomingCardsByDate;
+using TaskTrackerApp.Application.Features.Cards.Queries.SearchCards;
 using TaskTrackerApp.Domain.DTOs.Card;
 
 namespace TaskTrackerApp.Presentation.Controllers;
@@ -129,5 +130,28 @@ public class CardsController : ControllerBase
         var result = await _mediator.Send(command);
 
         return Ok(result);
+    }
+
+    [HttpGet("search")]
+    public async Task<IActionResult> SearchCard(
+        [FromQuery] string query,
+        [FromQuery] int? boardId,
+        [FromQuery] int? assigneeId)
+    {
+        var request = new SearchCardsQuery
+        {
+            SearchTerm = query,
+            BoardId = boardId,
+            AssigneeId = assigneeId
+        };
+
+        var result = await _mediator.Send(request);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result);
+        }
+
+        return BadRequest(result);
     }
 }
