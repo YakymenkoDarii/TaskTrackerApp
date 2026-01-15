@@ -1,0 +1,2 @@
+﻿ALTER TABLE Cards
+ADD "Priority" INT NOT NULL DEFAULT 0;

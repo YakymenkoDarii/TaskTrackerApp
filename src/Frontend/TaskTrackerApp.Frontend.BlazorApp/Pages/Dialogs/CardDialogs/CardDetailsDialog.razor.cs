@@ -4,6 +4,7 @@ using MudBlazor;
 using System.Security.Claims;
 using TaskTrackerApp.Frontend.Domain.DTOs.BoardMembers;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
+using TaskTrackerApp.Frontend.Domain.Enums;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
@@ -32,6 +33,7 @@ public partial class CardDetailsDialog
     private string description = string.Empty;
     private DateTime? dueDate;
     private bool isCompleted;
+    private CardPriority _priority = CardPriority.Low;
 
     private int? _assigneeId;
     private List<BoardMemberDto> _boardMembers = new();
@@ -45,6 +47,7 @@ public partial class CardDetailsDialog
             dueDate = Card.DueDate;
             isCompleted = Card.IsCompleted;
             _assigneeId = Card.AssigneeId;
+            _priority = Card.Priority;
         }
 
         await LoadBoardMembers();
@@ -93,6 +96,7 @@ public partial class CardDetailsDialog
             UpdatedById = userId,
             AssigneeId = _assigneeId,
             Position = Card.Position,
+            Priority = _priority,
         };
 
         var result = await CardsService.UpdateAsync(Card.Id, updateDto);
@@ -153,6 +157,7 @@ public partial class CardDetailsDialog
             UpdatedById = userId,
             AssigneeId = _assigneeId,
             Position = Card.Position,
+            Priority = _priority,
         };
 
         var result = await CardsService.UpdateAsync(Card.Id, updateDto);
@@ -168,4 +173,12 @@ public partial class CardDetailsDialog
             Snackbar.Add("Failed to update status", Severity.Error);
         }
     }
+
+    private Color GetPriorityColor(CardPriority p) => p switch
+    {
+        CardPriority.Critical => Color.Error,
+        CardPriority.High => Color.Warning,
+        CardPriority.Medium => Color.Info,
+        _ => Color.Default
+    };
 }

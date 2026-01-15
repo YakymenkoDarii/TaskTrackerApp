@@ -2,6 +2,7 @@
 @using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
+@using TaskTrackerApp.Frontend.Domain.Enums
 
 <MudDialog Class="card-details-dialog" DisableSidePadding=@true>
     <DialogContent>
@@ -50,6 +51,32 @@
                 <MudItem xs=12 sm=3>
 
                     <MudText Typo=@Typo.caption Class="text-uppercase fw-bold text-secondary mb-2 d-block">
+                        Priority
+                    </MudText>
+
+                    <MudSelect T="CardPriority"
+                               @bind-Value="_priority"
+                               Label="Select Priority"
+                               Variant="Variant.Outlined"
+                               AnchorOrigin="Origin.BottomCenter"
+                               Class="mb-4"
+                               Disabled="@IsReadOnly"
+                               AdornmentColor="@GetPriorityColor(_priority)">
+
+                        @foreach (CardPriority p in Enum.GetValues(typeof(CardPriority)))
+                        {
+                            <MudSelectItem Value="@p">
+                                <div class="d-flex align-center gap-2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Flag"
+                                             Color="@GetPriorityColor(p)"
+                                             Size="Size.Small" />
+                                    <MudText>@p.ToString()</MudText>
+                                </div>
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudText Typo=@Typo.caption Class="text-uppercase fw-bold text-secondary mb-2 d-block">
                         Assignee
                     </MudText>
 
@@ -74,14 +101,7 @@
                             <MudSelectItem T="int?" Value="@member.UserId">
                                 <div class="d-flex align-center gap-2">
                                     <MudAvatar Size="Size.Small" Color="Color.Primary">
-                                        @if (!string.IsNullOrEmpty(member.AvatarUrl))
-                                        {
-                                            <MudImage Src="@member.AvatarUrl" />
-                                        }
-                                        else
-                                        {
-                                            @(member.Name?.FirstOrDefault() ?? '?')
-                                        }
+                                        @(member.Name?.FirstOrDefault() ?? '?')
                                     </MudAvatar>
                                     <MudText>@member.Name</MudText>
                                 </div>

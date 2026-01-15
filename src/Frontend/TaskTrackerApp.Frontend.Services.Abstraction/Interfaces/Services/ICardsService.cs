@@ -16,5 +16,6 @@ public interface ICardsService
     Task<Result> UpdateStatus(int id, bool isCompleted);
 
     Task<Result<IEnumerable<UpcomingCardDto>>> GetUpcoming(DateTime weekStart, DateTime weekEnd, bool includeOverdue);
+
     Task<Result<IEnumerable<CardDto>>> SearchCardsAsync(string query, int? boardId = null, int? assigneeId = null);
 }

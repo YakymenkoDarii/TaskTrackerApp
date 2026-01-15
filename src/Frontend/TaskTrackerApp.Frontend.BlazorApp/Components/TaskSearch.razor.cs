@@ -2,6 +2,7 @@
 using MudBlazor;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
+using TaskTrackerApp.Frontend.Domain.Enums;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Components;
@@ -69,5 +70,16 @@ public partial class TaskSearch
         {
             await OnTaskChanged.InvokeAsync();
         }
+    }
+
+    private Color GetPriorityColor(CardPriority priority)
+    {
+        return priority switch
+        {
+            CardPriority.Critical => Color.Error,
+            CardPriority.High => Color.Warning,
+            CardPriority.Medium => Color.Info,
+            _ => Color.Default
+        };
     }
 }
