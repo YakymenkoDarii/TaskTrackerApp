@@ -23,4 +23,7 @@ public interface ICardsApi
 
     [Put("/api/Cards/status/{id}")]
     Task<IApiResponse<Result>> UpdateStatus(int id, bool isCompleted);
+
+    [Get("/api/Cards/search")]
+    Task<ApiResponse<Result<IEnumerable<CardDto>>>> SearchAsync([Query] string query, [Query] int? boardId, [Query] int? assigneeId);
 }

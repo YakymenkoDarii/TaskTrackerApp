@@ -1,0 +1,43 @@
+﻿@using TaskTrackerApp.Frontend.Domain.DTOs.Cards
+@using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
+@using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs
+
+
+
+<MudAutocomplete T="CardDto"
+                 Label="@Placeholder"
+                 Value="selectedCard"
+                 ValueChanged="OnCardSelected"
+                 SearchFunc="@SearchTasks"
+                 ToStringFunc="@(c => c?.Title)"
+                 AdornmentIcon="@Icons.Material.Filled.Search"
+                 Variant="Variant.Filled"
+                 Margin="Margin.Dense"
+                 Clearable="true"
+                 ResetValueOnEmptyText="true"
+                 CoerceText="false"
+                 DebounceInterval="500"
+                 Style="background-color: white; border-radius: var(--mud-default-borderradius);"
+                 Class="flex-grow-1">
+
+    <ItemTemplate Context="card">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="pa-2" Style="width: 100%">
+            <MudIcon Icon="@(card.IsCompleted? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.Circle)"
+                     Color="@(card.IsCompleted ? Color.Success : Color.Default)"
+                     Size="Size.Small" />
+            <MudStack Spacing="0" Class="flex-grow-1">
+                <MudText Typo="Typo.body2" Class="fw-bold">@card.Title</MudText>
+                @if (card.DueDate.HasValue)
+                {
+                    <div class="d-flex align-center gap-1">
+                        <MudIcon Icon="@Icons.Material.Filled.Event" Size="Size.Small" Style="font-size: 0.75rem; color: gray;" />
+                        <MudText Typo="Typo.caption" Color="@(card.DueDate < DateTime.Now && !card.IsCompleted ? Color.Error : Color.Secondary)">
+                            @card.DueDate.Value.ToString("MMM dd")
+                        </MudText>
+                    </div>
+                }
+            </MudStack>
+        </MudStack>
+    </ItemTemplate>
+
+</MudAutocomplete>

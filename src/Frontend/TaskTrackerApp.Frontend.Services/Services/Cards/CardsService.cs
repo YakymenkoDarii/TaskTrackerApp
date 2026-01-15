@@ -109,4 +109,21 @@ public class CardsService : ICardsService
             return Result.Failure(new Error("UnknownError", ex.Message));
         }
     }
+
+    public async Task<Result<IEnumerable<CardDto>>> SearchCardsAsync(string query, int? boardId = null, int? assigneeId = null)
+    {
+        try
+        {
+            var response = await _cardsApi.SearchAsync(query, boardId, assigneeId);
+            return response.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result<IEnumerable<CardDto>>.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result<IEnumerable<CardDto>>.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
 }
