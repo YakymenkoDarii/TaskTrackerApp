@@ -11,6 +11,7 @@ using TaskTrackerApp.Frontend.Domain;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Columns;
+using TaskTrackerApp.Frontend.Domain.Enums;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages;
@@ -27,6 +28,8 @@ public partial class Board
     [Inject] private IColumnsService ColumnsService { get; set; }
 
     [Inject] private ICardsService CardsService { get; set; }
+
+    [Inject] private IBoardMembersService BoardMembersService { get; set; }
 
     [Inject] private ISnackbar Snackbar { get; set; }
 
@@ -51,6 +54,11 @@ public partial class Board
 
     private MudDropContainer<CardDto> _cardDropContainer;
 
+    private BoardRole _currentUserRole = BoardRole.Viewer;
+    private bool IsAdmin => _currentUserRole == BoardRole.Admin;
+
+    private bool CanEditContent => _currentUserRole == BoardRole.Admin || _currentUserRole == BoardRole.Member;
+
     protected override async Task OnInitializedAsync()
     {
         await AddToRecentBoardsAsync(BoardId);
@@ -73,11 +81,12 @@ public partial class Board
             if (!boardResult.IsSuccess) return;
             board = boardResult.Value;
 
+            await DetermineUserRole();
+
             var columnsResult = await ColumnsService.GetByBoardIdAsync(BoardId);
             if (columnsResult.IsSuccess && columnsResult.Value != null)
             {
                 columns = columnsResult.Value.OrderBy(c => c.Position).ToList();
-
                 _allCards.Clear();
                 foreach (var col in columns)
                 {
@@ -99,8 +108,29 @@ public partial class Board
         }
     }
 
+    private async Task DetermineUserRole()
+    {
+        var userId = await GetUserId();
+        var membersResult = await BoardMembersService.GetMembersAsync(BoardId);
+
+        if (membersResult.IsSuccess)
+        {
+            var me = membersResult.Value.FirstOrDefault(m => m.UserId == userId);
+            if (me != null && Enum.TryParse<BoardRole>(me.Role, true, out var role))
+            {
+                _currentUserRole = role;
+            }
+            else
+            {
+                _currentUserRole = BoardRole.Viewer;
+            }
+        }
+    }
+
     private async Task ColumnDropped(MudItemDropInfo<ColumnDto> dropItem)
     {
+        if (!CanEditContent) return;
+
         columns.Remove(dropItem.Item);
         columns.Insert(dropItem.IndexInZone, dropItem.Item);
 
@@ -133,6 +163,8 @@ public partial class Board
 
     private async Task CardDropped(MudItemDropInfo<CardDto> dropItem)
     {
+        if (!CanEditContent) return;
+
         dropItem.Item.ColumnId = int.Parse(dropItem.DropzoneIdentifier);
 
         int userId = 0;
@@ -168,6 +200,8 @@ public partial class Board
 
     private async Task HandleAddColumn()
     {
+        if (!CanEditContent) return;
+
         var dialog = await DialogService.ShowAsync<CreateColumnDialog>("Add List");
         var result = await dialog.Result;
 
@@ -200,6 +234,8 @@ public partial class Board
 
     private async Task HandleAddCard(int columnId)
     {
+        if (!CanEditContent) return;
+
         var dialog = await DialogService.ShowAsync<CreateColumnDialog>("Add Card");
         var result = await dialog.Result;
 
@@ -244,6 +280,8 @@ public partial class Board
 
     private async Task HandleDeleteColumn(int columnId)
     {
+        if (!CanEditContent) return;
+
         bool? confirm = await DialogService.ShowMessageBox(
             "Delete List",
             "Are you sure? All tasks in this list will be deleted.",
@@ -277,7 +315,8 @@ public partial class Board
         var parameters = new DialogParameters<CardDetailsDialog>
         {
             { x => x.Card, card },
-            { x => x.BoardId, BoardId }
+            { x => x.BoardId, BoardId },
+            { x => x.IsReadOnly, !CanEditContent }
         };
 
         var options = new DialogOptions
@@ -297,22 +336,22 @@ public partial class Board
             {
                 var index = _allCards.FindIndex(c => c.Id == updatedCard.Id);
                 if (index != -1) _allCards[index] = updatedCard;
-                else _allCards.Add(updatedCard);
 
                 _allCards = _allCards.OrderBy(c => c.Position).ToList();
             }
             else if (result.Data is string action && action == "Deleted")
             {
                 var itemToRemove = _allCards.FirstOrDefault(c => c.Id == card.Id);
-                if (itemToRemove != null)
-                {
-                    _allCards.Remove(itemToRemove);
-                }
+                if (itemToRemove != null) _allCards.Remove(itemToRemove);
             }
-
-            if (_cardDropContainer != null) _cardDropContainer.Refresh();
-            StateHasChanged();
         }
+
+        if (_cardDropContainer != null)
+        {
+            _cardDropContainer.Refresh();
+        }
+
+        StateHasChanged();
     }
 
     private async Task HandleToggleComplete(CardDto card)

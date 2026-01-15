@@ -5,15 +5,12 @@
 @using TaskTrackerApp.Frontend.Domain.DTOs.Cards
 @using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
 
-
 <PageTitle>@(board?.Title ?? "Loading...")</PageTitle>
 
 @if (isLoading)
 {
-    <MudContainer Class="d-flex justify-center align-center"
-                  Style="height: 80vh;">
-        <MudProgressCircular Color=@Color.Info
-                             Indeterminate=@true />
+    <MudContainer Class="d-flex justify-center align-center" Style="height: 80vh;">
+        <MudProgressCircular Color=@Color.Info Indeterminate=@true />
     </MudContainer>
 }
 else if (board == null)
@@ -25,42 +22,56 @@ else
     <div class="board-container d-flex flex-column h-100">
         <div class="board-header px-4 py-3 d-flex align-center justify-space-between flex-shrink-0">
             <div>
-                <EditableLabel @bind-Value=@board.Title
-                               OnCommit=@UpdateBoardDetails
-                               Typo=Typo.h5
-                               Style="color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); font-weight: bold;" />
+                @if (IsAdmin)
+                {
+                    <EditableLabel @bind-Value=@board.Title
+                                   OnCommit=@UpdateBoardDetails
+                                   Typo=Typo.h5
+                                   Style="color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); font-weight: bold;" />
 
-                <EditableLabel @bind-Value=@board.Description
-                               OnCommit=@UpdateBoardDetails
-                               Typo=Typo.body2
-                               Multiline=true
-                               Placeholder=@string.Empty
-                               Style="color: rgba(255, 255, 255, 0.9); text-shadow: 0px 0px 2px black;" />
+                    <EditableLabel @bind-Value=@board.Description
+                                   OnCommit=@UpdateBoardDetails
+                                   Typo=Typo.body2
+                                   Multiline=true
+                                   Placeholder=@string.Empty
+                                   Style="color: rgba(255, 255, 255, 0.9); text-shadow: 0px 0px 2px black;" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h5" Style="color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); font-weight: bold;">
+                        @board.Title
+                    </MudText>
+                    <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.9); text-shadow: 0px 0px 2px black;">
+                        @board.Description
+                    </MudText>
+                }
             </div>
 
             <div class="d-flex align-center">
+
                 <MudButton Variant="Variant.Filled"
-                           StartIcon="@Icons.Material.Filled.PersonAdd"
+                           StartIcon="@Icons.Material.Filled.PeopleAlt"
                            Color="Color.Secondary"
                            Class="mr-4 fw-bold"
                            OnClick="OpenShareDialog">
-                    Share
+                    Members
                 </MudButton>
 
-                <div class="d-flex align-center rounded pa-2"
-                     style="background-color: rgba(0,0,0,0.4);">
-                    <MudSwitch @bind-Value=@_isLayoutMode
-                               Color=@Color.Info
-                               Label="Edit Layout"
-                               Class="ml-2 text-white" />
-                </div>
+                @if (CanEditContent)
+                {
+                    <div class="d-flex align-center rounded pa-2" style="background-color: rgba(0,0,0,0.1);">
+                        <MudSwitch @bind-Value=@_isLayoutMode
+                                   Color=@Color.Info
+                                   Label="Edit Layout"
+                                   Class="ml-2 text-white" />
+                    </div>
+                }
             </div>
         </div>
 
-        <div class="flex-grow-1 overflow-hidden"
-             style="position:relative;">
+        <div class="flex-grow-1 overflow-hidden" style="position:relative;">
 
-            @if (_isLayoutMode)
+            @if (_isLayoutMode && CanEditContent)
             {
                 <MudDropContainer T=@ColumnDto
                                   @ref=@_columnDropContainer
@@ -72,7 +83,7 @@ else
                         <MudDropZone T=@ColumnDto
                                      Identifier="board-zone"
                                      Class="d-flex gap-4 h-100"
-                                     AllowReorder=@true />
+                                     AllowReorder="@CanEditContent" />
 
                         <div class="board-column px-4">
                             <MudButton Variant=@Variant.Filled
@@ -89,9 +100,7 @@ else
                             <MudPaper Class="column-paper pa-4 d-flex align-center justify-center cursor-move mud-theme-info"
                                       Elevation=4
                                       Style="height: 100px; opacity: 1.0; color: white;">
-                                <MudIcon Icon=@Icons.Material.Filled.DragIndicator
-                                         Class="mr-2" />
-
+                                <MudIcon Icon=@Icons.Material.Filled.DragIndicator Class="mr-2" />
                                 <MudText Typo=@Typo.h6>@context.Title</MudText>
                             </MudPaper>
                         </div>
@@ -115,63 +124,85 @@ else
                                           Style="max-height: 100%; background-color: #f0f2f5;">
 
                                     <div class="d-flex justify-space-between align-center mb-2 px-2">
-                                        <div class="d-flex align-center flex-grow-1 gap-2"
-                                             style="min-width: 0;">
-        
-                                            <EditableLabel Value=@col.Title
-                                                           ValueChanged="@((val) => col.Title = val)"
-                                                           OnCommit="@(() => SaveColumn(col))"
-                                                           Typo="Typo.subtitle1"
-                                                           Style="font-weight: 700; color: #424242; white-space: nowrap;" />
+                                        <div class="d-flex align-center flex-grow-1 gap-2" style="min-width: 0;">
+                                            @if (CanEditContent)
+                                            {
+                                                <EditableLabel Value=@col.Title
+                                                               ValueChanged="@((val) => col.Title = val)"
+                                                               OnCommit="@(() => SaveColumn(col))"
+                                                               Typo="Typo.subtitle1"
+                                                               Style="font-weight: 700; color: #424242; white-space: nowrap;" />
 
-                                            <EditableLabel Value=@col.Description
-                                                           ValueChanged="@((val) => col.Description = val)"
-                                                           OnCommit="@(() => SaveColumn(col))"
-                                                           Typo=Typo.body2
-                                                           Placeholder=" "
-                                                           Multiline="false"
-                                                           Style="color: #757575; font-style: italic; min-width: 50px;" />
+                                                <EditableLabel Value=@col.Description
+                                                               ValueChanged="@((val) => col.Description = val)"
+                                                               OnCommit="@(() => SaveColumn(col))"
+                                                               Typo="Typo.body2"
+                                                               Placeholder=" "
+                                                               Multiline="false"
+                                                               Style="color: #757575; font-style: italic; min-width: 50px;" />
+                                            }
+                                            else
+                                            {
+                                                <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #424242; white-space: nowrap;">
+                                                    @col.Title
+                                                </MudText>
+
+                                                @if (!string.IsNullOrEmpty(col.Description))
+                                                {
+                                                    <MudText Typo="Typo.body2" Style="color: #757575; font-style: italic;">
+                                                        @col.Description
+                                                    </MudText>
+                                                }
+                                            }
                                         </div>
 
-                                        <MudMenu Icon=@Icons.Material.Filled.MoreHoriz
-                                                 Size=@Size.Small>
-                                            <MudMenuItem Icon=@Icons.Material.Filled.Delete
-                                                         IconColor=@Color.Error
-                                                         OnClick=@(() => HandleDeleteColumn(col.Id))>
-                                                Delete List
-                                            </MudMenuItem>
-                                        </MudMenu>
+                                        @if (CanEditContent)
+                                        {
+                                            <MudMenu Icon=@Icons.Material.Filled.MoreHoriz Size=@Size.Small>
+                                                <MudMenuItem Icon=@Icons.Material.Filled.Delete
+                                                             IconColor=@Color.Error
+                                                             OnClick=@(() => HandleDeleteColumn(col.Id))>
+                                                    Delete List
+                                                </MudMenuItem>
+                                            </MudMenu>
+                                        }
                                     </div>
 
                                     <MudDropZone T=@CardDto
                                                  Identifier=@col.Id.ToString()
                                                  Class="task-list mb-2 px-1 flex-grow-1 overflow-auto"
                                                  Style="min-height: 50px;"
-                                                 AllowReorder=@true />
+                                                 AllowReorder="@CanEditContent" />
 
-                                    <MudButton StartIcon=@Icons.Material.Filled.Add
-                                               FullWidth=@true
-                                               Variant=@Variant.Text
-                                               Color=@Color.Dark
-                                               OnClick=@(() => HandleAddCard(col.Id))>
-                                        Add a card
-                                    </MudButton>
+                                    @if (CanEditContent)
+                                    {
+                                        <MudButton StartIcon=@Icons.Material.Filled.Add
+                                                   FullWidth=@true
+                                                   Variant=@Variant.Text
+                                                   Color=@Color.Dark
+                                                   OnClick=@(() => HandleAddCard(col.Id))>
+                                            Add a card
+                                        </MudButton>
+                                    }
                                 </MudPaper>
                             </div>
                         }
 
-                        <div class="board-column px-4">
-                            <MudButton Variant=@Variant.Filled
-                                       Color=@Color.Success
-                                       OnClick=@HandleAddColumn
-                                       Class="py-2 fw-bold text-white">
-                                Add another list
-                            </MudButton>
-                        </div>
+                        @if (CanEditContent)
+                        {
+                            <div class="board-column px-4">
+                                <MudButton Variant=@Variant.Filled
+                                           Color=@Color.Success
+                                           OnClick=@HandleAddColumn
+                                           Class="py-2 fw-bold text-white">
+                                    Add another list
+                                </MudButton>
+                            </div>
+                        }
                     </ChildContent>
 
                     <ItemRenderer>
-                        <MudCard Class=@($"mb-2 cursor-pointer hover-effect {(IsOverdue(context) ? "border-solid border-2 mud-border-error" : "")}")
+                        <MudCard Class=@($"mb-2 hover-effect {(CanEditContent ? "cursor-move" : "cursor-pointer")} {(IsOverdue(context) ? "border-solid border-2 mud-border-error" : "")}")
                                  Elevation=1
                                  onclick=@(() => HandleCardClick(context))>
                             <MudCardContent Class="pa-2">
@@ -216,6 +247,7 @@ else
                                         </MudText>
                                     </div>
                                 }
+
                             </MudCardContent>
                         </MudCard>
                     </ItemRenderer>

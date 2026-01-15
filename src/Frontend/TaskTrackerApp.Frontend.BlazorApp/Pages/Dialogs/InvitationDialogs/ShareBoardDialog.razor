@@ -4,89 +4,92 @@
 
 <MudDialog>
     <DialogContent>
-        <div class="d-flex gap-3 align-center mb-4">
 
-            <div class="flex-grow-1">
-                @if (SelectedUser == null)
-                {
-                    <MudAutocomplete T="UserSummaryDto"
-                                     Label="Email address or name"
-                                     Value="SelectedUser"
-                                     ValueChanged="@((u) => SelectedUser = u)"
-                                     SearchFunc="@SearchUsers"
-                                     ToStringFunc="@(u => u?.Email)"
-                                     DebounceInterval="500"
-                                     AdornmentIcon="@Icons.Material.Filled.Search"
-                                     Placeholder="Type to search..."
-                                     Variant="Variant.Outlined"
-                                     Margin="Margin.Dense"
-                                     Clearable="false">
+        @if (_isCurrentUserAdmin)
+        {
+            <div class="d-flex gap-3 align-center mb-4">
+                <div class="flex-grow-1">
+                    @if (SelectedUser == null)
+                    {
+                        <MudAutocomplete T="UserSummaryDto"
+                                         Label="Email address or name"
+                                         Value="SelectedUser"
+                                         ValueChanged="@((u) => SelectedUser = u)"
+                                         SearchFunc="@SearchUsers"
+                                         ToStringFunc="@(u => u?.Email)"
+                                         DebounceInterval="500"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
+                                         Placeholder="Type to search..."
+                                         Variant="Variant.Outlined"
+                                         Margin="Margin.Dense"
+                                         Clearable="false">
 
-                        <ItemTemplate Context="user">
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="pa-1">
-                                <MudAvatar Size="Size.Small" Color="Color.Primary" Class="mr-2">
-                                    @if (!string.IsNullOrEmpty(user.AvatarUrl))
+                            <ItemTemplate Context="user">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="pa-1">
+                                    <MudAvatar Size="Size.Small" Color="Color.Primary" Class="mr-2">
+                                        @if (!string.IsNullOrEmpty(user.AvatarUrl))
+                                        {
+                                            <MudImage Src="@user.AvatarUrl" />
+                                        }
+                                        else
+                                        {
+                                            @(user.DisplayName?.FirstOrDefault() ?? '?')
+                                        }
+                                    </MudAvatar>
+                                    <MudStack Spacing="0">
+                                        <div class="d-flex align-baseline gap-1">
+                                            <MudText Typo="Typo.body1" Class="fw-bold">@user.DisplayName</MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@($"@{user.Tag}")</MudText>
+                                        </div>
+                                        <MudText Typo="Typo.caption" Color="Color.Default">@user.Email</MudText>
+                                    </MudStack>
+                                </MudStack>
+                            </ItemTemplate>
+                        </MudAutocomplete>
+                    }
+                    else
+                    {
+                        <MudPaper Outlined="true" Class="d-flex align-center pa-1 pl-2" Style="height: 40px; border-color: var(--mud-palette-lines-inputs);">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="flex-grow-1 overflow-hidden">
+                                <MudAvatar Size="Size.Small" Color="Color.Primary">
+                                    @if (!string.IsNullOrEmpty(SelectedUser.AvatarUrl))
                                     {
-                                        <MudImage Src="@user.AvatarUrl" />
+                                        <MudImage Src="@SelectedUser.AvatarUrl" />
                                     }
                                     else
                                     {
-                                        @(user.DisplayName?.FirstOrDefault() ?? '?')
+                                        @(SelectedUser.DisplayName?.FirstOrDefault() ?? '?')
                                     }
                                 </MudAvatar>
-                                <MudStack Spacing="0">
-                                    <div class="d-flex align-baseline gap-1">
-                                        <MudText Typo="Typo.body1" Class="fw-bold">@user.DisplayName</MudText>
-                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@($"@{user.Tag}")</MudText>
-                                    </div>
-                                    <MudText Typo="Typo.caption" Color="Color.Default">@user.Email</MudText>
-                                </MudStack>
+
+                                <MudText Typo="Typo.body2" Class="ml-2" Style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    <b>@SelectedUser.DisplayName</b> <span class="mud-text-secondary">(@SelectedUser.Email)</span>
+                                </MudText>
                             </MudStack>
-                        </ItemTemplate>
-                    </MudAutocomplete>
-                }
-                else
-                {
-                    <MudPaper Outlined="true" Class="d-flex align-center pa-1 pl-2" Style="height: 40px; border-color: var(--mud-palette-lines-inputs);">
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="flex-grow-1 overflow-hidden">
-                            <MudAvatar Size="Size.Small" Color="Color.Primary">
-                                @if (!string.IsNullOrEmpty(SelectedUser.AvatarUrl))
-                                {
-                                    <MudImage Src="@SelectedUser.AvatarUrl" />
-                                }
-                                else
-                                {
-                                    @(SelectedUser.DisplayName?.FirstOrDefault() ?? '?')
-                                }
-                            </MudAvatar>
 
-                            <MudText Typo="Typo.body2" Class="ml-2" Style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                <b>@SelectedUser.DisplayName</b> <span class="mud-text-secondary">(@SelectedUser.Email)</span>
-                            </MudText>
-                        </MudStack>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                           Size="Size.Small"
+                                           OnClick="@(() => SelectedUser = null)"
+                                           Title="Clear selection" />
+                        </MudPaper>
+                    }
+                </div>
 
-                        <MudIconButton Icon="@Icons.Material.Filled.Close"
-                                       Size="Size.Small"
-                                       OnClick="@(() => SelectedUser = null)"
-                                       Title="Clear selection" />
-                    </MudPaper>
-                }
+                <MudSelect T="BoardRole" @bind-Value="SelectedRole" Label="Role" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 120px;">
+                    @foreach (BoardRole role in Enum.GetValues(typeof(BoardRole)))
+                    {
+                        <MudSelectItem Value="@role">@GetRoleDisplayName(role)</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           OnClick="SendInvite"
+                           Disabled="@(SelectedUser == null)">
+                    Share
+                </MudButton>
             </div>
-
-            <MudSelect T="BoardRole" @bind-Value="SelectedRole" Label="Role" Variant="Variant.Outlined" Margin="Margin.Dense" Style="width: 120px;">
-                @foreach (BoardRole role in Enum.GetValues(typeof(BoardRole)))
-                {
-                    <MudSelectItem Value="@role">@GetRoleDisplayName(role)</MudSelectItem>
-                }
-            </MudSelect>
-
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       OnClick="SendInvite"
-                       Disabled="@(SelectedUser == null)">
-                Share
-            </MudButton>
-        </div>
+        }
 
         <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-3">
             <MudTabPanel Text="@($"Board members ({Members.Count})")">
@@ -161,35 +164,38 @@
                 </MudList>
             </MudTabPanel>
 
-            <MudTabPanel Text="@($"Join requests ({PendingInvites.Count})")">
-                @if (!PendingInvites.Any())
-                {
-                    <MudText Typo="Typo.body2" Align="Align.Center" Class="pa-4 text-muted">No pending invitations.</MudText>
-                }
-                else
-                {
-                    <MudList T="string" Clickable="false" Dense="true">
-                        @foreach (var invite in PendingInvites)
-                        {
-                            <MudListItem Icon="@Icons.Material.Filled.Mail">
-                                <div class="d-flex justify-space-between align-center w-100">
-                                    <div>
-                                        <MudText Typo="Typo.body2" Class="fw-bold">@invite.InviteeEmail</MudText>
-                                        <MudText Typo="Typo.caption">Invited as @invite.Role • Pending</MudText>
+            @if (_isCurrentUserAdmin)
+            {
+                <MudTabPanel Text="@($"Join requests ({PendingInvites.Count})")">
+                    @if (!PendingInvites.Any())
+                    {
+                        <MudText Typo="Typo.body2" Align="Align.Center" Class="pa-4 text-muted">No pending invitations.</MudText>
+                    }
+                    else
+                    {
+                        <MudList T="string" Clickable="false" Dense="true">
+                            @foreach (var invite in PendingInvites)
+                            {
+                                <MudListItem Icon="@Icons.Material.Filled.Mail">
+                                    <div class="d-flex justify-space-between align-center w-100">
+                                        <div>
+                                            <MudText Typo="Typo.body2" Class="fw-bold">@invite.InviteeEmail</MudText>
+                                            <MudText Typo="Typo.caption">Invited as @invite.Role • Pending</MudText>
+                                        </div>
+                                        <MudButton Variant="Variant.Outlined"
+                                                   Color="Color.Error"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => RevokeInvite(invite.Id))">
+                                            Revoke
+                                        </MudButton>
                                     </div>
-                                    <MudButton Variant="Variant.Outlined"
-                                               Color="Color.Error"
-                                               Size="Size.Small"
-                                               OnClick="@(() => RevokeInvite(invite.Id))">
-                                        Revoke
-                                    </MudButton>
-                                </div>
-                            </MudListItem>
-                            <MudDivider />
-                        }
-                    </MudList>
-                }
-            </MudTabPanel>
+                                </MudListItem>
+                                <MudDivider />
+                            }
+                        </MudList>
+                    }
+                </MudTabPanel>
+            }
         </MudTabs>
 
     </DialogContent>
