@@ -218,9 +218,9 @@ else
 
                                 <div class="d-flex align-center gap-2">
                                     <div @onclick:stopPropagation>
-                                        <MudTooltip Text="@(context.IsCompleted ? "Mark incomplete" : "Mark complete")">
+                                        <MudTooltip Text="@(context.IsCompleted ? "Mark incomplete" : $"Priority: {context.Priority}")">
                                             <MudIconButton Icon="@(context.IsCompleted? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.Circle)"
-                                                           Color="@(context.IsCompleted ? Color.Success : Color.Default)"
+                                                           Color="@(context.IsCompleted ? Color.Success : GetPriorityColor(context.Priority))"
                                                            Size="Size.Small"
                                                            OnClick="@(() => HandleToggleComplete(context))" />
                                         </MudTooltip>

@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
+using MudBlazor;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
+using TaskTrackerApp.Frontend.Domain.Enums;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Components;
 
@@ -14,5 +16,16 @@ public partial class TaskRowItem
     private bool IsOverdue(UpcomingCardDto task)
     {
         return !task.IsCompleted && task.DueDate < DateTime.Now;
+    }
+
+    private Color GetPriorityColor(CardPriority priority)
+    {
+        return priority switch
+        {
+            CardPriority.Critical => Color.Error,
+            CardPriority.High => Color.Warning,
+            CardPriority.Medium => Color.Info,
+            _ => Color.Default
+        };
     }
 }

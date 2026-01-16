@@ -1,4 +1,6 @@
-﻿namespace TaskTrackerApp.Domain.DTOs.Card;
+﻿using TaskTrackerApp.Domain.Enums;
+
+namespace TaskTrackerApp.Domain.DTOs.Card;
 
 public class UpcomingCardDto
 {
@@ -15,4 +17,6 @@ public class UpcomingCardDto
     public string BoardTitle { get; set; }
 
     public string ColumnTitle { get; set; }
+
+    public CardPriority Priority { get; set; }
 }

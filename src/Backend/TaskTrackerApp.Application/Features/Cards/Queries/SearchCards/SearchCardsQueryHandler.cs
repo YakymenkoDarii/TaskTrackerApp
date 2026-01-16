@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.UoW;
+using TaskTrackerApp.Application.Mappers.CardMappers;
 using TaskTrackerApp.Domain.DTOs.Card;
 using TaskTrackerApp.Domain.Results;
 
@@ -36,16 +37,7 @@ public class SearchCardsQueryHandler : IRequestHandler<SearchCardsQuery, Result<
 
         var result = query
             .Take(10)
-            .Select(c => new CardDto
-            {
-                Id = c.Id,
-                Title = c.Title,
-                IsCompleted = c.IsCompleted,
-                DueDate = c.DueDate,
-                BoardId = c.Column.BoardId,
-                ColumnId = c.ColumnId,
-                AssigneeId = c.AssigneeId,
-            })
+            .Select(c => c.ToDto())
             .ToList();
 
         return Result<IEnumerable<CardDto>>.Success(result);

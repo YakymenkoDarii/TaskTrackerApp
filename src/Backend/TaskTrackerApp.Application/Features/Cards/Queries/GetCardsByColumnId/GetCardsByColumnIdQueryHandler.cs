@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.UoW;
+using TaskTrackerApp.Application.Mappers.CardMappers;
 using TaskTrackerApp.Domain.DTOs.Card;
 using TaskTrackerApp.Domain.Results;
 
@@ -25,18 +26,9 @@ public class GetCardsByColumnIdQueryHandler : IRequestHandler<GetCardsByColumnId
             return null;
         }
 
-        var cardDtos = cards.Select(x => new CardDto
-        {
-            Id = x.Id,
-            Title = x.Title,
-            Description = x.Description,
-            DueDate = x.DueDate,
-            AssigneeId = x.AssigneeId,
-            CreatedAt = x.CreatedAt,
-            IsCompleted = x.IsCompleted,
-            ColumnId = x.ColumnId,
-            Position = x.Position,
-        }).OrderBy(c => c.Position).ToList();
+        var cardDtos = cards.Select(x => x!.ToDto())
+            .OrderBy(c => c.Position)
+            .ToList();
 
         return cardDtos;
     }

@@ -459,4 +459,15 @@ public partial class Board
 
         DialogService.ShowAsync<ShareBoardDialog>("Invite Members", parameters, options);
     }
+
+    private Color GetPriorityColor(CardPriority priority)
+    {
+        return priority switch
+        {
+            CardPriority.Critical => Color.Error,
+            CardPriority.High => Color.Warning,
+            CardPriority.Medium => Color.Info,
+            _ => Color.Default
+        };
+    }
 }
