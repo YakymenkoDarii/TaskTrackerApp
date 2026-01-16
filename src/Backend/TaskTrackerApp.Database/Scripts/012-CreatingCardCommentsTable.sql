@@ -1,0 +1,15 @@
+﻿CREATE TABLE CardComments (
+	Id INT IDENTITY (1,1) NOT NULL PRIMARY KEY,
+	CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 NULL,
+    CreatedById INT NOT NULL,
+    UpdatedById INT NOT NULL,
+
+    [Text] NVARCHAR(2000) NOT NULL,
+    IsEdited BIT NOT NULL DEFAULT 0,
+    CardId INT NOT NULL,
+
+    CONSTRAINT FK_CardComments_CreatedBy FOREIGN KEY (CreatedById) REFERENCES Users(Id),
+    CONSTRAINT FK_CardComments_UpdatedBy FOREIGN KEY (UpdatedById) REFERENCES Users(Id),
+    CONSTRAINT FK_CardComments_CardId FOREIGN KEY (CardId) REFERENCES Cards(Id) ON DELETE CASCADE
+);

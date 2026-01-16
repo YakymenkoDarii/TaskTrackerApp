@@ -22,6 +22,8 @@ public class TaskTrackerDbContext : DbContext
 
     public DbSet<BoardInvitation> BoardInvitations { get; set; }
 
+    public DbSet<CardComment> CardComments { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -98,5 +100,18 @@ public class TaskTrackerDbContext : DbContext
         modelBuilder.Entity<BoardInvitation>()
         .Property(b => b.Role)
         .HasConversion<string>();
+
+        modelBuilder.Entity<CardComment>(entity =>
+        {
+            entity.HasOne(c => c.CreatedBy)
+                  .WithMany()
+                  .HasForeignKey(c => c.CreatedById)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(c => c.Card)
+                  .WithMany(card => card.Comments)
+                  .HasForeignKey(c => c.CardId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

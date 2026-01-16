@@ -15,7 +15,7 @@ public class Repository<TEntity, TId> : IRepository<TEntity, TId> where TEntity 
         _dbSet = context.Set<TEntity>();
     }
 
-    public async Task<TEntity?> GetAsync(TId id)
+    public async Task<TEntity?> GetById(TId id)
     {
         return await _dbSet.FindAsync(id);
     }

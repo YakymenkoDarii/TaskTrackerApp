@@ -32,7 +32,7 @@ public class DeleteMemberCommandHandler : IRequestHandler<DeleteMemberCommand, R
             return Result.Failure(AuthErrors.NotAuthenticated);
         }
 
-        var board = await uow.BoardRepository.GetAsync(request.BoardId);
+        var board = await uow.BoardRepository.GetById(request.BoardId);
         if (board == null)
         {
             return Result.Failure(BoardErrors.NotFound);

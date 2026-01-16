@@ -16,5 +16,7 @@ public interface IUnitOfWork : IDisposable
 
     IBoardInvitationsRepository BoardInvitationsRepository { get; }
 
+    ICardCommentsRepository CardCommentsRepository { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -26,7 +26,7 @@ public class GetBoardByIdQueryHandler : IRequestHandler<GetBoardByIdQuery, Resul
             return Result<BoardDto>.Failure(new Error("Unauthorized", "You do not have access to this board."));
         }
 
-        var board = await uow.BoardRepository.GetAsync(request.Id);
+        var board = await uow.BoardRepository.GetById(request.Id);
 
         if (board == null)
         {
