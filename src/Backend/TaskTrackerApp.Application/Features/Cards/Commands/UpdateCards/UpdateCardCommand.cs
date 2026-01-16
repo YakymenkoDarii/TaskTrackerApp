@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using TaskTrackerApp.Domain.DTOs.Card;
+using TaskTrackerApp.Domain.Enums;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Cards.Commands.UpdateCards;
@@ -25,4 +26,6 @@ public class UpdateCardCommand : IRequest<Result<CardDto>>
     public bool IsCompleted { get; set; }
 
     public int Position { get; set; }
+
+    public CardPriority Priority { get; set; }
 }

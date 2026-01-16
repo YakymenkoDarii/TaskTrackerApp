@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.UoW;
+using TaskTrackerApp.Application.Mappers.CardMappers;
 using TaskTrackerApp.Domain.DTOs.Card;
 using TaskTrackerApp.Domain.Errors;
 using TaskTrackerApp.Domain.Results;
@@ -77,21 +78,11 @@ internal class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, Res
         card.UpdatedById = request.UpdatedById;
         card.UpdatedAt = DateTime.UtcNow;
         card.IsCompleted = request.IsCompleted;
+        card.Priority = request.Priority;
 
         await uow.CardRepository.UpdateAsync(card);
         await uow.SaveChangesAsync(cancellationToken);
 
-        return new CardDto
-        {
-            Id = card.Id,
-            Title = card.Title,
-            Description = card.Description,
-            DueDate = card.DueDate,
-            AssigneeId = card.AssigneeId,
-            CreatedAt = card.CreatedAt,
-            IsCompleted = card.IsCompleted,
-            ColumnId = card.ColumnId,
-            Position = card.Position,
-        };
+        return Result<CardDto>.Success(card.ToDto());
     }
 }

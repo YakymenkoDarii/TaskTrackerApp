@@ -11,16 +11,6 @@
 		<EmbeddedResource Include="Scripts\*.sql" />
 	</ItemGroup>
 
-
-	<ItemGroup>
-	  <EmbeddedResource Remove="Scripts\011_AddingPriorityFieldToCard.sql" />
-	</ItemGroup>
-
-
-	<ItemGroup>
-	  <Compile Include="Scripts\011_AddingPriorityFieldToCard.sql" />
-	</ItemGroup>
-
 	<ItemGroup>
 	  <PackageReference Include="dbup-sqlserver" Version="6.0.16" />
 	</ItemGroup>

@@ -1,4 +1,6 @@
-﻿namespace TaskTrackerApp.Domain.DTOs.Card;
+﻿using TaskTrackerApp.Domain.Enums;
+
+namespace TaskTrackerApp.Domain.DTOs.Card;
 
 public class UpdateCardDto
 {
@@ -21,4 +23,6 @@ public class UpdateCardDto
     public int Position { get; set; }
 
     public bool IsCompleted { get; set; }
+
+    public CardPriority Priority { get; set; }
 }

@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.UoW;
+using TaskTrackerApp.Application.Mappers.CardMappers;
 using TaskTrackerApp.Domain.DTOs.Card;
 using TaskTrackerApp.Domain.Results;
 
@@ -25,15 +26,7 @@ public class GetUpcomingCardsByDateQueryHandler : IRequestHandler<GetUpcomingCar
             request.IncludeOverdue
         );
 
-        var dtos = cards.Select(c => new UpcomingCardDto
-        {
-            Id = c.Id,
-            Title = c.Title,
-            DueDate = c.DueDate,
-            IsCompleted = c.IsCompleted,
-            BoardId = c.BoardId,
-            BoardTitle = c.Column?.Board?.Title,
-        });
+        var dtos = cards.Select(c => c.ToUpcomingDto());
 
         return dtos.ToList();
     }
