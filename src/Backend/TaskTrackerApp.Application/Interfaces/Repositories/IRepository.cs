@@ -2,7 +2,7 @@
 
 public interface IRepository<T, TId>
 {
-    Task<T?> GetAsync(TId id);
+    Task<T?> GetById(TId id);
 
     Task<IEnumerable<T>> GetAllAsync();
 

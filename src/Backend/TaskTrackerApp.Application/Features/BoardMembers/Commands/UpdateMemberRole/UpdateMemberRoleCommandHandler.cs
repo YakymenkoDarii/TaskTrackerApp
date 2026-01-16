@@ -32,7 +32,7 @@ public class UpdateMemberRoleCommandHandler : IRequestHandler<UpdateMemberRoleCo
             return Result.Failure(AuthErrors.NotAuthenticated);
         }
 
-        var board = await uow.BoardRepository.GetAsync(request.BoardId);
+        var board = await uow.BoardRepository.GetById(request.BoardId);
 
         if (board == null)
         {

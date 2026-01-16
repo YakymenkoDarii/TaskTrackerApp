@@ -20,7 +20,7 @@ internal class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, Res
     {
         using var uow = _uowFactory.Create();
 
-        var card = await uow.CardRepository.GetAsync(request.Id);
+        var card = await uow.CardRepository.GetById(request.Id);
         if (card == null) return Result<CardDto>.Failure(new Error("Card.NotFound", "No card found"));
 
         var targetColumnCards = await uow.CardRepository.GetCardsByColumnIdAsync(request.ColumnId);

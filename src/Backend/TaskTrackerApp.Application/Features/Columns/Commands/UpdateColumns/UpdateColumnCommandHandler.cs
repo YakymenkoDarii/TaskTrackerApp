@@ -18,7 +18,7 @@ internal class UpdateColumnCommandHandler : IRequestHandler<UpdateColumnCommand,
     {
         using var uow = _uowFactory.Create();
 
-        var column = await uow.ColumnRepository.GetAsync(request.Id);
+        var column = await uow.ColumnRepository.GetById(request.Id);
 
         if (column.Position != request.Position)
         {

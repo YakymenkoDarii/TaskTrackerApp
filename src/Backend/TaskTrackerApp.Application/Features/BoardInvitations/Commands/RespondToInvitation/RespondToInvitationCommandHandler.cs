@@ -20,7 +20,7 @@ public class RespondToInvitationCommandHandler : IRequestHandler<RespondToInvita
     {
         using var uow = _uowFactory.Create();
 
-        var invitation = await uow.BoardInvitationsRepository.GetAsync(request.InvitationId);
+        var invitation = await uow.BoardInvitationsRepository.GetById(request.InvitationId);
         if (invitation == null) return Result.Failure(new Error("Invitation.NotFound", "Invitation not found."));
 
         if (request.IsAccepted)
