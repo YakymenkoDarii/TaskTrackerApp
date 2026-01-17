@@ -10,13 +10,13 @@ namespace TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 
 public interface ILabelService
 {
-    Task<Result> AddLabelToCard(int cardId, int id);
+    Task<Result<LabelDto>> CreateLabelAsync(CreateLabelDto createDto);
 
-    Task<Result> CreateLabel(CreateLabelDto createDto);
+    Task<Result<LabelDto>> UpdateLabelAsync(LabelDto updateDto);
 
-    Task<Result<IEnumerable<LabelDto>>> GetLabelsByBoardId(int boardId);
+    Task<Result<IEnumerable<LabelDto>>> GetLabelsByBoardIdAsync(int boardId);
 
-    Task<Result> RemoveLabelFromCard(int cardId, int id);
+    Task<Result> AddLabelToCardAsync(int cardId, int labelId);
 
-    Task<Result> UpdateLabel(LabelDto updateDto);
+    Task<Result> RemoveLabelFromCardAsync(int cardId, int labelId);
 }

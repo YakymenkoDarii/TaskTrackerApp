@@ -48,7 +48,7 @@ public partial class CardLabelsPanel
 
     private async Task LoadBoardLabels()
     {
-        var result = await LabelService.GetLabelsByBoardId(BoardId);
+        var result = await LabelService.GetLabelsByBoardIdAsync(BoardId);
         if (result.IsSuccess)
         {
             _allBoardLabels = result.Value.ToList();
@@ -65,13 +65,13 @@ public partial class CardLabelsPanel
         {
             SelectedLabels.Remove(existingLabel);
 
-            await LabelService.RemoveLabelFromCard(CardId, label.Id);
+            await LabelService.RemoveLabelFromCardAsync(CardId, label.Id);
         }
         else
         {
             SelectedLabels.Add(label);
 
-            await LabelService.AddLabelToCard(CardId, label.Id);
+            await LabelService.AddLabelToCardAsync(CardId, label.Id);
         }
 
         await SelectedLabelsChanged.InvokeAsync(SelectedLabels);
@@ -100,7 +100,7 @@ public partial class CardLabelsPanel
         if (_editingLabel == null)
         {
             var createDto = new CreateLabelDto { Name = _editingLabelName, Color = _editingLabelColor, BoardId = BoardId };
-            var result = await LabelService.CreateLabel(createDto);
+            var result = await LabelService.CreateLabelAsync(createDto);
             if (result.IsSuccess)
             {
                 _allBoardLabels.Add(result.Value);
@@ -110,7 +110,7 @@ public partial class CardLabelsPanel
         else
         {
             var updateDto = new LabelDto { Id = _editingLabel.Id, Name = _editingLabelName, Color = _editingLabelColor };
-            var result = await LabelService.UpdateLabel(updateDto);
+            var result = await LabelService.UpdateLabelAsync(updateDto);
             if (result.IsSuccess)
             {
                 var index = _allBoardLabels.FindIndex(l => l.Id == _editingLabel.Id);
