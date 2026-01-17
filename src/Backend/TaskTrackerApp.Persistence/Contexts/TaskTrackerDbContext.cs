@@ -24,6 +24,8 @@ public class TaskTrackerDbContext : DbContext
 
     public DbSet<CardComment> CardComments { get; set; }
 
+    public DbSet<Label> Labels { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -112,6 +114,18 @@ public class TaskTrackerDbContext : DbContext
                   .WithMany(card => card.Comments)
                   .HasForeignKey(c => c.CardId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Label>(entity =>
+        {
+            entity.HasOne(l => l.Board)
+                  .WithMany()
+                  .HasForeignKey(l => l.BoardId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(l => l.Cards)
+                  .WithMany(c => c.Labels)
+                  .UsingEntity(j => j.ToTable("CardLabels"));
         });
     }
 }

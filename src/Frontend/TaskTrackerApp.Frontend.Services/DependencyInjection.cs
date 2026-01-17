@@ -12,6 +12,7 @@ using TaskTrackerApp.Frontend.Services.Services.Boards;
 using TaskTrackerApp.Frontend.Services.Services.CardComments;
 using TaskTrackerApp.Frontend.Services.Services.Cards;
 using TaskTrackerApp.Frontend.Services.Services.Columns;
+using TaskTrackerApp.Frontend.Services.Services.Labels;
 using TaskTrackerApp.Frontend.Services.Services.Users;
 
 namespace TaskTrackerApp.Frontend.Services;
@@ -30,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<IBoardMembersService, BoardMembersService>();
         services.AddScoped<IUsersService, UsersService>();
         services.AddScoped<ICardCommentsService, CardCommentsService>();
+        services.AddScoped<ILabelService, LabelService>();
 
         services.AddBlazoredSessionStorage();
         services.AddScoped<ITokenStorage, TokenStorage>();
@@ -68,6 +70,10 @@ public static class DependencyInjection
             .AddHttpMessageHandler<AuthMessageHandler>();
 
         services.AddRefitClient<ICardCommentsApi>()
+            .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!))
+            .AddHttpMessageHandler<AuthMessageHandler>();
+
+        services.AddRefitClient<ILabelApi>()
             .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!))
             .AddHttpMessageHandler<AuthMessageHandler>();
 

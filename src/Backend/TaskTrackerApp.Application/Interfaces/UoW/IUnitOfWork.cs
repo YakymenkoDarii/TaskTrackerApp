@@ -18,5 +18,7 @@ public interface IUnitOfWork : IDisposable
 
     ICardCommentsRepository CardCommentsRepository { get; }
 
+    ILabelsRepository LabelsRepository { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

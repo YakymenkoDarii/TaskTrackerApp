@@ -1,4 +1,5 @@
-﻿@using TaskTrackerApp.Frontend.Domain.DTOs.Cards
+﻿@using TaskTrackerApp.Frontend.BlazorApp.Components.Cards.Labels
+@using TaskTrackerApp.Frontend.Domain.DTOs.Cards
 @using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
@@ -52,6 +53,11 @@
                 </MudItem>
 
                 <MudItem xs=12 sm=3>
+
+                    <CardLabelsPanel BoardId="@BoardId" 
+                     CardId="@Card.Id"
+                     @bind-SelectedLabels="@Card.Labels"
+                     IsReadOnly="@IsReadOnly" />
 
                     <MudText Typo=@Typo.caption Class="text-uppercase fw-bold text-secondary mb-2 d-block">
                         Priority
