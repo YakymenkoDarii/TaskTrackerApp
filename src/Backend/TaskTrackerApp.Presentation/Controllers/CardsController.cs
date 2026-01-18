@@ -10,9 +10,7 @@ using TaskTrackerApp.Application.Features.Cards.Queries.GetByBoardId;
 using TaskTrackerApp.Application.Features.Cards.Queries.GetCardsByColumnId;
 using TaskTrackerApp.Application.Features.Cards.Queries.GetUpcomingCardsByDate;
 using TaskTrackerApp.Application.Features.Cards.Queries.SearchCards;
-using TaskTrackerApp.Application.Features.Labels.Command.RemoveLabelFromCard;
 using TaskTrackerApp.Domain.DTOs.Card;
-using TaskTrackerApp.Domain.Entities;
 
 namespace TaskTrackerApp.Presentation.Controllers;
 

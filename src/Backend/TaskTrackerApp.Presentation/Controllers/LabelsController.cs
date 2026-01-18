@@ -1,6 +1,5 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using TaskTrackerApp.Application.Features.Labels.Command.AddLabelToCard;
 using TaskTrackerApp.Application.Features.Labels.Command.CreateLabel;

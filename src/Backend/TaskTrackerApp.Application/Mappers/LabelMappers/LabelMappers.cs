@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskTrackerApp.Domain.DTOs.Labels;
+﻿using TaskTrackerApp.Domain.DTOs.Labels;
 using TaskTrackerApp.Domain.Entities;
 
 namespace TaskTrackerApp.Application.Mappers.LabelMappers;
