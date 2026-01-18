@@ -1,4 +1,5 @@
 ﻿using TaskTrackerApp.Domain.DTOs.Card;
+using TaskTrackerApp.Domain.DTOs.Labels;
 using TaskTrackerApp.Domain.Entities;
 using TaskTrackerApp.Domain.Enums;
 
@@ -22,7 +23,15 @@ public static class CardMappers
             Position = entity.Position,
             ColumnId = entity.ColumnId,
             BoardId = entity.BoardId,
-            Priority = entity.Priority
+            Priority = entity.Priority,
+            Labels = entity.Labels != null
+                ? entity.Labels.Select(l => new LabelDto
+                {
+                    Id = l.Id,
+                    Name = l.Name,
+                    Color = l.Color
+                }).ToList()
+                : new List<LabelDto>()
         };
     }
 

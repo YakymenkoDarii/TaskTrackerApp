@@ -26,4 +26,7 @@ public interface ICardsApi
 
     [Get("/api/Cards/search")]
     Task<ApiResponse<Result<IEnumerable<CardDto>>>> SearchAsync([Query] string query, [Query] int? boardId, [Query] int? assigneeId);
+
+    [Get("/api/Cards/board/{boardId}")]
+    Task<ApiResponse<Result<IEnumerable<CardDto>>>> GetCardsByBoardIdAsync(int boardId);
 }

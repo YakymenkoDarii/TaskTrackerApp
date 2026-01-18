@@ -11,6 +11,8 @@ public partial class CardLabelsPanel
 
     [Inject] public ISnackbar Snackbar { get; set; }
 
+    [Inject] public IDialogService DialogService { get; set; }
+
     [Parameter] public int BoardId { get; set; }
 
     [Parameter] public int CardId { get; set; }
@@ -126,6 +128,42 @@ public partial class CardLabelsPanel
         }
 
         _isCreatingOrEditing = false;
+    }
+
+    private async Task DeleteLabel()
+    {
+        if (_editingLabel == null) return;
+
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Delete Label",
+            "Are you sure? This will remove this label from ALL cards on this board.",
+            yesText: "Delete", cancelText: "Cancel");
+
+        if (confirm == true)
+        {
+            var result = await LabelService.DeleteLabelAsync(_editingLabel.Id);
+
+            if (result.IsSuccess)
+            {
+                var labelToRemove = _allBoardLabels.FirstOrDefault(l => l.Id == _editingLabel.Id);
+                if (labelToRemove != null) _allBoardLabels.Remove(labelToRemove);
+
+                // 2. Remove from the selected labels on THIS card (if present)
+                var selectedToRemove = SelectedLabels.FirstOrDefault(l => l.Id == _editingLabel.Id);
+                if (selectedToRemove != null)
+                {
+                    SelectedLabels.Remove(selectedToRemove);
+                    await SelectedLabelsChanged.InvokeAsync(SelectedLabels);
+                }
+
+                _isCreatingOrEditing = false;
+                Snackbar.Add("Label deleted", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add(result.Error.Message, Severity.Error);
+            }
+        }
     }
 
     private string GetContrastColor(string hexColor)

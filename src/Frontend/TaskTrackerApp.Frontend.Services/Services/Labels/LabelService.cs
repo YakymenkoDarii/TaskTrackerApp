@@ -1,9 +1,4 @@
 ﻿using Refit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TaskTrackerApp.Frontend.Domain.DTOs.Labels;
 using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Results;
@@ -52,6 +47,23 @@ public class LabelService : ILabelService
         catch (Exception ex)
         {
             return Result<LabelDto>.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
+
+    public async Task<Result> DeleteLabelAsync(int id)
+    {
+        try
+        {
+            var response = await _api.DeleteLabelAsync(id);
+            return response.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure(new Error("UnknownError", ex.Message));
         }
     }
 

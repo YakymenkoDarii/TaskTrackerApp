@@ -18,4 +18,6 @@ public interface ICardsService
     Task<Result<IEnumerable<UpcomingCardDto>>> GetUpcoming(DateTime weekStart, DateTime weekEnd, bool includeOverdue);
 
     Task<Result<IEnumerable<CardDto>>> SearchCardsAsync(string query, int? boardId = null, int? assigneeId = null);
+
+    Task<Result<IEnumerable<CardDto>>> GetCardsByBoardIdAsync(int boardId);
 }

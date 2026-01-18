@@ -125,7 +125,19 @@ public class TaskTrackerDbContext : DbContext
 
             entity.HasMany(l => l.Cards)
                   .WithMany(c => c.Labels)
-                  .UsingEntity(j => j.ToTable("CardLabels"));
+                  .UsingEntity<Dictionary<string, object>>(
+                      "CardLabels",
+
+                      right => right.HasOne<Card>()
+                                    .WithMany()
+                                    .HasForeignKey("CardId")
+                                    .OnDelete(DeleteBehavior.Cascade),
+
+                      left => left.HasOne<Label>()
+                                  .WithMany()
+                                  .HasForeignKey("LabelId")
+                                  .OnDelete(DeleteBehavior.Restrict)
+                  );
         });
     }
 }

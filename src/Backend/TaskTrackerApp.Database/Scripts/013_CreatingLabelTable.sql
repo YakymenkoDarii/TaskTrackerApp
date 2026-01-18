@@ -17,5 +17,5 @@ CREATE TABLE CardLabels (
     LabelId INT NOT NULL,
     PRIMARY KEY (CardId, LabelId),
     CONSTRAINT FK_CardLabels_Card FOREIGN KEY (CardId) REFERENCES Cards(Id) ON DELETE CASCADE,
-    CONSTRAINT FK_CardLabels_Label FOREIGN KEY (LabelId) REFERENCES Labels(Id) ON DELETE CASCADE
+    CONSTRAINT FK_CardLabels_Label FOREIGN KEY (LabelId) REFERENCES Labels(Id)
 );

@@ -54,9 +54,20 @@
             }
         </div>
 
-        <div class="d-flex gap-2">
+        <div class="d-flex align-center gap-2">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="SaveLabel">Save</MudButton>
             <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => _isCreatingOrEditing = false)">Back</MudButton>
+
+            @if (_editingLabel != null)
+            {
+                <MudSpacer />
+                <MudTooltip Text="Delete Label">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   Size="Size.Small"
+                                   OnClick="DeleteLabel" />
+                </MudTooltip>
+            }
         </div>
     }
     else

@@ -63,7 +63,10 @@ public partial class CardDetailsDialog
         }
     }
 
-    private void Cancel() => MudDialog.Cancel();
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
 
     private async Task SaveChanges()
     {

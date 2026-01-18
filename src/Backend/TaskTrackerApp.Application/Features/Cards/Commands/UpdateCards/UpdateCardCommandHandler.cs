@@ -20,57 +20,68 @@ internal class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, Res
     {
         using var uow = _uowFactory.Create();
 
-        var card = await uow.CardRepository.GetById(request.Id);
+        var card = await uow.CardRepository.GetCardDetailsAsync(request.Id);
         if (card == null) return Result<CardDto>.Failure(new Error("Card.NotFound", "No card found"));
+        bool isMoving = (card.ColumnId != request.ColumnId) || (card.Position != request.Position);
 
-        var targetColumnCards = await uow.CardRepository.GetCardsByColumnIdAsync(request.ColumnId);
-
-        int maxPos = (card.ColumnId == request.ColumnId) ? targetColumnCards.Count() - 1 : targetColumnCards.Count();
-        request.Position = Math.Clamp(request.Position, 0, maxPos);
-
-        if (card.ColumnId != request.ColumnId)
+        if (isMoving)
         {
-            var oldColumnCards = await uow.CardRepository.GetCardsByColumnIdAsync(card.ColumnId);
-            foreach (var c in oldColumnCards.Where(c => c.Position > card.Position))
-            {
-                c.Position--;
-                await uow.CardRepository.UpdateAsync(c);
-            }
+            var targetColumnCards = await uow.CardRepository.GetCardsByColumnIdAsync(request.ColumnId);
 
-            foreach (var c in targetColumnCards.Where(c => c.Position >= request.Position))
-            {
-                c.Position++;
-                await uow.CardRepository.UpdateAsync(c);
-            }
-        }
-        else if (card.Position != request.Position)
-        {
-            if (request.Position < card.Position)
-            {
-                var cardsToShift = targetColumnCards
-                    .Where(c => c.Position >= request.Position && c.Position < card.Position && c.Id != card.Id);
+            int maxPos = (card.ColumnId == request.ColumnId)
+                ? targetColumnCards.Count() - 1
+                : targetColumnCards.Count();
 
-                foreach (var c in cardsToShift)
+            if (maxPos < 0) maxPos = 0;
+
+            request.Position = Math.Clamp(request.Position, 0, maxPos);
+
+            if (card.ColumnId != request.ColumnId)
+            {
+                var oldColumnCards = await uow.CardRepository.GetCardsByColumnIdAsync(card.ColumnId);
+
+                foreach (var c in oldColumnCards.Where(c => c.Position > card.Position))
+                {
+                    c.Position--;
+                    await uow.CardRepository.UpdateAsync(c);
+                }
+
+                foreach (var c in targetColumnCards.Where(c => c.Position >= request.Position))
                 {
                     c.Position++;
                     await uow.CardRepository.UpdateAsync(c);
                 }
             }
-            else if (request.Position > card.Position)
+            else if (card.Position != request.Position)
             {
-                var cardsToShift = targetColumnCards
-                    .Where(c => c.Position > card.Position && c.Position <= request.Position && c.Id != card.Id);
-
-                foreach (var c in cardsToShift)
+                if (request.Position < card.Position)
                 {
-                    c.Position--;
-                    await uow.CardRepository.UpdateAsync(c);
+                    var cardsToShift = targetColumnCards
+                        .Where(c => c.Position >= request.Position && c.Position < card.Position && c.Id != card.Id);
+
+                    foreach (var c in cardsToShift)
+                    {
+                        c.Position++;
+                        await uow.CardRepository.UpdateAsync(c);
+                    }
+                }
+                else if (request.Position > card.Position)
+                {
+                    var cardsToShift = targetColumnCards
+                        .Where(c => c.Position > card.Position && c.Position <= request.Position && c.Id != card.Id);
+
+                    foreach (var c in cardsToShift)
+                    {
+                        c.Position--;
+                        await uow.CardRepository.UpdateAsync(c);
+                    }
                 }
             }
+
+            card.ColumnId = request.ColumnId;
+            card.Position = request.Position;
         }
 
-        card.ColumnId = request.ColumnId;
-        card.Position = request.Position;
         card.Title = request.Title;
         card.Description = request.Description;
         card.DueDate = request.DueDate;

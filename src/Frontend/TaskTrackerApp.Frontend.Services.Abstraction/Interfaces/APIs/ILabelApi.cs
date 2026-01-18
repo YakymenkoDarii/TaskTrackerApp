@@ -1,9 +1,4 @@
 ﻿using Refit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TaskTrackerApp.Frontend.Domain.DTOs.Labels;
 using TaskTrackerApp.Frontend.Domain.Results;
 
@@ -25,4 +20,7 @@ public interface ILabelApi
 
     [Delete("/api/Labels/{cardId}/{labelId}")]
     Task<IApiResponse<Result>> RemoveLabelFromCardAsync(int cardId, int labelId);
+
+    [Delete("/api/Labels/delete/{labelId}")]
+    Task<IApiResponse<Result>> DeleteLabelAsync(int labelId);
 }

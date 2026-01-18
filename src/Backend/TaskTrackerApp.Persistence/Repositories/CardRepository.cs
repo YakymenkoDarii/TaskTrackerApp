@@ -14,13 +14,22 @@ public class CardRepository : Repository<Card, int>, ICardRepository
     public async Task<IEnumerable<Card>> GetCardsByBoardIdAsync(int boardId)
     {
         return await _dbSet
+            .Include(c => c.Labels)
             .Where(c => c.BoardId == boardId)
             .ToListAsync();
+    }
+
+    public async Task<Card?> GetCardDetailsAsync(int id)
+    {
+        return await _dbSet
+            .Include(c => c.Labels)
+            .FirstOrDefaultAsync(c => c.Id == id);
     }
 
     public async Task<IEnumerable<Card>> GetCardsByColumnIdAsync(int columnId)
     {
         return await _dbSet
+            .Include(c => c.Labels)
             .Where(c => c.ColumnId == columnId)
             .ToListAsync();
     }
@@ -64,6 +73,7 @@ public class CardRepository : Repository<Card, int>, ICardRepository
     public IQueryable<Card> GetQueryable()
     {
         return _dbSet
+            .Include(c => c.Labels)
             .Include(c => c.Column)
             .AsNoTracking()
             .AsQueryable();

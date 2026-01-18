@@ -18,13 +18,13 @@ public class GetCardByIdQueryHandler : IRequestHandler<GetCardByIdQuery, CardDto
     {
         using var uow = _unitOfWorkFactory.Create();
 
-        var card = await uow.CardRepository.GetById(request.Id);
+        var card = await uow.CardRepository.GetCardDetailsAsync(request.Id);
 
         if (card == null)
         {
             return null;
         }
 
-        return card!.ToDto();
+        return card.ToDto();
     }
 }
