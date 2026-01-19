@@ -23,14 +23,13 @@ public class GetPendingInvitesQueryHandler : IRequestHandler<GetPendingInvitesQu
         var dtos = invites.Select(x => new BoardInvitationDto
         {
             Id = x.Id,
-            BoardId = x.Id,
+            BoardId = x.BoardId,
             InviteeId = x.InviteeId,
             InviteeEmail = x.InviteeEmail,
-            InviteeAvatarUrl = x.Invitee.AvatarUrl,
+            InviteeAvatarUrl = x.Invitee?.AvatarUrl,
             Role = x.Role.ToString(),
             Status = x.Status.ToString(),
         }).ToList();
-
         return dtos;
     }
 }

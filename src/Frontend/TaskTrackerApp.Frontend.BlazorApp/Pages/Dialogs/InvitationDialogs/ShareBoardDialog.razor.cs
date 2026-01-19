@@ -2,15 +2,17 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
+using TaskTrackerApp.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.Domain.DTOs.BoardInvitations;
 using TaskTrackerApp.Frontend.Domain.DTOs.BoardMembers;
 using TaskTrackerApp.Frontend.Domain.DTOs.Users;
 using TaskTrackerApp.Frontend.Domain.Enums;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
+using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.InvitationDialogs;
 
-public partial class ShareBoardDialog
+public partial class ShareBoardDialog : IDisposable
 {
     [Inject] public IUsersService UsersService { get; set; }
 
@@ -25,6 +27,8 @@ public partial class ShareBoardDialog
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
 
     [Inject] private NavigationManager Navigation { get; set; }
+
+    [Inject] private InvitationSignalRService SignalRService { get; set; }
 
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
 
@@ -44,6 +48,7 @@ public partial class ShareBoardDialog
     protected override async Task OnInitializedAsync()
     {
         await GetCurrentUserIdentity();
+        SignalRService.OnInviteResponded += HandleInviteResponded;
         await LoadData();
     }
 
@@ -64,6 +69,14 @@ public partial class ShareBoardDialog
         {
             _currentUserId = null;
         }
+    }
+
+    private async void HandleInviteResponded(InvitationRespondedEvent notification)
+    {
+        await LoadData();
+        Snackbar.Add(notification.Message, notification.IsAccepted ? Severity.Success : Severity.Warning);
+
+        StateHasChanged();
     }
 
     private async Task LoadData()
@@ -245,6 +258,11 @@ public partial class ShareBoardDialog
     }
 
     private void Cancel() => MudDialog.Cancel();
+
+    public void Dispose()
+    {
+        SignalRService.OnInviteResponded -= HandleInviteResponded;
+    }
 
     private string GetRoleDisplayName(BoardRole role) => role switch
     {
