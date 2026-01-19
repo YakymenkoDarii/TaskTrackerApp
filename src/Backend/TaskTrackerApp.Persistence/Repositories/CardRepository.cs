@@ -43,7 +43,7 @@ public class CardRepository : Repository<Card, int>, ICardRepository
 
     public async Task<IEnumerable<Card>> GetUpcomingCardsAsync(int userId, DateTime start, DateTime end, bool includeOverdue)
     {
-        var query = _dbSet.AsQueryable();
+        var query = _dbSet.Include(c => c.Board).AsQueryable();
 
         query = query.Where(c => c.AssigneeId == userId && c.DueDate.HasValue);
 

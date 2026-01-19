@@ -1,61 +1,84 @@
 ﻿using Refit;
 using System.Net;
+using System.Text.Json;
 using TaskTrackerApp.Frontend.Domain.Errors;
-
-namespace TaskTrackerApp.Frontend.Domain.Results;
+using TaskTrackerApp.Frontend.Domain.Results;
 
 public static class ApiResponseExtensions
 {
     public static Result<T> ToResult<T>(this IApiResponse<Result<T>> response)
     {
-        if (!response.IsSuccessStatusCode)
+        if (response.IsSuccessStatusCode && response.Content is not null)
         {
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            return response.Content.IsSuccess
+                ? Result<T>.Success(response.Content.Value)
+                : Result<T>.Failure(response.Content.Error);
+        }
+
+        if (response.Error?.Content is not null)
+        {
+            try
             {
-                return Result<T>.Failure(AuthErrors.AuthError);
+                using var doc = JsonDocument.Parse(response.Error.Content);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("code", out var codeProp) &&
+                    root.TryGetProperty("message", out var msgProp))
+                {
+                    var code = codeProp.GetString() ?? "Unknown";
+                    var message = msgProp.GetString() ?? "Unknown error";
+
+                    var specificError = new Error(code, message);
+                    return Result<T>.Failure(specificError);
+                }
             }
-
-            return Result<T>.Failure(new Error(
-                ClientErrors.NetworkError.Code,
-                response.ReasonPhrase ?? "Unknown Network Error"));
+            catch
+            {
+                Console.WriteLine("[ToResult] Failed to parse error JSON manually.");
+            }
         }
-        var backendResult = response.Content;
 
-        if (backendResult == null)
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            return Result<T>.Failure(new Error("SerializationError", "Response was empty"));
+            return Result<T>.Failure(AuthErrors.AuthError);
         }
 
-        if (!backendResult.IsSuccess)
-        {
-            return Result<T>.Failure(backendResult.Error);
-        }
-
-        return Result<T>.Success(backendResult.Value);
+        return Result<T>.Failure(new Error(
+            ClientErrors.NetworkError.Code,
+            response.ReasonPhrase ?? "Unknown Network Error"));
     }
 
     public static Result ToResult(this IApiResponse<Result> response)
     {
-        if (!response.IsSuccessStatusCode)
+        if (response.IsSuccessStatusCode && response.Content is not null)
         {
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
-                return Result.Failure(AuthErrors.AuthError);
-
-            return Result.Failure(new Error(ClientErrors.NetworkError.Code, response.ReasonPhrase ?? "Network Error"));
+            return response.Content.IsSuccess
+                ? Result.Success()
+                : Result.Failure(response.Content.Error);
         }
 
-        var backendResult = response.Content;
-
-        if (backendResult == null)
+        if (response.Error?.Content is not null)
         {
-            return Result.Failure(new Error("SerializationError", "Response was empty"));
+            try
+            {
+                using var doc = JsonDocument.Parse(response.Error.Content);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("code", out var codeProp) &&
+                    root.TryGetProperty("message", out var msgProp))
+                {
+                    return Result.Failure(new Error(codeProp.GetString(), msgProp.GetString()));
+                }
+            }
+            catch
+            {
+                Console.WriteLine("[ToResult] Failed to parse error JSON manually.");
+            }
         }
 
-        if (!backendResult.IsSuccess)
-        {
-            return Result.Failure(backendResult.Error);
-        }
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+            return Result.Failure(AuthErrors.AuthError);
 
-        return Result.Success();
+        return Result.Failure(new Error(ClientErrors.NetworkError.Code, response.ReasonPhrase ?? "Network Error"));
     }
 }

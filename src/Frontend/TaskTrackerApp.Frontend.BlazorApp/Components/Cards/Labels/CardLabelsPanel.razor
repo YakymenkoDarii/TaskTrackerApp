@@ -9,91 +9,84 @@
     <div class="d-flex flex-wrap gap-2 align-center">
         @foreach (var label in SelectedLabels)
         {
-            <MudChip T="LabelDto"
-                     Text="@label.Name"
-                     Style="@($"background-color: {label.Color}; color: {GetContrastColor(label.Color)}; font-weight: bold;")"
+            <MudChip T="LabelDto" Text="@label.Name"
+                     Style="@GetLabelStyle(label)"
                      Size="Size.Small"
-                     OnClose="@(IsReadOnly ? null : () => ToggleLabel(label))"
+                     OnClose="@(IsReadOnly ? default : () => ToggleLabel(label))"
                      CloseIcon="@Icons.Material.Filled.Close" />
         }
 
-        @if (!IsReadOnly)
+        @if (!IsReadOnly && !_isCreatingOrEditing)
         {
             <MudIconButton Icon="@Icons.Material.Filled.Add"
                            Size="Size.Small"
                            Variant="Variant.Outlined"
                            Color="Color.Primary"
-                           OnClick="@TogglePopover"
-                           Class="ml-1" />
+                           Class="ml-1"
+                           OnClick="@StartCreate" />
         }
-    </div>
-</div>
-
-<MudPopover Open="@_isPopoverOpen"
-            AnchorOrigin="Origin.BottomLeft"
-            TransformOrigin="Origin.TopLeft"
-            Class="pa-4"
-            Style="width: 300px; max-width: 90vw;">
-
-    <div class="d-flex justify-space-between align-center mb-2">
-        <MudText Typo="Typo.subtitle2">Labels</MudText>
-        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="@(() => _isPopoverOpen = false)" />
     </div>
 
     @if (_isCreatingOrEditing)
     {
-        <MudTextField @bind-Value="_editingLabelName" Label="Name" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" />
+        <div class="mt-3 pa-3 rounded border" style="background-color: var(--mud-palette-background-grey);">
 
-        <MudText Typo="Typo.caption">Select Color</MudText>
-        <div class="d-flex flex-wrap gap-1 mb-3">
-            @foreach (var color in _presetColors)
+            <div class="d-flex justify-space-between align-center mb-2">
+                <MudText Typo="Typo.subtitle2">Manage Labels</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                               Size="Size.Small"
+                               OnClick="@(() => _isCreatingOrEditing = false)" />
+            </div>
+
+            @if (_editingLabel != null || _isCreatingNew)
             {
-                <div @onclick="@(() => _editingLabelColor = color)"
-                     style="@($"width: 32px; height: 32px; background-color: {color}; cursor: pointer; border: {(_editingLabelColor == color ? "2px solid black" : "1px solid #ddd")}; border-radius: 4px;")">
+                <MudTextField @bind-Value="_editingLabelName" Label="Name" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" AutoFocus="true" />
+
+                <MudText Typo="Typo.caption">Select Color</MudText>
+                <div class="d-flex flex-wrap gap-1 mb-3">
+                    @foreach (var color in _presetColors)
+                    {
+                        <div @onclick="@(() => _editingLabelColor = color)"
+                             style="@($"width: 32px; height: 32px; background-color: {color}; cursor: pointer; border: {GetBorderStyle(color)}; border-radius: 4px;")">
+                        </div>
+                    }
                 </div>
-            }
-        </div>
 
-        <div class="d-flex align-center gap-2">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="SaveLabel">Save</MudButton>
-            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => _isCreatingOrEditing = false)">Back</MudButton>
-
-            @if (_editingLabel != null)
-            {
-                <MudSpacer />
-                <MudTooltip Text="Delete Label">
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                   Color="Color.Error"
-                                   Size="Size.Small"
-                                   OnClick="DeleteLabel" />
-                </MudTooltip>
-            }
-        </div>
-    }
-    else
-    {
-        <MudTextField @bind-Value="_searchTerm" Placeholder="Search labels..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Margin="Margin.Dense" Class="mb-2" />
-
-        <div class="d-flex flex-column gap-1" style="max-height: 200px; overflow-y: auto;">
-            @foreach (var label in FilteredBoardLabels)
-            {
-                var isSelected = SelectedLabels.Any(l => l.Id == label.Id);
                 <div class="d-flex align-center gap-2">
-                    <MudCheckBox T="bool"
-                                 Value="@isSelected"
-                                 ValueChanged="@((v) => ToggleLabel(label))"
-                                 Color="Color.Primary"
-                                 Dense="true" />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="SaveLabel">Save</MudButton>
+                    <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => { _editingLabel = null; _isCreatingNew = false; })">Back</MudButton>
 
-                    <div class="flex-grow-1 pa-1 rounded px-2" style="@($"background-color: {label.Color}; color: {GetContrastColor(label.Color)}; font-size: 0.85rem;")">
-                        @label.Name
-                    </div>
+                    @if (_editingLabel != null)
+                    {
+                        <MudSpacer />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="DeleteLabel" />
+                    }
+                </div>
+            }
+            else
+            {
+                <MudTextField @bind-Value="_searchTerm" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Margin="Margin.Dense" Class="mb-2" />
 
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => StartEdit(label))" />
+                <MudButton Variant="Variant.Filled" FullWidth="true" Color="Color.Default" Class="mb-2" OnClick="@(() => _isCreatingNew = true)">
+                    Create new label
+                </MudButton>
+
+                <div class="d-flex flex-column gap-1" style="max-height: 200px; overflow-y: auto;">
+                    @foreach (var label in FilteredBoardLabels)
+                    {
+                        var isSelected = SelectedLabels.Any(l => l.Id == label.Id);
+                        <div class="d-flex align-center gap-2">
+                            <MudCheckBox T="bool" Value="@isSelected" ValueChanged="@((v) => ToggleLabel(label))" Color="Color.Primary" Dense="true" />
+
+                            <div class="flex-grow-1 pa-1 rounded px-2" style="@GetLabelStyle(label)">
+                                @label.Name
+                            </div>
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => StartEdit(label))" />
+                        </div>
+                    }
                 </div>
             }
         </div>
-
-        <MudButton Variant="Variant.Filled" FullWidth="true" Color="Color.Default" Class="mt-3" OnClick="StartCreate">Create new label</MudButton>
     }
-</MudPopover>
+</div>

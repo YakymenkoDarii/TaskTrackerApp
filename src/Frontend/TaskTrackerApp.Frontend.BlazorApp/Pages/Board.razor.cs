@@ -193,7 +193,8 @@ public partial class Board
             IsCompleted = dropItem.Item.IsCompleted,
             BoardId = BoardId,
             UpdatedById = userId,
-            Position = dropItem.IndexInZone
+            Position = dropItem.IndexInZone,
+            Priority = dropItem.Item.Priority
         };
 
         var result = await CardsService.UpdateAsync(dropItem.Item.Id, updateDto);

@@ -23,8 +23,8 @@ public partial class CardLabelsPanel
 
     [Parameter] public bool IsReadOnly { get; set; }
 
-    private bool _isPopoverOpen;
     private bool _isCreatingOrEditing;
+    private bool _isCreatingNew;
     private List<LabelDto> _allBoardLabels = new();
 
     private string _searchTerm = "";
@@ -57,8 +57,6 @@ public partial class CardLabelsPanel
         }
     }
 
-    private void TogglePopover() => _isPopoverOpen = !_isPopoverOpen;
-
     private async Task ToggleLabel(LabelDto label)
     {
         var existingLabel = SelectedLabels.FirstOrDefault(l => l.Id == label.Id);
@@ -85,6 +83,8 @@ public partial class CardLabelsPanel
         _editingLabelName = "";
         _editingLabelColor = _presetColors[0];
         _isCreatingOrEditing = true;
+        _isCreatingNew = false;
+        _searchTerm = "";
     }
 
     private void StartEdit(LabelDto label)
@@ -93,6 +93,7 @@ public partial class CardLabelsPanel
         _editingLabelName = label.Name;
         _editingLabelColor = label.Color;
         _isCreatingOrEditing = true;
+        _isCreatingNew = false;
     }
 
     private async Task SaveLabel()
@@ -106,6 +107,7 @@ public partial class CardLabelsPanel
             if (result.IsSuccess)
             {
                 _allBoardLabels.Add(result.Value);
+
                 await ToggleLabel(result.Value);
             }
         }
@@ -127,7 +129,8 @@ public partial class CardLabelsPanel
             }
         }
 
-        _isCreatingOrEditing = false;
+        _editingLabel = null;
+        _isCreatingNew = false;
     }
 
     private async Task DeleteLabel()
@@ -148,7 +151,6 @@ public partial class CardLabelsPanel
                 var labelToRemove = _allBoardLabels.FirstOrDefault(l => l.Id == _editingLabel.Id);
                 if (labelToRemove != null) _allBoardLabels.Remove(labelToRemove);
 
-                // 2. Remove from the selected labels on THIS card (if present)
                 var selectedToRemove = SelectedLabels.FirstOrDefault(l => l.Id == _editingLabel.Id);
                 if (selectedToRemove != null)
                 {
@@ -156,7 +158,8 @@ public partial class CardLabelsPanel
                     await SelectedLabelsChanged.InvokeAsync(SelectedLabels);
                 }
 
-                _isCreatingOrEditing = false;
+                _editingLabel = null;
+                _isCreatingNew = false;
                 Snackbar.Add("Label deleted", Severity.Success);
             }
             else
@@ -169,5 +172,15 @@ public partial class CardLabelsPanel
     private string GetContrastColor(string hexColor)
     {
         return "#FFFFFF";
+    }
+
+    private string GetLabelStyle(LabelDto label)
+    {
+        return $"background-color: {label.Color}; color: {GetContrastColor(label.Color)}; font-size: 0.85rem;";
+    }
+
+    private string GetBorderStyle(string color)
+    {
+        return _editingLabelColor == color ? "2px solid black" : "1px solid #ddd";
     }
 }

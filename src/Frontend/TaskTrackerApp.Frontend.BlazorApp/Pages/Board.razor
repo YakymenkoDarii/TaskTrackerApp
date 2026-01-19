@@ -99,7 +99,7 @@ else
                                        Color=@Color.Success
                                        OnClick=@HandleAddColumn
                                        Class="py-2 fw-bold text-white">
-                                Add another list
+                                @(columns.Any() ? "Add another list" : "Add list")
                             </MudButton>
                         </div>
                     </ChildContent>
@@ -204,7 +204,7 @@ else
                                            Color=@Color.Success
                                            OnClick=@HandleAddColumn
                                            Class="py-2 fw-bold text-white">
-                                    Add another list
+                                    @(columns.Any() ? "Add another list" : "Add list")
                                 </MudButton>
                             </div>
                         }
