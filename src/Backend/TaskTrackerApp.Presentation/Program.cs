@@ -7,7 +7,9 @@ using System.Text.Json.Serialization;
 using TaskTrackerApp.Application.DependencyInjection;
 using TaskTrackerApp.Database;
 using TaskTrackerApp.Domain.Settings;
+using TaskTrackerApp.Frontend.Domain.Constants;
 using TaskTrackerApp.Infrastructure.DependencyInjection;
+using TaskTrackerApp.Infrastructure.Hubs;
 using TaskTrackerApp.Persistence.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,6 +45,22 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(key)
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/hubs/invitations")))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -95,5 +113,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers().RequireRateLimiting("authLimiter");
+
+app.MapHub<InvitationHub>(HubRoutes.Invitations);
 
 app.Run();

@@ -12,6 +12,7 @@ using TaskTrackerApp.Frontend.Services.Services.Boards;
 using TaskTrackerApp.Frontend.Services.Services.CardComments;
 using TaskTrackerApp.Frontend.Services.Services.Cards;
 using TaskTrackerApp.Frontend.Services.Services.Columns;
+using TaskTrackerApp.Frontend.Services.Services.Hubs;
 using TaskTrackerApp.Frontend.Services.Services.Labels;
 using TaskTrackerApp.Frontend.Services.Services.Users;
 
@@ -38,6 +39,8 @@ public static class DependencyInjection
 
         services.AddTransient<AuthMessageHandler>();
         services.AddTransient<CookieHandler>();
+
+        services.AddScoped<InvitationSignalRService>();
 
         services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 

@@ -32,6 +32,7 @@ public class BoardInvitationsRepository : Repository<BoardInvitation, int>, IBoa
     public async Task<BoardInvitation?> GetPendingByEmailAsync(int boardId, string email)
     {
         return await _dbSet
+            .Include(i => i.Board)
             .FirstOrDefaultAsync(i =>
                 i.BoardId == boardId &&
                 i.InviteeEmail == email &&

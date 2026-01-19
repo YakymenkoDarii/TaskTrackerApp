@@ -2,13 +2,15 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
+using TaskTrackerApp.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.InvitationDialogs;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
+using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages;
 
-public partial class Home
+public partial class Home : IDisposable
 {
     [Inject] private NavigationManager Nav { get; set; } = default!;
 
@@ -19,6 +21,8 @@ public partial class Home
     [Inject] private IBoardInvitationsService InvitationService { get; set; }
 
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+
+    [Inject] private InvitationSignalRService SignalRService { get; set; }
 
     private DateTime _anchorDate = DateTime.Today;
     private DateTime _weekStart;
@@ -38,11 +42,27 @@ public partial class Home
         var user = authState.User;
         if (user.Identity.IsAuthenticated)
         {
-            int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out _currentUserId);
+            if (int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out _currentUserId))
+            {
+                SignalRService.OnInviteReceived += HandleInviteReceived;
+                SignalRService.OnInviteRevoked += HandleInviteRevoked;
+            }
         }
 
         CalculateWeekRange();
         await Task.WhenAll(LoadDataAsync(), UpdateInvitationCount());
+    }
+
+    private async void HandleInviteReceived(InvitationReceivedEvent _)
+    {
+        await UpdateInvitationCount();
+        StateHasChanged();
+    }
+
+    private async void HandleInviteRevoked(int _)
+    {
+        await UpdateInvitationCount();
+        StateHasChanged();
     }
 
     private async Task UpdateInvitationCount()
@@ -51,6 +71,7 @@ public partial class Home
         if (result.IsSuccess)
         {
             _pendingInvitesCount = result.Value.Count();
+            StateHasChanged();
         }
     }
 
@@ -160,5 +181,11 @@ public partial class Home
         await CardService.UpdateStatus(task.Id, task.IsCompleted);
 
         StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        SignalRService.OnInviteReceived -= HandleInviteReceived;
+        SignalRService.OnInviteRevoked -= HandleInviteRevoked;
     }
 }

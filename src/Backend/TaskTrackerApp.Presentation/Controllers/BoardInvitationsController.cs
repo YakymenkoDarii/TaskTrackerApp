@@ -38,7 +38,7 @@ public class BoardInvitationsController : ControllerBase
     [HttpPost("invite")]
     public async Task<IActionResult> SendInviteAsync(SendBoardInvitationRequestDto request)
     {
-        var senderId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+        var senderId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                              ?? throw new UnauthorizedAccessException());
 
         var comamnd = new SendBoardInvitationCommand
