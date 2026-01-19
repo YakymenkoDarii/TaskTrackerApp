@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using TaskTrackerApp.Frontend.Domain.Enums
+@using TaskTrackerApp.Frontend.BlazorApp.Components.Cards;
 
 <MudDialog Class="card-details-dialog" DisableSidePadding=@true>
     <DialogContent>
@@ -46,6 +47,8 @@
                                   Placeholder="@(IsReadOnly ? "No description provided." : "Add a more detailed description...")"
                                   Class="mb-4"
                                   ReadOnly="@IsReadOnly" />
+
+                    <CardComments CardId="@Card.Id" IsReadOnly="@IsReadOnly" />
                 </MudItem>
 
                 <MudItem xs=12 sm=3>

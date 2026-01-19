@@ -18,7 +18,7 @@ internal class UpdateBoardCommandHandler : IRequestHandler<UpdateBoardCommand, R
     {
         using var uow = _uowFactory.Create();
 
-        var board = await uow.BoardRepository.GetAsync(request.Id);
+        var board = await uow.BoardRepository.GetById(request.Id);
 
         if (board == null)
         {

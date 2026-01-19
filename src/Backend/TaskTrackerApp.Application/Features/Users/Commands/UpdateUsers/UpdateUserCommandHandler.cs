@@ -16,7 +16,7 @@ internal class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand>
     {
         using var uow = _uowFactory.Create();
 
-        var user = await uow.UserRepository.GetAsync(request.Id);
+        var user = await uow.UserRepository.GetById(request.Id);
 
         user.Tag = request.Tag;
         user.PasswordHash = request.PasswordHash;
