@@ -1,0 +1,21 @@
+﻿CREATE TABLE Labels (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    Color NVARCHAR(7) NOT NULL,
+    BoardId INT NOT NULL,
+    
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 NULL,
+    CreatedById INT NOT NULL, 
+    UpdatedById INT NOT NULL,
+
+    CONSTRAINT FK_Labels_BoardId FOREIGN KEY (BoardId) REFERENCES Boards(Id) ON DELETE CASCADE
+);
+
+CREATE TABLE CardLabels (
+    CardId INT NOT NULL,
+    LabelId INT NOT NULL,
+    PRIMARY KEY (CardId, LabelId),
+    CONSTRAINT FK_CardLabels_Card FOREIGN KEY (CardId) REFERENCES Cards(Id) ON DELETE CASCADE,
+    CONSTRAINT FK_CardLabels_Label FOREIGN KEY (LabelId) REFERENCES Labels(Id)
+);

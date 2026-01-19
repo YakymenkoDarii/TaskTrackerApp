@@ -13,8 +13,11 @@ namespace TaskTrackerApp.Frontend.BlazorApp.Pages;
 public partial class Login
 {
     [Inject] public ISnackbar SnackBar { get; set; } = default!;
+
     [Inject] public IAuthService AuthService { get; set; } = default!;
+
     [Inject] public NavigationManager Navigation { get; set; } = default!;
+
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     [Parameter]
@@ -85,14 +88,18 @@ public partial class Login
 
     private void HandleError(Error error)
     {
+        _messageStore.Clear();
+
         switch (error.Code)
         {
             case var c when c == LoginError.InvalidPassword.Code:
-                SnackBar.Add("Wrong password", Severity.Error);
+                _messageStore.Add(_editContext.Field(nameof(model.Password)), "Invalid password");
+                _editContext.NotifyValidationStateChanged();
                 break;
 
             case var c when c == LoginError.UserNotFound.Code:
-                SnackBar.Add("User not found", Severity.Error);
+                _messageStore.Add(_editContext.Field(nameof(model.Login)), "User not found");
+                _editContext.NotifyValidationStateChanged();
                 break;
 
             case ClientErrors.NetworkErrorCode:

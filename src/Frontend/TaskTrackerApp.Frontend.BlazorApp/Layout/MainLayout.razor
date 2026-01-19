@@ -1,4 +1,5 @@
-﻿@using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
+﻿@using System.Security.Claims
+@using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
 @using TaskTrackerApp.Frontend.Services.Services.Auth
 @inherits LayoutComponentBase
 @inject NavigationManager Navigation
@@ -37,7 +38,9 @@
             </NotAuthorized>
         </AuthorizeView>
 
-        <MudAvatar Color="Color.Secondary">U</MudAvatar>
+        <MudAvatar Color="Color.Secondary">
+            @UserLetter
+        </MudAvatar>
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen"
@@ -53,6 +56,8 @@
 
 @code {
     bool _drawerOpen = true;
+    private string? UserLetter = "U";
+
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     void DrawerToggle()
@@ -68,5 +73,21 @@
             .NotifyUserLogout();
 
         Navigation.NavigateTo("/login", true);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            var tagName = user.FindFirst(ClaimTypes.Name)?.Value;
+
+            if (!string.IsNullOrEmpty(tagName))
+            {
+                UserLetter = tagName[0].ToString().ToUpper();
+            }
+        }
     }
 }

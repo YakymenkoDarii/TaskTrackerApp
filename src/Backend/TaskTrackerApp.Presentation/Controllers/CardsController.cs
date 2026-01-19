@@ -6,6 +6,7 @@ using TaskTrackerApp.Application.Features.Cards.Commands.CreateCard;
 using TaskTrackerApp.Application.Features.Cards.Commands.DeleteCard;
 using TaskTrackerApp.Application.Features.Cards.Commands.UpdateCards;
 using TaskTrackerApp.Application.Features.Cards.Commands.UpdateStatusCards;
+using TaskTrackerApp.Application.Features.Cards.Queries.GetByBoardId;
 using TaskTrackerApp.Application.Features.Cards.Queries.GetCardsByColumnId;
 using TaskTrackerApp.Application.Features.Cards.Queries.GetUpcomingCardsByDate;
 using TaskTrackerApp.Application.Features.Cards.Queries.SearchCards;
@@ -147,6 +148,23 @@ public class CardsController : ControllerBase
         };
 
         var result = await _mediator.Send(request);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result);
+        }
+
+        return BadRequest(result);
+    }
+
+    [HttpGet("board/{boardId}")]
+    public async Task<IActionResult> GetCardsByBoardIdAsync(int boardId)
+    {
+        var query = new GetCardsByBoardIdQuery
+        {
+            BoardId = boardId
+        };
+        var result = await _mediator.Send(query);
 
         if (result.IsSuccess)
         {

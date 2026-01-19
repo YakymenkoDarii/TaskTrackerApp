@@ -77,7 +77,6 @@ public partial class Boards
             foreach (var item in recentItems)
             {
                 var matchingBoard = apiBoards.FirstOrDefault(b => b.Id == item.BoardId);
-
                 if (matchingBoard != null)
                 {
                     matchingBoard.LastTimeOpenned = item.LastViewed;
@@ -85,7 +84,9 @@ public partial class Boards
                 }
             }
 
-            lastOpenedBoards = tempList;
+            lastOpenedBoards = tempList
+                .OrderByDescending(x => x.LastTimeOpenned)
+                .Take(4);
         }
     }
 

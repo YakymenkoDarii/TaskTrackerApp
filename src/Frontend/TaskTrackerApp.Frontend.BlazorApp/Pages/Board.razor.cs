@@ -88,13 +88,11 @@ public partial class Board
             {
                 columns = columnsResult.Value.OrderBy(c => c.Position).ToList();
                 _allCards.Clear();
-                foreach (var col in columns)
+                var allCardsResult = await CardsService.GetCardsByBoardIdAsync(BoardId);
+
+                if (allCardsResult.IsSuccess)
                 {
-                    var cardsResult = await CardsService.GetCardsByColumnId(col.Id);
-                    if (cardsResult.IsSuccess && cardsResult.Value != null)
-                    {
-                        _allCards.AddRange(cardsResult.Value.OrderBy(c => c.Position));
-                    }
+                    _allCards = allCardsResult.Value.OrderBy(c => c.Position).ToList();
                 }
             }
         }
@@ -165,7 +163,16 @@ public partial class Board
     {
         if (!CanEditContent) return;
 
+        var cardInList = _allCards.FirstOrDefault(c => c.Id == dropItem.Item.Id);
+
         dropItem.Item.ColumnId = int.Parse(dropItem.DropzoneIdentifier);
+        dropItem.Item.Position = dropItem.IndexInZone;
+
+        if (cardInList != null)
+        {
+            cardInList.ColumnId = dropItem.Item.ColumnId;
+            cardInList.Position = dropItem.IndexInZone;
+        }
 
         int userId = 0;
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -186,7 +193,8 @@ public partial class Board
             IsCompleted = dropItem.Item.IsCompleted,
             BoardId = BoardId,
             UpdatedById = userId,
-            Position = dropItem.IndexInZone
+            Position = dropItem.IndexInZone,
+            Priority = dropItem.Item.Priority
         };
 
         var result = await CardsService.UpdateAsync(dropItem.Item.Id, updateDto);
@@ -194,7 +202,21 @@ public partial class Board
         if (!result.IsSuccess)
         {
             Snackbar.Add("Failed to move card", Severity.Error);
-            await LoadBoardDataAsync();
+            await ReloadCards();
+        }
+        else
+        {
+            await ReloadCards();
+        }
+    }
+
+    private async Task ReloadCards()
+    {
+        var result = await CardsService.GetCardsByBoardIdAsync(BoardId);
+        if (result.IsSuccess)
+        {
+            _allCards = result.Value.OrderBy(c => c.Position).ToList();
+            _cardDropContainer.Refresh();
         }
     }
 

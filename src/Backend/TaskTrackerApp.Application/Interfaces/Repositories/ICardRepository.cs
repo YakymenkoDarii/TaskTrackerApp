@@ -15,4 +15,6 @@ public interface ICardRepository : IRepository<Card, int>
     Task<IEnumerable<Card>> GetCardsByAsigneeIdAsync(int userId);
 
     IQueryable<Card> GetQueryable();
+
+    Task<Card?> GetCardDetailsAsync(int id);
 }

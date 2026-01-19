@@ -36,4 +36,6 @@ public class Card : BaseEntity
     public User UpdatedBy { get; set; }
 
     public ICollection<CardComment> Comments { get; set; } = new List<CardComment>();
+
+    public ICollection<Label> Labels { get; set; } = new List<Label>();
 }
