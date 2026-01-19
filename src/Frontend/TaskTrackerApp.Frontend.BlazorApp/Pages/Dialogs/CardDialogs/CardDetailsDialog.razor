@@ -6,110 +6,118 @@
 @using TaskTrackerApp.Frontend.Domain.Enums
 @using TaskTrackerApp.Frontend.BlazorApp.Components.Cards;
 
-<MudDialog Class="card-details-dialog" DisableSidePadding=@true>
+<MudDialog Class=card-details-dialog DisableSidePadding=true>
     <DialogContent>
-        <MudContainer MaxWidth=@MaxWidth.False Class="pa-4">
+        <MudContainer MaxWidth=MaxWidth.False Class=pa-4>
             <MudGrid>
                 <MudItem xs=12 sm=9>
                     <div class="d-flex align-center gap-2 mb-4">
 
                         <MudTooltip Text="@(isCompleted ? "Mark incomplete" : "Mark complete")">
-                            <MudCheckBox T="bool"
-                                         Value="@isCompleted"
-                                         ValueChanged="@OnCompletionToggled"
-                                         Color=@Color.Success
+                            <MudCheckBox T=bool
+                                         Value=@isCompleted
+                                         ValueChanged=@OnCompletionToggled
+                                         Color=Color.Success
                                          CheckedIcon=@Icons.Material.Filled.CheckCircle
                                          UncheckedIcon=@Icons.Material.Outlined.Circle
-                                         Size=@Size.Large
-                                         Class="mr-2" />
+                                         Size=Size.Large
+                                         Class=mr-2 />
                         </MudTooltip>
 
-                        <MudIcon Icon=@Icons.Material.Filled.WebAsset Class="mud-text-secondary" />
+                        <MudIcon Icon=@Icons.Material.Filled.WebAsset
+                                 Class=mud-text-secondary />
 
                         <MudTextField @bind-Value=@title
-                                      T=@string
-                                      Variant=@Variant.Text
-                                      Typo=@Typo.h5
+                                      T=string
+                                      Variant=Variant.Text
+                                      Typo=Typo.h5
                                       Class=@($"fw-bold {(isCompleted ? "strikethrough-text" : "")}")
-                                      DisableUnderLine=@true
+                                      DisableUnderLine=true
                                       Style="font-weight: 700;"
-                                      ReadOnly="@IsReadOnly" />
+                                      ReadOnly=@IsReadOnly />
                     </div>
 
                     <div class="d-flex align-center gap-2 mb-2">
-                        <MudIcon Icon=@Icons.Material.Filled.Description Class="mud-text-secondary" />
-                        <MudText Typo=@Typo.h6>Description</MudText>
+                        <MudIcon Icon=@Icons.Material.Filled.Description
+                                 Class=mud-text-secondary />
+                        <MudText Typo=Typo.h6>
+                            Description
+                        </MudText>
                     </div>
 
                     <MudTextField @bind-Value=@description
-                                  T=@string
-                                  Variant=@Variant.Outlined
+                                  T=string
+                                  Variant=Variant.Outlined
                                   Lines=8
                                   Placeholder="@(IsReadOnly ? "No description provided." : "Add a more detailed description...")"
-                                  Class="mb-4"
-                                  ReadOnly="@IsReadOnly" />
+                                  Class=mb-4
+                                  ReadOnly=@IsReadOnly />
 
-                    <CardComments CardId="@Card.Id" IsReadOnly="@IsReadOnly" />
+                    <CardComments CardId=@Card.Id
+                                  IsReadOnly=@IsReadOnly />
                 </MudItem>
 
                 <MudItem xs=12 sm=3>
 
-                    <CardLabelsPanel BoardId="@BoardId" 
-                     CardId="@Card.Id"
-                     @bind-SelectedLabels="@Card.Labels"
-                     IsReadOnly="@IsReadOnly" />
+                    <CardLabelsPanel BoardId=@BoardId
+                                     CardId=@Card.Id
+                                     @bind-SelectedLabels=@Card.Labels
+                                     IsReadOnly=@IsReadOnly />
 
-                    <MudText Typo=@Typo.caption Class="text-uppercase fw-bold text-secondary mb-2 d-block">
+                    <MudText Typo=Typo.caption
+                             Class="text-uppercase fw-bold text-secondary mb-2 d-block">
                         Priority
                     </MudText>
 
-                    <MudSelect T="CardPriority"
-                               @bind-Value="_priority"
+                    <MudSelect T=CardPriority
+                               @bind-Value=_priority
                                Label="Select Priority"
-                               Variant="Variant.Outlined"
-                               AnchorOrigin="Origin.BottomCenter"
-                               Class="mb-4"
-                               Disabled="@IsReadOnly"
-                               AdornmentColor="@GetPriorityColor(_priority)">
+                               Variant=Variant.Outlined
+                               AnchorOrigin=Origin.BottomCenter
+                               Class=mb-4
+                               Disabled=@IsReadOnly
+                               AdornmentColor=@GetPriorityColor(_priority)>
 
                         @foreach (CardPriority p in Enum.GetValues(typeof(CardPriority)))
                         {
-                            <MudSelectItem Value="@p">
+                            <MudSelectItem Value=@p>
                                 <div class="d-flex align-center gap-2">
-                                    <MudIcon Icon="@Icons.Material.Filled.Flag"
-                                             Color="@GetPriorityColor(p)"
-                                             Size="Size.Small" />
+                                    <MudIcon Icon=@Icons.Material.Filled.Flag
+                                             Color=@GetPriorityColor(p)
+                                             Size=Size.Small />
                                     <MudText>@p.ToString()</MudText>
                                 </div>
                             </MudSelectItem>
                         }
                     </MudSelect>
 
-                    <MudText Typo=@Typo.caption Class="text-uppercase fw-bold text-secondary mb-2 d-block">
+                    <MudText Typo=Typo.caption
+                             Class="text-uppercase fw-bold text-secondary mb-2 d-block">
                         Assignee
                     </MudText>
 
                     <MudSelect T="int?"
-                               @bind-Value="@_assigneeId"
+                               @bind-Value=@_assigneeId
                                Label="@(_assigneeId == null ? "Unassigned" : "")"
-                               Variant="Variant.Outlined"
-                               AnchorOrigin="Origin.BottomCenter"
-                               Class="mb-4"
+                               Variant=Variant.Outlined
+                               AnchorOrigin=Origin.BottomCenter
+                               Class=mb-4
                                ToStringFunc="@(id => _boardMembers.FirstOrDefault(m => m.UserId == id)?.Name)"
-                               Disabled="@IsReadOnly">
+                               Disabled=@IsReadOnly>
 
-                        <MudSelectItem T="int?" Value="null">
+                        <MudSelectItem T="int?" Value=null>
                             <div class="d-flex align-center gap-2">
-                                <MudIcon Icon="@Icons.Material.Outlined.PersonOff" Size="Size.Small" />
+                                <MudIcon Icon=@Icons.Material.Outlined.PersonOff
+                                         Size=Size.Small />
                                 <MudText>Unassigned</MudText>
                             </div>
                         </MudSelectItem>
 
                         @foreach (var member in _boardMembers)
                         {
-                            <MudSelectItem T="int?" Value="@member.UserId">
+                            <MudSelectItem T="int?" Value=@member.UserId>
                                 <div class="d-flex align-center gap-2">
-                                    <MudAvatar Size="Size.Small" Color="Color.Primary">
+                                    <MudAvatar Size=Size.Small Color=Color.Primary>
                                         @(member.Name?.FirstOrDefault() ?? '?')
                                     </MudAvatar>
                                     <MudText>@member.Name</MudText>
@@ -118,46 +126,48 @@
                         }
                     </MudSelect>
 
-                    <MudText Typo=@Typo.caption Class="text-uppercase fw-bold text-secondary mb-2 d-block">
+                    <MudText Typo=Typo.caption
+                             Class="text-uppercase fw-bold text-secondary mb-2 d-block">
                         Add to card
                     </MudText>
 
                     <MudDatePicker Label="Due Date"
                                    @bind-Date=@dueDate
-                                   Color=@Color.Primary
-                                   Variant=@Variant.Outlined
-                                   Class="mb-3"
-                                   ReadOnly="@IsReadOnly" />
+                                   Color=Color.Primary
+                                   Variant=Variant.Outlined
+                                   Class=mb-3
+                                   ReadOnly=@IsReadOnly />
 
-                    <MudText Typo=@Typo.caption Class="text-uppercase fw-bold text-secondary mb-2 d-block mt-4">
+                    <MudText Typo=Typo.caption
+                             Class="text-uppercase fw-bold text-secondary mb-2 d-block mt-4">
                         Actions
                     </MudText>
 
                     @if (!IsReadOnly)
                     {
-                        <MudButton Variant=@Variant.Filled
-                                   Color=@Color.Primary
-                                   FullWidth=@true
-                                   OnClick=@SaveChanges
-                                   Class="mb-2">
+                        <MudButton Variant=Variant.Filled
+                                   Color=Color.Primary
+                                   FullWidth=true
+                                   OnClick=SaveChanges
+                                   Class=mb-2>
                             Save
                         </MudButton>
                     }
 
-                    <MudButton Variant=@Variant.Outlined
-                               Color=@Color.Secondary
-                               FullWidth=@true
-                               OnClick=@Cancel>
+                    <MudButton Variant=Variant.Outlined
+                               Color=Color.Secondary
+                               FullWidth=true
+                               OnClick=Cancel>
                         Close
                     </MudButton>
 
                     @if (!IsReadOnly)
                     {
-                        <MudButton Variant=@Variant.Outlined
-                                   Color=@Color.Error
-                                   FullWidth=@true
-                                   OnClick=@DeleteCard
-                                   Class="mt-2">
+                        <MudButton Variant=Variant.Outlined
+                                   Color=Color.Error
+                                   FullWidth=true
+                                   OnClick=DeleteCard
+                                   Class=mt-2>
                             Delete Card
                         </MudButton>
                     }

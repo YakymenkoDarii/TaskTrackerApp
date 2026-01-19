@@ -2,28 +2,30 @@
 @using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
 
 <div class="mb-4">
-    <MudText Typo="Typo.caption" Class="text-uppercase fw-bold text-secondary mb-2 d-block">
+    <MudText Typo=Typo.caption
+             Class="text-uppercase fw-bold text-secondary mb-2 d-block">
         Labels
     </MudText>
 
     <div class="d-flex flex-wrap gap-2 align-center">
         @foreach (var label in SelectedLabels)
         {
-            <MudChip T="LabelDto" Text="@label.Name"
+            <MudChip T=LabelDto
+                     Text=@label.Name
                      Style="@GetLabelStyle(label)"
-                     Size="Size.Small"
-                     OnClose="@(IsReadOnly ? default : () => ToggleLabel(label))"
-                     CloseIcon="@Icons.Material.Filled.Close" />
+                     Size=Size.Small
+                     OnClose=@(IsReadOnly ? default : () => ToggleLabel(label))
+                     CloseIcon=@Icons.Material.Filled.Close />
         }
 
         @if (!IsReadOnly && !_isCreatingOrEditing)
         {
-            <MudIconButton Icon="@Icons.Material.Filled.Add"
-                           Size="Size.Small"
-                           Variant="Variant.Outlined"
-                           Color="Color.Primary"
-                           Class="ml-1"
-                           OnClick="@StartCreate" />
+            <MudIconButton Icon=@Icons.Material.Filled.Add
+                           Size=Size.Small
+                           Variant=Variant.Outlined
+                           Color=Color.Primary
+                           Class=ml-1
+                           OnClick=StartCreate />
         }
     </div>
 
@@ -32,17 +34,27 @@
         <div class="mt-3 pa-3 rounded border" style="background-color: var(--mud-palette-background-grey);">
 
             <div class="d-flex justify-space-between align-center mb-2">
-                <MudText Typo="Typo.subtitle2">Manage Labels</MudText>
-                <MudIconButton Icon="@Icons.Material.Filled.Close"
-                               Size="Size.Small"
-                               OnClick="@(() => _isCreatingOrEditing = false)" />
+                <MudText Typo=Typo.subtitle2>
+                    Manage Labels
+                </MudText>
+                <MudIconButton Icon=@Icons.Material.Filled.Close
+                               Size=Size.Small
+                               OnClick=@(() => _isCreatingOrEditing = false) />
             </div>
 
             @if (_editingLabel != null || _isCreatingNew)
             {
-                <MudTextField @bind-Value="_editingLabelName" Label="Name" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-3" AutoFocus="true" />
+                <MudTextField @bind-Value=_editingLabelName
+                              Label=Name
+                              Variant=Variant.Outlined
+                              Margin=Margin.Dense
+                              Class=mb-3
+                              AutoFocus=true />
 
-                <MudText Typo="Typo.caption">Select Color</MudText>
+                <MudText Typo=Typo.caption>
+                    Select Color
+                </MudText>
+
                 <div class="d-flex flex-wrap gap-1 mb-3">
                     @foreach (var color in _presetColors)
                     {
@@ -53,21 +65,43 @@
                 </div>
 
                 <div class="d-flex align-center gap-2">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="SaveLabel">Save</MudButton>
-                    <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => { _editingLabel = null; _isCreatingNew = false; })">Back</MudButton>
+                    <MudButton Variant=Variant.Filled
+                               Color=Color.Primary
+                               Size=Size.Small
+                               OnClick=SaveLabel>
+                        Save
+                    </MudButton>
+
+                    <MudButton Variant=Variant.Text
+                               Size=Size.Small
+                               OnClick="@(() => { _editingLabel = null; _isCreatingNew = false; })">
+                        Back
+                    </MudButton>
 
                     @if (_editingLabel != null)
                     {
                         <MudSpacer />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="DeleteLabel" />
+                        <MudIconButton Icon=@Icons.Material.Filled.Delete
+                                       Color=Color.Error
+                                       Size=Size.Small
+                                       OnClick=DeleteLabel />
                     }
                 </div>
             }
             else
             {
-                <MudTextField @bind-Value="_searchTerm" Placeholder="Search..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Margin="Margin.Dense" Class="mb-2" />
+                <MudTextField @bind-Value=_searchTerm
+                              Placeholder=Search...
+                              Adornment=Adornment.Start
+                              AdornmentIcon=@Icons.Material.Filled.Search
+                              Margin=Margin.Dense
+                              Class=mb-2 />
 
-                <MudButton Variant="Variant.Filled" FullWidth="true" Color="Color.Default" Class="mb-2" OnClick="@(() => _isCreatingNew = true)">
+                <MudButton Variant=Variant.Filled
+                           FullWidth=true
+                           Color=Color.Default
+                           Class=mb-2
+                           OnClick="@(() => _isCreatingNew = true)">
                     Create new label
                 </MudButton>
 
@@ -76,13 +110,19 @@
                     {
                         var isSelected = SelectedLabels.Any(l => l.Id == label.Id);
                         <div class="d-flex align-center gap-2">
-                            <MudCheckBox T="bool" Value="@isSelected" ValueChanged="@((v) => ToggleLabel(label))" Color="Color.Primary" Dense="true" />
+                            <MudCheckBox T=bool
+                                         Value=@isSelected
+                                         ValueChanged="@((v) => ToggleLabel(label))"
+                                         Color=Color.Primary
+                                         Dense=true />
 
                             <div class="flex-grow-1 pa-1 rounded px-2" style="@GetLabelStyle(label)">
                                 @label.Name
                             </div>
 
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => StartEdit(label))" />
+                            <MudIconButton Icon=@Icons.Material.Filled.Edit
+                                           Size=Size.Small
+                                           OnClick="@(() => StartEdit(label))" />
                         </div>
                     }
                 </div>
