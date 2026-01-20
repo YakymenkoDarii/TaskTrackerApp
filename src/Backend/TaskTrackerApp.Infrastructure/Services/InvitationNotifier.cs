@@ -1,9 +1,4 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TaskTrackerApp.Application.Interfaces.Hubs;
 using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Domain.Events.Invitations;
@@ -41,5 +36,10 @@ public class InvitationNotifier : IInvitationNotifier
         var payload = new InvitationRespondedEvent(message, isAccepted);
 
         await _hubContext.Clients.User(senderId.ToString()).InviteResponded(payload);
+    }
+
+    public async Task NotifyUserAssignedToCardAsync(int userId, int cardId, string cardTitle)
+    {
+        await _hubContext.Clients.User(userId.ToString()).CardAssigned(cardId, cardTitle);
     }
 }

@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TaskTrackerApp.Frontend.Domain.Constants;
+﻿namespace TaskTrackerApp.Frontend.Domain.Constants;
 
 public static class HubRoutes
 {
     public const string Invitations = "/hubs/invitations";
+    public const string Board = "/hubs/board";
+    public const string Card = "/hubs/card";
 }

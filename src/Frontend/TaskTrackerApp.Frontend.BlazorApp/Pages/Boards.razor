@@ -83,7 +83,7 @@
 
                                 <CardHeaderActions>
                                     <span @onclick:stopPropagation=@true>
-                                        <MudMenu Icon=@Icons.Material.Filled.MoreVert
+                                        @* <MudMenu Icon=@Icons.Material.Filled.MoreVert
                                                  AnchorOrigin=@Origin.BottomRight
                                                  TransformOrigin=@Origin.TopRight>
 
@@ -97,7 +97,7 @@
                                                          OnClick=@(() => DeleteBoard(board.Id))>
                                                 Delete
                                             </MudMenuItem>
-                                        </MudMenu>
+                                        </MudMenu> *@
                                     </span>
                                 </CardHeaderActions>
                             </MudCardHeader>

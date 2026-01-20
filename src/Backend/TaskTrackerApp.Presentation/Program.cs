@@ -115,5 +115,7 @@ app.UseAuthorization();
 app.MapControllers().RequireRateLimiting("authLimiter");
 
 app.MapHub<InvitationHub>(HubRoutes.Invitations);
+app.MapHub<BoardHub>(HubRoutes.Board);
+app.MapHub<CardHub>(HubRoutes.Card);
 
 app.Run();

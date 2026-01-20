@@ -1,6 +1,8 @@
 ﻿using MediatR;
+using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.Events.Column;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Columns.Commands.UpdateColumns;
@@ -8,10 +10,12 @@ namespace TaskTrackerApp.Application.Features.Columns.Commands.UpdateColumns;
 internal class UpdateColumnCommandHandler : IRequestHandler<UpdateColumnCommand, Result>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
+    private readonly IBoardNotifier _notifier;
 
-    public UpdateColumnCommandHandler(IUnitOfWorkFactory uowFactory)
+    public UpdateColumnCommandHandler(IUnitOfWorkFactory uowFactory, IBoardNotifier notifier)
     {
         _uowFactory = uowFactory;
+        _notifier = notifier;
     }
 
     public async Task<Result> Handle(UpdateColumnCommand request, CancellationToken cancellationToken)
@@ -66,8 +70,10 @@ internal class UpdateColumnCommandHandler : IRequestHandler<UpdateColumnCommand,
         column.Position = request.Position;
 
         await uow.ColumnRepository.UpdateAsync(column);
-
         await uow.SaveChangesAsync(cancellationToken);
+
+        var moveEvt = new ColumnMovedEvent(column.Id, column.BoardId, column.Position);
+        _ = _notifier.NotifyColumnMovedAsync(moveEvt);
 
         return Result.Success();
     }
