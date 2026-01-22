@@ -2,11 +2,12 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
-using TaskTrackerApp.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.Domain.DTOs.BoardInvitations;
 using TaskTrackerApp.Frontend.Domain.DTOs.BoardMembers;
 using TaskTrackerApp.Frontend.Domain.DTOs.Users;
 using TaskTrackerApp.Frontend.Domain.Enums;
+using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
+using TaskTrackerApp.Frontend.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
@@ -28,7 +29,9 @@ public partial class ShareBoardDialog : IDisposable
 
     [Inject] private NavigationManager Navigation { get; set; }
 
-    [Inject] private InvitationSignalRService SignalRService { get; set; }
+    [Inject] private InvitationSignalRService InvitationHub { get; set; }
+
+    [Inject] private BoardSignalRService BoardHub { get; set; }
 
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
 
@@ -48,8 +51,65 @@ public partial class ShareBoardDialog : IDisposable
     protected override async Task OnInitializedAsync()
     {
         await GetCurrentUserIdentity();
-        SignalRService.OnInviteResponded += HandleInviteResponded;
+
+        InvitationHub.OnInviteResponded += HandleInviteResponded;
+
+        BoardHub.OnMemberAdded += HandleMemberAdded;
+        BoardHub.OnMemberRemoved += HandleMemberRemoved;
+        BoardHub.OnMemberRoleUpdated += HandleMemberRoleUpdated;
+        BoardHub.OnInvitationAdded += HandleInvitationAdded;
+        BoardHub.OnInvitationRevoked += HandleInvitationRevoked;
+
         await LoadData();
+    }
+
+    private async void HandleMemberAdded(BoardMemberAddedEvent e)
+    {
+        await InvokeAsync(async () =>
+        {
+            if (e.BoardId == BoardId) await LoadData();
+        });
+    }
+
+    private async void HandleMemberRemoved(BoardMemberRemovedEvent e)
+    {
+        await InvokeAsync(async () =>
+        {
+            if (e.BoardId == BoardId) await LoadData();
+        });
+    }
+
+    private async void HandleMemberRoleUpdated(BoardMemberRoleUpdatedEvent e)
+    {
+        await InvokeAsync(async () =>
+        {
+            if (e.BoardId == BoardId) await LoadData();
+        });
+    }
+
+    private async void HandleInvitationAdded(BoardInvitationAddedEvent e)
+    {
+        await InvokeAsync(async () =>
+        {
+            if (e.BoardId == BoardId) await LoadData();
+        });
+    }
+
+    private async void HandleInvitationRevoked(BoardInvitationRevokedEvent e)
+    {
+        await InvokeAsync(async () =>
+        {
+            if (e.BoardId == BoardId) await LoadData();
+        });
+    }
+
+    private async void HandleInviteResponded(InvitationRespondedEvent notification)
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadData();
+            Snackbar.Add(notification.Message, notification.IsAccepted ? Severity.Success : Severity.Warning);
+        });
     }
 
     private async Task GetCurrentUserIdentity()
@@ -58,25 +118,10 @@ public partial class ShareBoardDialog : IDisposable
         var user = authState.User;
 
         var userIdString = user.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-        if (!string.IsNullOrEmpty(userIdString))
+        if (!string.IsNullOrEmpty(userIdString) && int.TryParse(userIdString, out int parsedId))
         {
-            if (int.TryParse(userIdString, out int parsedId))
-            {
-                _currentUserId = parsedId;
-            }
+            _currentUserId = parsedId;
         }
-        else
-        {
-            _currentUserId = null;
-        }
-    }
-
-    private async void HandleInviteResponded(InvitationRespondedEvent notification)
-    {
-        await LoadData();
-        Snackbar.Add(notification.Message, notification.IsAccepted ? Severity.Success : Severity.Warning);
-
-        StateHasChanged();
     }
 
     private async Task LoadData()
@@ -85,7 +130,6 @@ public partial class ShareBoardDialog : IDisposable
         if (membersResult.IsSuccess)
         {
             Members = membersResult.Value.ToList();
-
             var myMembership = Members.FirstOrDefault(m => m.UserId == _currentUserId);
             _isCurrentUserAdmin = myMembership?.Role == BoardRole.Admin.ToString();
         }
@@ -95,23 +139,15 @@ public partial class ShareBoardDialog : IDisposable
         {
             PendingInvites = invitesResult.Value.ToList();
         }
+        StateHasChanged();
     }
 
     private async Task<IEnumerable<UserSummaryDto>> SearchUsers(string value, CancellationToken token)
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return Enumerable.Empty<UserSummaryDto>();
-        }
+        if (string.IsNullOrWhiteSpace(value)) return Enumerable.Empty<UserSummaryDto>();
 
         var result = await UsersService.SearchUsersAsync(value, token, BoardId);
-
-        if (result.IsSuccess)
-        {
-            return result.Value;
-        }
-
-        return Enumerable.Empty<UserSummaryDto>();
+        return result.IsSuccess ? result.Value : Enumerable.Empty<UserSummaryDto>();
     }
 
     private async Task SendInvite()
@@ -130,10 +166,8 @@ public partial class ShareBoardDialog : IDisposable
         if (result.IsSuccess)
         {
             Snackbar.Add($"Invited {SelectedUser.Email}", Severity.Success);
-
             SelectedUser = null;
             SelectedRole = BoardRole.Member;
-
             await LoadData();
         }
         else
@@ -160,7 +194,6 @@ public partial class ShareBoardDialog : IDisposable
         if (result.IsSuccess)
         {
             Snackbar.Add("Role updated", Severity.Success);
-            await LoadData();
         }
         else
         {
@@ -233,7 +266,6 @@ public partial class ShareBoardDialog : IDisposable
             else
             {
                 Snackbar.Add("User removed", Severity.Success);
-                await LoadData();
             }
         }
         else
@@ -249,7 +281,12 @@ public partial class ShareBoardDialog : IDisposable
         if (result.IsSuccess)
         {
             Snackbar.Add("Invitation revoked", Severity.Info);
-            await LoadData();
+            var invite = PendingInvites.FirstOrDefault(i => i.Id == invitationId);
+            if (invite != null)
+            {
+                PendingInvites.Remove(invite);
+                StateHasChanged();
+            }
         }
         else
         {
@@ -261,7 +298,12 @@ public partial class ShareBoardDialog : IDisposable
 
     public void Dispose()
     {
-        SignalRService.OnInviteResponded -= HandleInviteResponded;
+        InvitationHub.OnInviteResponded -= HandleInviteResponded;
+        BoardHub.OnMemberAdded -= HandleMemberAdded;
+        BoardHub.OnMemberRemoved -= HandleMemberRemoved;
+        BoardHub.OnMemberRoleUpdated -= HandleMemberRoleUpdated;
+        BoardHub.OnInvitationAdded -= HandleInvitationAdded;
+        BoardHub.OnInvitationRevoked -= HandleInvitationRevoked;
     }
 
     private string GetRoleDisplayName(BoardRole role) => role switch

@@ -1,9 +1,11 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.Common;
+using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Application.Mappers.LabelMappers;
 using TaskTrackerApp.Domain.DTOs.Labels;
 using TaskTrackerApp.Domain.Errors.Auth;
+using TaskTrackerApp.Domain.Events.Labels;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Labels.Command.CreateLabel;
@@ -12,11 +14,13 @@ public class CreateLabelCommandHandler : IRequestHandler<CreateLabelCommand, Res
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IBoardNotifier _boardNotifier;
 
-    public CreateLabelCommandHandler(IUnitOfWorkFactory uowFactory, ICurrentUserService currentUserService)
+    public CreateLabelCommandHandler(IUnitOfWorkFactory uowFactory, ICurrentUserService currentUserService, IBoardNotifier boardNotifier)
     {
         _uowFactory = uowFactory;
         _currentUserService = currentUserService;
+        _boardNotifier = boardNotifier;
     }
 
     public async Task<Result<LabelDto>> Handle(CreateLabelCommand request, CancellationToken cancellationToken)
@@ -39,6 +43,10 @@ public class CreateLabelCommandHandler : IRequestHandler<CreateLabelCommand, Res
         await uow.SaveChangesAsync(cancellationToken);
 
         var resultDto = labelEntity.ToDto();
+
+        var evt = new LabelCreatedEvent(labelEntity.BoardId, labelEntity.Id, labelEntity.Name, labelEntity.Color);
+
+        await _boardNotifier.NotifyLabelCreatedAsync(evt);
 
         return Result<LabelDto>.Success(resultDto);
     }

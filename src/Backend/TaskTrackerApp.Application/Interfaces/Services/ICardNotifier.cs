@@ -11,4 +11,6 @@ public interface ICardNotifier
     Task NotifyCommentDeletedAsync(int commentId, int cardId);
 
     Task NotifyLabelAddedAsync(int cardId, int labelId);
+
+    Task NotifyLabelRemovedAsync(int cardId, int labelId);
 }

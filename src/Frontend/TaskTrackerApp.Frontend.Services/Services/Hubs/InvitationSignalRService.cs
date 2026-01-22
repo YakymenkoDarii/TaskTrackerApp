@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
-using TaskTrackerApp.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.Domain.Constants;
+using TaskTrackerApp.Frontend.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Hubs;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 

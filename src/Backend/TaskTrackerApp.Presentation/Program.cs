@@ -21,6 +21,8 @@ builder.Services
     .AddPersistence(builder.Configuration)
     .AddInfrastructure();
 
+builder.Services.AddSignalR();
+
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
@@ -55,7 +57,7 @@ builder.Services.AddAuthentication(options =>
 
             var path = context.HttpContext.Request.Path;
             if (!string.IsNullOrEmpty(accessToken) &&
-                (path.StartsWithSegments("/hubs/invitations")))
+                path.StartsWithSegments("/hubs"))
             {
                 context.Token = accessToken;
             }

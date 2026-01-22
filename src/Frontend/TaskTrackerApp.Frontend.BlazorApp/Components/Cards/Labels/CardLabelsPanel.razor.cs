@@ -1,17 +1,23 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using TaskTrackerApp.Frontend.Domain.DTOs.Labels;
+using TaskTrackerApp.Frontend.Domain.Events.Labels;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
+using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Components.Cards.Labels;
 
-public partial class CardLabelsPanel
+public partial class CardLabelsPanel : IDisposable
 {
     [Inject] public ILabelService LabelService { get; set; }
 
     [Inject] public ISnackbar Snackbar { get; set; }
 
     [Inject] public IDialogService DialogService { get; set; }
+
+    [Inject] public BoardSignalRService BoardHub { get; set; }
+
+    [Inject] public CardSignalRService CardHub { get; set; }
 
     [Parameter] public int BoardId { get; set; }
 
@@ -45,7 +51,105 @@ public partial class CardLabelsPanel
 
     protected override async Task OnInitializedAsync()
     {
+        BoardHub.OnLabelCreated += HandleLabelCreated;
+        BoardHub.OnLabelUpdated += HandleLabelUpdated;
+        BoardHub.OnLabelDeleted += HandleLabelDeleted;
+
+        CardHub.OnLabelAdded += HandleLabelAddedToCard;
+        CardHub.OnLabelRemoved += HandleLabelRemovedFromCard;
+
         await LoadBoardLabels();
+    }
+
+    private void HandleLabelCreated(LabelCreatedEvent e)
+    {
+        InvokeAsync(() =>
+        {
+            if (e.BoardId == BoardId && !_allBoardLabels.Any(l => l.Id == e.LabelId))
+            {
+                _allBoardLabels.Add(new LabelDto { Id = e.LabelId, Name = e.Name, Color = e.Color });
+                StateHasChanged();
+            }
+        });
+    }
+
+    private void HandleLabelUpdated(LabelUpdatedEvent e)
+    {
+        InvokeAsync(async () =>
+        {
+            if (e.BoardId == BoardId)
+            {
+                var label = _allBoardLabels.FirstOrDefault(l => l.Id == e.LabelId);
+                if (label != null)
+                {
+                    label.Name = e.Name;
+                    label.Color = e.Color;
+                }
+                var selected = SelectedLabels.FirstOrDefault(l => l.Id == e.LabelId);
+                if (selected != null)
+                {
+                    selected.Name = e.Name;
+                    selected.Color = e.Color;
+                    await SelectedLabelsChanged.InvokeAsync(SelectedLabels);
+                }
+
+                StateHasChanged();
+            }
+        });
+    }
+
+    private void HandleLabelDeleted(LabelDeletedEvent e)
+    {
+        InvokeAsync(async () =>
+        {
+            if (e.BoardId == BoardId)
+            {
+                var label = _allBoardLabels.FirstOrDefault(l => l.Id == e.LabelId);
+                if (label != null) _allBoardLabels.Remove(label);
+
+                var selected = SelectedLabels.FirstOrDefault(l => l.Id == e.LabelId);
+                if (selected != null)
+                {
+                    SelectedLabels.Remove(selected);
+                    await SelectedLabelsChanged.InvokeAsync(SelectedLabels);
+                }
+                StateHasChanged();
+            }
+        });
+    }
+
+    private void HandleLabelAddedToCard(int cardId, int labelId)
+    {
+        InvokeAsync(async () =>
+        {
+            if (cardId == CardId && !SelectedLabels.Any(l => l.Id == labelId))
+            {
+                var labelDef = _allBoardLabels.FirstOrDefault(l => l.Id == labelId);
+                if (labelDef != null)
+                {
+                    SelectedLabels.Add(labelDef);
+                    await SelectedLabelsChanged.InvokeAsync(SelectedLabels);
+                    StateHasChanged();
+                }
+            }
+        });
+    }
+
+    private void HandleLabelRemovedFromCard(int cardId, int labelId)
+    {
+        InvokeAsync(async () =>
+        {
+            if (cardId == CardId)
+            {
+                var label = SelectedLabels.FirstOrDefault(l => l.Id == labelId);
+                if (label != null)
+                {
+                    SelectedLabels.Remove(label);
+                    await SelectedLabelsChanged.InvokeAsync(SelectedLabels);
+                    StateHasChanged();
+                }
+            }
+        });
     }
 
     private async Task LoadBoardLabels()
@@ -64,13 +168,11 @@ public partial class CardLabelsPanel
         if (existingLabel != null)
         {
             SelectedLabels.Remove(existingLabel);
-
             await LabelService.RemoveLabelFromCardAsync(CardId, label.Id);
         }
         else
         {
             SelectedLabels.Add(label);
-
             await LabelService.AddLabelToCardAsync(CardId, label.Id);
         }
 
@@ -106,7 +208,10 @@ public partial class CardLabelsPanel
             var result = await LabelService.CreateLabelAsync(createDto);
             if (result.IsSuccess)
             {
-                _allBoardLabels.Add(result.Value);
+                if (!_allBoardLabels.Any(l => l.Id == result.Value.Id))
+                {
+                    _allBoardLabels.Add(result.Value);
+                }
 
                 await ToggleLabel(result.Value);
             }
@@ -115,18 +220,6 @@ public partial class CardLabelsPanel
         {
             var updateDto = new LabelDto { Id = _editingLabel.Id, Name = _editingLabelName, Color = _editingLabelColor };
             var result = await LabelService.UpdateLabelAsync(updateDto);
-            if (result.IsSuccess)
-            {
-                var index = _allBoardLabels.FindIndex(l => l.Id == _editingLabel.Id);
-                if (index != -1) _allBoardLabels[index] = result.Value;
-
-                var selectedIndex = SelectedLabels.FindIndex(l => l.Id == _editingLabel.Id);
-                if (selectedIndex != -1)
-                {
-                    SelectedLabels[selectedIndex] = result.Value;
-                    await SelectedLabelsChanged.InvokeAsync(SelectedLabels);
-                }
-            }
         }
 
         _editingLabel = null;
@@ -145,19 +238,8 @@ public partial class CardLabelsPanel
         if (confirm == true)
         {
             var result = await LabelService.DeleteLabelAsync(_editingLabel.Id);
-
             if (result.IsSuccess)
             {
-                var labelToRemove = _allBoardLabels.FirstOrDefault(l => l.Id == _editingLabel.Id);
-                if (labelToRemove != null) _allBoardLabels.Remove(labelToRemove);
-
-                var selectedToRemove = SelectedLabels.FirstOrDefault(l => l.Id == _editingLabel.Id);
-                if (selectedToRemove != null)
-                {
-                    SelectedLabels.Remove(selectedToRemove);
-                    await SelectedLabelsChanged.InvokeAsync(SelectedLabels);
-                }
-
                 _editingLabel = null;
                 _isCreatingNew = false;
                 Snackbar.Add("Label deleted", Severity.Success);
@@ -169,10 +251,7 @@ public partial class CardLabelsPanel
         }
     }
 
-    private string GetContrastColor(string hexColor)
-    {
-        return "#FFFFFF";
-    }
+    private string GetContrastColor(string hexColor) => "#FFFFFF";
 
     private string GetLabelStyle(LabelDto label)
     {
@@ -182,5 +261,15 @@ public partial class CardLabelsPanel
     private string GetBorderStyle(string color)
     {
         return _editingLabelColor == color ? "2px solid black" : "1px solid #ddd";
+    }
+
+    public void Dispose()
+    {
+        BoardHub.OnLabelCreated -= HandleLabelCreated;
+        BoardHub.OnLabelUpdated -= HandleLabelUpdated;
+        BoardHub.OnLabelDeleted -= HandleLabelDeleted;
+
+        CardHub.OnLabelAdded -= HandleLabelAddedToCard;
+        CardHub.OnLabelRemoved -= HandleLabelRemovedFromCard;
     }
 }

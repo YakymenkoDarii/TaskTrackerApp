@@ -3,9 +3,12 @@
 @using TaskTrackerApp.Frontend.Services.Services.Auth
 @using TaskTrackerApp.Frontend.Services.Services.Hubs
 @inherits LayoutComponentBase
+@implements IDisposable
+
 @inject NavigationManager Navigation
 @inject IAuthService Auth
-@inject InvitationSignalRService SignalRService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject InvitationSignalRService InvitationHub
 
 <MudThemeProvider />
 <MudDialogProvider />
@@ -30,7 +33,6 @@
                     Logout
                 </MudButton>
             </Authorized>
-
             <NotAuthorized>
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Primary"
@@ -52,15 +54,13 @@
     </MudDrawer>
 
     <MudMainContent>
-            @Body
+        @Body
     </MudMainContent>
 </MudLayout>
 
 @code {
     bool _drawerOpen = true;
     private string? UserLetter = "U";
-
-    [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     void DrawerToggle()
     {
@@ -71,33 +71,55 @@
     {
         await Auth.LogoutAsync();
 
-        ((CustomAuthStateProvider)AuthStateProvider).NotifyUserLogout();
+        await InvitationHub.DisposeAsync();
+
+        if (AuthStateProvider is CustomAuthStateProvider customProvider)
+        {
+            customProvider.NotifyUserLogout();
+        }
 
         Navigation.NavigateTo("/login", true);
     }
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
 
-        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        await CheckAndStartHubs();
+    }
+
+    private async void OnAuthStateChanged(Task<AuthenticationState> task)
+    {
+        await CheckAndStartHubs();
+    }
+
+    private async Task CheckAndStartHubs()
+    {
+        try
         {
-            var tagName = user.FindFirst(ClaimTypes.Name)?.Value;
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
 
-            if (!string.IsNullOrEmpty(tagName))
+            if (user.Identity is not null && user.Identity.IsAuthenticated)
             {
-                UserLetter = tagName[0].ToString().ToUpper();
-            }
+                var tagName = user.FindFirst(ClaimTypes.Name)?.Value;
+                if (!string.IsNullOrEmpty(tagName))
+                {
+                    UserLetter = tagName[0].ToString().ToUpper();
+                    StateHasChanged();
+                }
 
-            try
-            {
-                await SignalRService.StartConnection();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"SignalR skipped: {ex.Message}");
+                await InvitationHub.StartConnection();
             }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SignalR Connection Error: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthStateChanged;
     }
 }

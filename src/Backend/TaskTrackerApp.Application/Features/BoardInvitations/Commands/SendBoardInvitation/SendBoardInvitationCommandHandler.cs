@@ -5,6 +5,7 @@ using TaskTrackerApp.Domain.Entities;
 using TaskTrackerApp.Domain.Enums;
 using TaskTrackerApp.Domain.Errors;
 using TaskTrackerApp.Domain.Errors.BoardMember;
+using TaskTrackerApp.Domain.Events.Invitations;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.BoardInvitations.Commands.SendBoardInvitation;
@@ -13,11 +14,13 @@ public class SendBoardInvitationCommandHandler : IRequestHandler<SendBoardInvita
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly IInvitationNotifier _notifier;
+    private readonly IBoardNotifier _boardNotifier;
 
-    public SendBoardInvitationCommandHandler(IUnitOfWorkFactory uowFactory, IInvitationNotifier notifier)
+    public SendBoardInvitationCommandHandler(IUnitOfWorkFactory uowFactory, IInvitationNotifier notifier, IBoardNotifier boardNotifier)
     {
         _uowFactory = uowFactory;
         _notifier = notifier;
+        _boardNotifier = boardNotifier;
     }
 
     public async Task<Result<int>> Handle(SendBoardInvitationCommand request, CancellationToken cancellationToken)
@@ -66,6 +69,15 @@ public class SendBoardInvitationCommandHandler : IRequestHandler<SendBoardInvita
         var senderUser = await uow.UserRepository.GetById(request.SenderId);
 
         await uow.SaveChangesAsync(cancellationToken);
+
+        var boardEvt = new BoardInvitationAddedEvent(
+            invitation.BoardId,
+            invitation.Id,
+            invitation.InviteeEmail,
+            invitation.Role.ToString()
+        );
+
+        await _boardNotifier.NotifyInvitationAddedAsync(boardEvt);
 
         if (existingUser != null)
         {

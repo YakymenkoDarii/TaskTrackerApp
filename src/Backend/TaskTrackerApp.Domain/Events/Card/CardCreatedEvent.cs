@@ -1,10 +1,14 @@
-﻿namespace TaskTrackerApp.Domain.Events.Card;
+﻿using TaskTrackerApp.Domain.Enums;
+
+namespace TaskTrackerApp.Domain.Events.Card;
 public record CardCreatedEvent(
-    int Id,
+    int CardId,
     int BoardId,
     int ColumnId,
     string Title,
     string? Description,
     int? AssigneeId,
-    string? Priority
+    DateTime? DueDate,
+    int Position,
+    CardPriority Priority
 );

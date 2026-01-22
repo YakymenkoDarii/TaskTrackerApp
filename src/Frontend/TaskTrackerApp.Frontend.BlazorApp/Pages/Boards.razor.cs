@@ -3,14 +3,17 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
+using TaskTrackerApp.Frontend.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.BoardDialogs;
 using TaskTrackerApp.Frontend.Domain;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
+using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
+using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages;
 
-public partial class Boards
+public partial class Boards : IDisposable
 {
     [Inject] private IBoardsService BoardsService { get; set; } = default!;
 
@@ -24,12 +27,22 @@ public partial class Boards
 
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
+    [Inject] private InvitationSignalRService InvitationHub { get; set; }
+
+    [Inject] private BoardSignalRService BoardHub { get; set; }
+
     private IEnumerable<BoardDto> lastOpenedBoards = Enumerable.Empty<BoardDto>();
     private IEnumerable<BoardDto> allBoards = Enumerable.Empty<BoardDto>();
     private bool isLoading = true;
 
+    private HashSet<int> _activeBoardIds = new();
+
     protected override async Task OnInitializedAsync()
     {
+        InvitationHub.OnInviteResponded += HandleInviteResponded;
+
+        BoardHub.OnMemberRemoved += HandleMemberRemoved;
+
         await LoadBoardsAsync();
     }
 
@@ -43,10 +56,17 @@ public partial class Boards
             if (result.IsSuccess && result.Value is not null)
             {
                 var data = result.Value.ToList();
-
                 allBoards = data.OrderBy(x => x.Title);
 
                 await LoadRecentBoardsFromStorage(data);
+                foreach (var board in allBoards)
+                {
+                    if (!_activeBoardIds.Contains(board.Id))
+                    {
+                        await BoardHub.JoinBoard(board.Id);
+                        _activeBoardIds.Add(board.Id);
+                    }
+                }
             }
             else
             {
@@ -56,6 +76,34 @@ public partial class Boards
         finally
         {
             isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async void HandleInviteResponded(InvitationRespondedEvent e)
+    {
+        if (e.IsAccepted)
+        {
+            await LoadBoardsAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async void HandleMemberRemoved(BoardMemberRemovedEvent e)
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var myIdStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (int.TryParse(myIdStr, out int myId) && e.UserId == myId)
+        {
+            allBoards = allBoards.Where(b => b.Id != e.BoardId).ToList();
+            lastOpenedBoards = lastOpenedBoards.Where(b => b.Id != e.BoardId).ToList();
+
+            _ = BoardHub.LeaveBoard(e.BoardId);
+            _activeBoardIds.Remove(e.BoardId);
+
+            SnackBar.Add("You have been removed from a board.", Severity.Warning);
+            StateHasChanged();
         }
     }
 
@@ -67,7 +115,6 @@ public partial class Boards
         if (string.IsNullOrEmpty(userIdStr)) return;
 
         var key = $"recentBoardsState-{userIdStr}";
-
         var recentItems = await LocalStorage.GetItemAsync<List<RecentBoardItem>>(key);
 
         if (recentItems != null && recentItems.Any())
@@ -130,10 +177,14 @@ public partial class Boards
             if (deleteResult.IsSuccess)
             {
                 SnackBar.Add("Board deleted", Severity.Success);
-
                 await RemoveFromRecentBoards(boardId);
 
-                await LoadBoardsAsync();
+                allBoards = allBoards.Where(b => b.Id != boardId).ToList();
+                lastOpenedBoards = lastOpenedBoards.Where(b => b.Id != boardId).ToList();
+
+                _ = BoardHub.LeaveBoard(boardId);
+                _activeBoardIds.Remove(boardId);
+
                 StateHasChanged();
             }
             else
@@ -148,10 +199,8 @@ public partial class Boards
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userId))
-        {
-            return;
-        }
+        if (string.IsNullOrEmpty(userId)) return;
+
         var key = $"recentBoardsState-{userId}";
         var recent = await LocalStorage.GetItemAsync<List<RecentBoardItem>>(key);
 
@@ -170,5 +219,16 @@ public partial class Boards
     private void ArchiveBoard(int boardId)
     {
         SnackBar.Add("Archived (Not implemented yet)", Severity.Info);
+    }
+
+    public void Dispose()
+    {
+        InvitationHub.OnInviteResponded -= HandleInviteResponded;
+        BoardHub.OnMemberRemoved -= HandleMemberRemoved;
+
+        foreach (var boardId in _activeBoardIds)
+        {
+            _ = BoardHub.LeaveBoard(boardId);
+        }
     }
 }

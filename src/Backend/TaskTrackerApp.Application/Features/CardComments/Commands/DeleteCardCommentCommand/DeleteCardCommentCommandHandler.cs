@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.Common;
+using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Errors.Auth;
 using TaskTrackerApp.Domain.Errors.CardComments;
@@ -11,11 +12,13 @@ public class DeleteCardCommentCommandHandler : IRequestHandler<DeleteCardComment
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly ICurrentUserService _currentUserService;
+    private readonly ICardNotifier _cardNotifier;
 
-    public DeleteCardCommentCommandHandler(IUnitOfWorkFactory uowFactory, ICurrentUserService currentUserService)
+    public DeleteCardCommentCommandHandler(IUnitOfWorkFactory uowFactory, ICurrentUserService currentUserService, ICardNotifier cardNotifier)
     {
         _uowFactory = uowFactory;
         _currentUserService = currentUserService;
+        _cardNotifier = cardNotifier;
     }
 
     public async Task<Result> Handle(DeleteCardCommentCommand request, CancellationToken cancellationToken)
@@ -40,6 +43,8 @@ public class DeleteCardCommentCommandHandler : IRequestHandler<DeleteCardComment
 
         await uow.CardCommentsRepository.DeleteAsync(comment.Id);
         await uow.SaveChangesAsync(cancellationToken);
+
+        await _cardNotifier.NotifyCommentDeletedAsync(comment.Id, comment.CardId);
 
         return Result.Success();
     }

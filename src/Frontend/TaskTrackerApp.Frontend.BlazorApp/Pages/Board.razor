@@ -105,7 +105,7 @@ else
                     </ChildContent>
 
                     <ItemRenderer>
-                        <div class="board-column">
+                        <div @key="@context.Id" class="board-column">
                             <MudPaper Class="column-paper pa-4 d-flex align-center justify-center cursor-move mud-theme-info"
                                       Elevation=4
                                       Style="height: 100px; opacity: 1.0; color: white;">
@@ -211,7 +211,8 @@ else
                     </ChildContent>
 
                     <ItemRenderer>
-                        <MudCard Class=@($"mb-2 hover-effect {(CanEditContent ? "cursor-move" : "cursor-pointer")} {(IsOverdue(context) ? "border-solid border-2 mud-border-error" : "")}")
+                        <MudCard @key=@context.Id 
+                                 Class=@($"mb-2 hover-effect {(CanEditContent ? "cursor-move" : "cursor-pointer")} {(IsOverdue(context) ? "border-solid border-2 mud-border-error" : "")}")
                                  Elevation=1
                                  onclick=@(() => HandleCardClick(context))>
                             <MudCardContent Class="pa-2">

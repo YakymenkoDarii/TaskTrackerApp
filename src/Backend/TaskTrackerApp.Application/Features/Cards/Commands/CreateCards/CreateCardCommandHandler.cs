@@ -25,16 +25,7 @@ internal class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, Res
         using var uow = _unitOfWorkFactory.Create();
 
         var cards = await uow.CardRepository.GetCardsByBoardIdAsync(request.BoardId);
-        int newLastPosition;
-
-        if (cards.Any())
-        {
-            newLastPosition = cards.Max(c => c.Position) + 1;
-        }
-        else
-        {
-            newLastPosition = 0;
-        }
+        int newLastPosition = cards.Any() ? cards.Max(c => c.Position) + 1 : 0;
 
         var card = new Card
         {
@@ -50,7 +41,6 @@ internal class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, Res
         };
 
         await uow.CardRepository.AddAsync(card);
-
         await uow.SaveChangesAsync(cancellationToken);
 
         var boardEvt = new CardCreatedEvent(
@@ -60,7 +50,9 @@ internal class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, Res
             card.Title,
             card.Description,
             card.AssigneeId,
-            card.Priority.ToString()
+            card.DueDate,
+            card.Position,
+            card.Priority
         );
 
         _ = _boardNotifier.NotifyCardCreatedAsync(boardEvt);

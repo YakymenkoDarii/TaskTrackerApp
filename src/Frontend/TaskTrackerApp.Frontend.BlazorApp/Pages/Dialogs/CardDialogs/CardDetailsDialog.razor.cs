@@ -3,13 +3,19 @@ using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
 using TaskTrackerApp.Frontend.Domain.DTOs.BoardMembers;
+using TaskTrackerApp.Frontend.Domain.DTOs.CardComments;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
+using TaskTrackerApp.Frontend.Domain.DTOs.Labels;
 using TaskTrackerApp.Frontend.Domain.Enums;
+using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
+using TaskTrackerApp.Frontend.Domain.Events.Card;
+using TaskTrackerApp.Frontend.Domain.Events.Comment;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
+using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
 
-public partial class CardDetailsDialog
+public partial class CardDetailsDialog : IAsyncDisposable
 {
     [Inject] private ICardsService CardsService { get; set; }
 
@@ -19,9 +25,15 @@ public partial class CardDetailsDialog
 
     [Inject] private IDialogService DialogService { get; set; }
 
-    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
-
     [Inject] private IBoardMembersService BoardMembersService { get; set; }
+
+    [Inject] private ILabelService LabelService { get; set; }
+
+    [Inject] private BoardSignalRService BoardHub { get; set; }
+
+    [Inject] private CardSignalRService CardHub { get; set; }
+
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter] public CardDto Card { get; set; } = default!;
 
@@ -34,23 +46,172 @@ public partial class CardDetailsDialog
     private DateTime? dueDate;
     private bool isCompleted;
     private CardPriority _priority = CardPriority.Low;
-
     private int? _assigneeId;
     private List<BoardMemberDto> _boardMembers = new();
+
+    private List<CardCommentDto> _comments = new();
+
+    private List<LabelDto> _allBoardLabels = new();
 
     protected override async Task OnInitializedAsync()
     {
         if (Card != null)
         {
-            title = Card.Title;
-            description = Card.Description;
-            dueDate = Card.DueDate;
-            isCompleted = Card.IsCompleted;
-            _assigneeId = Card.AssigneeId;
-            _priority = Card.Priority;
+            UpdateLocalState(Card);
         }
 
+        BoardHub.OnCardUpdated += HandleCardUpdated;
+        BoardHub.OnMemberAdded += HandleMemberAdded;
+
+        await CardHub.StartConnection();
+        await CardHub.JoinCard(Card.Id);
+
+        CardHub.OnCommentAdded += HandleCommentAdded;
+        CardHub.OnCommentUpdated += HandleCommentUpdated;
+        CardHub.OnCommentDeleted += HandleCommentDeleted;
+        CardHub.OnLabelAdded += HandleLabelAdded;
+        CardHub.OnLabelRemoved += HandleLabelRemoved;
+
         await LoadBoardMembers();
+        await LoadBoardLabels();
+    }
+
+    private async Task LoadBoardLabels()
+    {
+        var result = await LabelService.GetLabelsByBoardIdAsync(BoardId);
+        if (result.IsSuccess)
+        {
+            _allBoardLabels = result.Value.ToList();
+        }
+    }
+
+    private void HandleCommentAdded(CommentAddedEvent e)
+    {
+        InvokeAsync(() =>
+        {
+            if (e.CardId == Card.Id)
+            {
+                if (_comments.Any(c => c.Id == e.Id)) return;
+
+                var newComment = new CardCommentDto
+                {
+                    Id = e.Id,
+                    IsEdited = false,
+                    Text = e.Text,
+                    CreatedById = e.CreatedById,
+                    AuthorName = e.CreatedByName,
+                    AuthorAvatarUrl = e.AvatarUrl,
+                    CreatedAt = e.CreatedAt
+                };
+
+                _comments.Insert(0, newComment);
+                StateHasChanged();
+            }
+        });
+    }
+
+    private void HandleCommentUpdated(CommentUpdatedEvent e)
+    {
+        InvokeAsync(() =>
+        {
+            var comment = _comments.FirstOrDefault(c => c.Id == e.Id);
+            if (comment != null)
+            {
+                comment.Text = e.Text;
+                StateHasChanged();
+            }
+        });
+    }
+
+    private void HandleCommentDeleted(int commentId)
+    {
+        InvokeAsync(() =>
+        {
+            var comment = _comments.FirstOrDefault(c => c.Id == commentId);
+            if (comment != null)
+            {
+                _comments.Remove(comment);
+                StateHasChanged();
+            }
+        });
+    }
+
+    private void HandleLabelAdded(int cardId, int labelId)
+    {
+        InvokeAsync(() =>
+        {
+            if (cardId == Card.Id && !Card.Labels.Any(l => l.Id == labelId))
+            {
+                var labelDef = _allBoardLabels.FirstOrDefault(l => l.Id == labelId);
+                if (labelDef != null)
+                {
+                    Card.Labels.Add(labelDef);
+                    StateHasChanged();
+                }
+            }
+        });
+    }
+
+    private void HandleLabelRemoved(int cardId, int labelId)
+    {
+        InvokeAsync(() =>
+        {
+            if (cardId == Card.Id)
+            {
+                var label = Card.Labels.FirstOrDefault(l => l.Id == labelId);
+                if (label != null)
+                {
+                    Card.Labels.Remove(label);
+                    StateHasChanged();
+                }
+            }
+        });
+    }
+
+    private void UpdateLocalState(CardDto dto)
+    {
+        title = dto.Title;
+        description = dto.Description;
+        dueDate = dto.DueDate;
+        isCompleted = dto.IsCompleted;
+        _assigneeId = dto.AssigneeId;
+        _priority = dto.Priority;
+    }
+
+    private void HandleCardUpdated(CardUpdatedEvent e)
+    {
+        InvokeAsync(() =>
+        {
+            if (e.CardId == Card.Id)
+            {
+                title = e.Title;
+                description = e.Description;
+                isCompleted = e.IsCompleted;
+                dueDate = e.DueDate;
+                _priority = e.Priority;
+                _assigneeId = e.AssigneeId;
+
+                Card.Title = e.Title;
+                Card.Description = e.Description;
+                Card.IsCompleted = e.IsCompleted;
+                Card.DueDate = e.DueDate;
+                Card.Priority = e.Priority;
+                Card.AssigneeId = e.AssigneeId;
+
+                StateHasChanged();
+            }
+        });
+    }
+
+    private async void HandleMemberAdded(BoardMemberAddedEvent e)
+    {
+        await InvokeAsync(async () =>
+        {
+            if (e.BoardId == BoardId)
+            {
+                await LoadBoardMembers();
+            }
+        });
     }
 
     private async Task LoadBoardMembers()
@@ -107,7 +268,15 @@ public partial class CardDetailsDialog
         if (result.IsSuccess)
         {
             Snackbar.Add("Card updated", Severity.Success);
-            MudDialog.Close(DialogResult.Ok(result.Value));
+
+            Card.Title = title;
+            Card.Description = description;
+            Card.DueDate = dueDate;
+            Card.IsCompleted = isCompleted;
+            Card.AssigneeId = _assigneeId;
+            Card.Priority = _priority;
+
+            MudDialog.Close(DialogResult.Ok(Card));
         }
         else
         {
@@ -142,6 +311,7 @@ public partial class CardDetailsDialog
 
     private async Task OnCompletionToggled(bool newValue)
     {
+        bool oldState = isCompleted;
         isCompleted = newValue;
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -172,7 +342,7 @@ public partial class CardDetailsDialog
         }
         else
         {
-            isCompleted = !newValue;
+            isCompleted = oldState;
             Snackbar.Add("Failed to update status", Severity.Error);
         }
     }
@@ -184,4 +354,22 @@ public partial class CardDetailsDialog
         CardPriority.Medium => Color.Info,
         _ => Color.Default
     };
+
+    public async ValueTask DisposeAsync()
+    {
+        BoardHub.OnCardUpdated -= HandleCardUpdated;
+        BoardHub.OnMemberAdded -= HandleMemberAdded;
+
+        CardHub.OnCommentAdded -= HandleCommentAdded;
+        CardHub.OnCommentUpdated -= HandleCommentUpdated;
+        CardHub.OnCommentDeleted -= HandleCommentDeleted;
+
+        CardHub.OnLabelAdded -= HandleLabelAdded;
+        CardHub.OnLabelRemoved -= HandleLabelRemoved;
+
+        if (Card != null)
+        {
+            await CardHub.LeaveCard(Card.Id);
+        }
+    }
 }

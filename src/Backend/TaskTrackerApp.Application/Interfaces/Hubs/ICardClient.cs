@@ -11,4 +11,6 @@ public interface ICardClient
     Task CommentDeleted(int commentId);
 
     Task LabelAdded(int cardId, int labelId);
+
+    Task LabelRemoved(int cardId, int labelId);
 }

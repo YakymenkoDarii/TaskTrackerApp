@@ -1,10 +1,12 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.Common;
+using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Enums;
 using TaskTrackerApp.Domain.Errors.Auth;
 using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Errors.BoardMember;
+using TaskTrackerApp.Domain.Events.BoardMember;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.BoardMembers.Commands.DeleteMember;
@@ -13,13 +15,16 @@ public class DeleteMemberCommandHandler : IRequestHandler<DeleteMemberCommand, R
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IBoardNotifier _boardNotifier;
 
     public DeleteMemberCommandHandler(
         IUnitOfWorkFactory uowFactory,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IBoardNotifier boardNotifier)
     {
         _uowFactory = uowFactory;
         _currentUserService = currentUserService;
+        _boardNotifier = boardNotifier;
     }
 
     public async Task<Result> Handle(DeleteMemberCommand request, CancellationToken cancellationToken)
@@ -79,6 +84,9 @@ public class DeleteMemberCommandHandler : IRequestHandler<DeleteMemberCommand, R
         await uow.BoardMembersRepository.DeleteAsync(targetMember.Id);
 
         await uow.SaveChangesAsync(cancellationToken);
+
+        var evt = new BoardMemberRemovedEvent(board.Id, targetMember.UserId);
+        await _boardNotifier.NotifyMemberRemovedAsync(evt);
 
         return Result.Success();
     }

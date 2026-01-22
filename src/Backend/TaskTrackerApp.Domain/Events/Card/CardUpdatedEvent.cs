@@ -1,9 +1,13 @@
-﻿namespace TaskTrackerApp.Domain.Events.Card;
+﻿using TaskTrackerApp.Domain.Enums;
+
+namespace TaskTrackerApp.Domain.Events.Card;
 public record CardUpdatedEvent(
-    int Id,
+    int CardId,
     int BoardId,
-    int ColumnId,
     string Title,
-    int? AssigneeId,
-    bool IsCompleted
+    string? Description,
+    bool IsCompleted,
+    DateTime? DueDate,
+    CardPriority Priority,
+    int? AssigneeId
 );

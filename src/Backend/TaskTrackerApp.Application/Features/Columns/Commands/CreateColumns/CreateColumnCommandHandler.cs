@@ -44,8 +44,14 @@ internal class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand,
         await uow.ColumnRepository.AddAsync(column);
         await uow.SaveChangesAsync(cancellationToken);
 
-        var evt = new ColumnCreatedEvent(column.Id, column.BoardId, column.Title);
-        _ = _notifier.NotifyColumnCreatedAsync(evt);
+        var evt = new ColumnCreatedEvent(
+            column.Id,
+            column.BoardId,
+            column.Title,
+            column.Position
+        );
+
+        await _notifier.NotifyColumnCreatedAsync(evt);
 
         return column.Id;
     }

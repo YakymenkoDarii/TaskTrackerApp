@@ -29,12 +29,14 @@ public class UpdateCardStatusCommandHandler : IRequestHandler<UpdateCardStatusCo
         await uow.SaveChangesAsync();
 
         var evt = new CardUpdatedEvent(
-            card.Id,
-            card.BoardId,
-            card.ColumnId,
-            card.Title,
-            card.AssigneeId,
-            request.IsCompleted
+                    card.Id,
+                    card.BoardId,
+                    card.Title,
+                    card.Description,
+                    card.IsCompleted,
+                    card.DueDate,
+                    card.Priority,
+                    card.AssigneeId
         );
 
         _ = _boardNotifier.NotifyCardUpdatedAsync(evt);

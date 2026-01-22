@@ -1,10 +1,12 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.Common;
+using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Application.Mappers.LabelMappers;
 using TaskTrackerApp.Domain.DTOs.Labels;
 using TaskTrackerApp.Domain.Errors.Auth;
 using TaskTrackerApp.Domain.Errors.Label;
+using TaskTrackerApp.Domain.Events.Labels;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Labels.Command.UpdateLabel;
@@ -13,11 +15,13 @@ public class UpdateLabelCommandHandler : IRequestHandler<UpdateLabelCommand, Res
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IBoardNotifier _boardNotifier;
 
-    public UpdateLabelCommandHandler(IUnitOfWorkFactory uowFactory, ICurrentUserService currentUserService)
+    public UpdateLabelCommandHandler(IUnitOfWorkFactory uowFactory, ICurrentUserService currentUserService, IBoardNotifier boardNotifier)
     {
         _uowFactory = uowFactory;
         _currentUserService = currentUserService;
+        _boardNotifier = boardNotifier;
     }
 
     public async Task<Result<LabelDto>> Handle(UpdateLabelCommand request, CancellationToken cancellationToken)
@@ -42,6 +46,9 @@ public class UpdateLabelCommandHandler : IRequestHandler<UpdateLabelCommand, Res
         label.ApplyUpdate(request.Dto);
 
         await uow.SaveChangesAsync(cancellationToken);
+
+        var evt = new LabelUpdatedEvent(label.BoardId, label.Id, label.Name, label.Color);
+        await _boardNotifier.NotifyLabelUpdatedAsync(evt);
 
         return label.ToDto();
     }

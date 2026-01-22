@@ -2,5 +2,6 @@
 public record ColumnCreatedEvent(
     int Id,
     int BoardId,
-    string Title
+    string Title,
+    int Position
 );

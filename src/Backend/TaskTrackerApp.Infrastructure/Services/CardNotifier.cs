@@ -34,4 +34,9 @@ public class CardNotifier : ICardNotifier
     {
         await _hubContext.Clients.Group($"Card_{cardId}").LabelAdded(cardId, labelId);
     }
+
+    public async Task NotifyLabelRemovedAsync(int cardId, int labelId)
+    {
+        await _hubContext.Clients.Group($"Card_{cardId}").LabelRemoved(cardId, labelId);
+    }
 }

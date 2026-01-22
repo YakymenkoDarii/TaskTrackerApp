@@ -106,12 +106,21 @@ internal class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, Res
 
         if (isMoving)
         {
-            var moveEvt = new CardMovedEvent(card.Id, card.BoardId, oldColumnId, card.ColumnId, card.Position);
+            var moveEvt = new CardMovedEvent(card.Id, card.BoardId, card.ColumnId, card.Position);
             _ = _boardNotifier.NotifyCardMovedAsync(moveEvt);
         }
         else
         {
-            var updateEvt = new CardUpdatedEvent(card.Id, card.BoardId, card.ColumnId, card.Title, card.AssigneeId, card.IsCompleted);
+            var updateEvt = new CardUpdatedEvent(
+                card.Id,
+                card.BoardId,
+                card.Title,
+                card.Description,
+                card.IsCompleted,
+                card.DueDate,
+                card.Priority,
+                card.AssigneeId
+            );
             _ = _boardNotifier.NotifyCardUpdatedAsync(updateEvt);
         }
 
