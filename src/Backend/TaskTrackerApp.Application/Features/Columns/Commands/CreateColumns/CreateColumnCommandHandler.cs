@@ -1,6 +1,8 @@
 ﻿using MediatR;
+using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Entities;
+using TaskTrackerApp.Domain.Events.Column;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Columns.Commands.CreateColumns;
@@ -8,10 +10,12 @@ namespace TaskTrackerApp.Application.Features.Columns.Commands.CreateColumns;
 internal class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand, Result<int>>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
+    private readonly IBoardNotifier _notifier;
 
-    public CreateColumnCommandHandler(IUnitOfWorkFactory uowFactory)
+    public CreateColumnCommandHandler(IUnitOfWorkFactory uowFactory, IBoardNotifier notifier)
     {
         _uowFactory = uowFactory;
+        _notifier = notifier;
     }
 
     public async Task<Result<int>> Handle(CreateColumnCommand request, CancellationToken cancellationToken)
@@ -39,6 +43,15 @@ internal class CreateColumnCommandHandler : IRequestHandler<CreateColumnCommand,
 
         await uow.ColumnRepository.AddAsync(column);
         await uow.SaveChangesAsync(cancellationToken);
+
+        var evt = new ColumnCreatedEvent(
+            column.Id,
+            column.BoardId,
+            column.Title,
+            column.Position
+        );
+
+        await _notifier.NotifyColumnCreatedAsync(evt);
 
         return column.Id;
     }

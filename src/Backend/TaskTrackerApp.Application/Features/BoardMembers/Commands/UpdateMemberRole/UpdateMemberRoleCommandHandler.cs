@@ -1,10 +1,12 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.Common;
+using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Enums;
 using TaskTrackerApp.Domain.Errors.Auth;
 using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Errors.BoardMember;
+using TaskTrackerApp.Domain.Events.BoardMember;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.BoardMembers.Commands.UpdateMemberRole;
@@ -13,13 +15,16 @@ public class UpdateMemberRoleCommandHandler : IRequestHandler<UpdateMemberRoleCo
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IBoardNotifier _boardNotifier;
 
     public UpdateMemberRoleCommandHandler(
         IUnitOfWorkFactory uowFactory,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IBoardNotifier boardNotifier)
     {
         _uowFactory = uowFactory;
         _currentUserService = currentUserService;
+        _boardNotifier = boardNotifier;
     }
 
     public async Task<Result> Handle(UpdateMemberRoleCommand request, CancellationToken cancellationToken)
@@ -68,6 +73,9 @@ public class UpdateMemberRoleCommandHandler : IRequestHandler<UpdateMemberRoleCo
         targetMember.Role = request.Role;
 
         await uow.SaveChangesAsync(cancellationToken);
+
+        var evt = new BoardMemberRoleUpdatedEvent(board.Id, targetMember.UserId, request.Role);
+        await _boardNotifier.NotifyMemberRoleUpdatedAsync(evt);
 
         return Result.Success();
     }

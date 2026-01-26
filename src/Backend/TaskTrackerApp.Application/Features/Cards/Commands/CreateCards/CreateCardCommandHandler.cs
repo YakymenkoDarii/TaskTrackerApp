@@ -1,6 +1,8 @@
 ﻿using MediatR;
+using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Entities;
+using TaskTrackerApp.Domain.Events.Card;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Cards.Commands.CreateCard;
@@ -8,10 +10,14 @@ namespace TaskTrackerApp.Application.Features.Cards.Commands.CreateCard;
 internal class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, Result<int>>
 {
     private readonly IUnitOfWorkFactory _unitOfWorkFactory;
+    private readonly IBoardNotifier _boardNotifier;
+    private readonly IInvitationNotifier _personalNotifier;
 
-    public CreateCardCommandHandler(IUnitOfWorkFactory unitOfWorkFactory)
+    public CreateCardCommandHandler(IUnitOfWorkFactory unitOfWorkFactory, IBoardNotifier boardNotifier, IInvitationNotifier personalNotifier)
     {
         _unitOfWorkFactory = unitOfWorkFactory;
+        _boardNotifier = boardNotifier;
+        _personalNotifier = personalNotifier;
     }
 
     public async Task<Result<int>> Handle(CreateCardCommand request, CancellationToken cancellationToken)
@@ -19,16 +25,7 @@ internal class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, Res
         using var uow = _unitOfWorkFactory.Create();
 
         var cards = await uow.CardRepository.GetCardsByBoardIdAsync(request.BoardId);
-        int newLastPosition;
-
-        if (cards.Any())
-        {
-            newLastPosition = cards.Max(c => c.Position) + 1;
-        }
-        else
-        {
-            newLastPosition = 0;
-        }
+        int newLastPosition = cards.Any() ? cards.Max(c => c.Position) + 1 : 0;
 
         var card = new Card
         {
@@ -44,8 +41,30 @@ internal class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, Res
         };
 
         await uow.CardRepository.AddAsync(card);
-
         await uow.SaveChangesAsync(cancellationToken);
+
+        var boardEvt = new CardCreatedEvent(
+            card.Id,
+            card.BoardId,
+            card.ColumnId,
+            card.Title,
+            card.Description,
+            card.AssigneeId,
+            card.DueDate,
+            card.Position,
+            card.Priority
+        );
+
+        _ = _boardNotifier.NotifyCardCreatedAsync(boardEvt);
+
+        if (card.AssigneeId.HasValue)
+        {
+            _ = _personalNotifier.NotifyUserAssignedToCardAsync(
+                card.AssigneeId.Value,
+                card.Id,
+                card.Title
+            );
+        }
 
         return card.Id;
     }

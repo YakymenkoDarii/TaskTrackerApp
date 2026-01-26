@@ -1,8 +1,10 @@
 ﻿using MediatR;
+using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Application.Mappers.CardMappers;
 using TaskTrackerApp.Domain.DTOs.Card;
 using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.Events.Card;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Cards.Commands.UpdateCards;
@@ -10,10 +12,14 @@ namespace TaskTrackerApp.Application.Features.Cards.Commands.UpdateCards;
 internal class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, Result<CardDto>>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
+    private readonly IBoardNotifier _boardNotifier;
+    private readonly IInvitationNotifier _personalNotifier;
 
-    public UpdateCardCommandHandler(IUnitOfWorkFactory uowFactory)
+    public UpdateCardCommandHandler(IUnitOfWorkFactory uowFactory, IBoardNotifier boardNotifier, IInvitationNotifier personalNotifier)
     {
         _uowFactory = uowFactory;
+        _boardNotifier = boardNotifier;
+        _personalNotifier = personalNotifier;
     }
 
     public async Task<Result<CardDto>> Handle(UpdateCardCommand request, CancellationToken cancellationToken)
@@ -23,6 +29,10 @@ internal class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, Res
         var card = await uow.CardRepository.GetCardDetailsAsync(request.Id);
         if (card == null) return Result<CardDto>.Failure(new Error("Card.NotFound", "No card found"));
         bool isMoving = (card.ColumnId != request.ColumnId) || (card.Position != request.Position);
+
+        int oldColumnId = card.ColumnId;
+        int oldPosition = card.Position;
+        int? oldAssignee = card.AssigneeId;
 
         if (isMoving)
         {
@@ -93,6 +103,35 @@ internal class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, Res
 
         await uow.CardRepository.UpdateAsync(card);
         await uow.SaveChangesAsync(cancellationToken);
+
+        if (isMoving)
+        {
+            var moveEvt = new CardMovedEvent(card.Id, card.BoardId, card.ColumnId, card.Position);
+            _ = _boardNotifier.NotifyCardMovedAsync(moveEvt);
+        }
+        else
+        {
+            var updateEvt = new CardUpdatedEvent(
+                card.Id,
+                card.BoardId,
+                card.Title,
+                card.Description,
+                card.IsCompleted,
+                card.DueDate,
+                card.Priority,
+                card.AssigneeId
+            );
+            _ = _boardNotifier.NotifyCardUpdatedAsync(updateEvt);
+        }
+
+        if (request.AssigneeId.HasValue && request.AssigneeId != oldAssignee)
+        {
+            _ = _personalNotifier.NotifyUserAssignedToCardAsync(
+                request.AssigneeId.Value,
+                card.Id,
+                card.Title
+            );
+        }
 
         return Result<CardDto>.Success(card.ToDto());
     }

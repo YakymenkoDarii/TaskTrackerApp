@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
 using TaskTrackerApp.Frontend.Domain.DTOs.CardComments;
+using TaskTrackerApp.Frontend.Domain.Events.Comment;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
+using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Components.Cards;
 
-public partial class CardComments
+public partial class CardComments : IDisposable
 {
     [Inject] private ICardCommentsService CardCommentsService { get; set; }
 
@@ -16,6 +18,8 @@ public partial class CardComments
     [Inject] private ISnackbar Snackbar { get; set; }
 
     [Inject] private IDialogService DialogService { get; set; }
+
+    [Inject] private CardSignalRService CardHub { get; set; }
 
     [Parameter] public int CardId { get; set; }
 
@@ -35,7 +39,67 @@ public partial class CardComments
     protected override async Task OnInitializedAsync()
     {
         await LoadCurrentUser();
+
+        CardHub.OnCommentAdded += HandleCommentAdded;
+        CardHub.OnCommentUpdated += HandleCommentUpdated;
+        CardHub.OnCommentDeleted += HandleCommentDeleted;
+
         await LoadComments();
+    }
+
+    private void HandleCommentAdded(CommentAddedEvent e)
+    {
+        InvokeAsync(() =>
+        {
+            if (e.CardId == CardId && !_comments.Any(c => c.Id == e.Id))
+            {
+                var newComment = new CardCommentDto
+                {
+                    Id = e.Id,
+                    Text = e.Text,
+                    CreatedAt = e.CreatedAt,
+                    CreatedById = e.CreatedById,
+                    AuthorName = e.CreatedByName,
+                    AuthorAvatarUrl = e.AvatarUrl
+                };
+
+                _comments.Insert(0, newComment);
+                _comments = _comments.OrderByDescending(c => c.CreatedAt).ToList();
+                StateHasChanged();
+            }
+        });
+    }
+
+    private void HandleCommentUpdated(CommentUpdatedEvent e)
+    {
+        InvokeAsync(() =>
+        {
+            if (e.CardId == CardId)
+            {
+                var comment = _comments.FirstOrDefault(c => c.Id == e.Id);
+
+                if (comment != null)
+                {
+                    comment.Text = e.Text;
+                    comment.IsEdited = true;
+                    comment.UpdatedAt = e.UpdatedAt;
+                    StateHasChanged();
+                }
+            }
+        });
+    }
+
+    private void HandleCommentDeleted(int commentId)
+    {
+        InvokeAsync(() =>
+        {
+            var comment = _comments.FirstOrDefault(c => c.Id == commentId);
+            if (comment != null)
+            {
+                _comments.Remove(comment);
+                StateHasChanged();
+            }
+        });
     }
 
     private async Task LoadCurrentUser()
@@ -154,5 +218,12 @@ public partial class CardComments
         {
             Snackbar.Add("Failed to update comment", Severity.Error);
         }
+    }
+
+    public void Dispose()
+    {
+        CardHub.OnCommentAdded -= HandleCommentAdded;
+        CardHub.OnCommentUpdated -= HandleCommentUpdated;
+        CardHub.OnCommentDeleted -= HandleCommentDeleted;
     }
 }

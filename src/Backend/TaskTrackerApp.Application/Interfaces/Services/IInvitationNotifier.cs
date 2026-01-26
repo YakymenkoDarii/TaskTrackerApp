@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TaskTrackerApp.Application.Interfaces.Services;
+﻿namespace TaskTrackerApp.Application.Interfaces.Services;
 
 public interface IInvitationNotifier
 {
@@ -13,4 +7,6 @@ public interface IInvitationNotifier
     Task NotifyUserInviteRevokedAsync(int userId, int invitationId);
 
     Task NotifySenderInviteRespondedAsync(int senderId, string inviteeName, string boardName, bool isAccepted);
+
+    Task NotifyUserAssignedToCardAsync(int userId, int cardId, string cardTitle);
 }

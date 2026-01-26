@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using MudBlazor
 @using TaskTrackerApp.Frontend.Domain.Models
+@attribute [AllowAnonymous]
 
 <EditForm EditContext=@_editContext
           OnValidSubmit=@OnValidSubmit>

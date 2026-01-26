@@ -41,6 +41,8 @@ public static class DependencyInjection
         services.AddTransient<CookieHandler>();
 
         services.AddScoped<InvitationSignalRService>();
+        services.AddScoped<BoardSignalRService>();
+        services.AddScoped<CardSignalRService>();
 
         services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 

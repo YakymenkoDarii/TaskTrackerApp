@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskTrackerApp.Domain.Events.Invitations;
+﻿using TaskTrackerApp.Frontend.Domain.Events.Invitations;
 
 namespace TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Hubs;
 
@@ -14,4 +9,6 @@ public interface IInvitationClient
     Task RevokeInvite(int invitationId);
 
     Task InviteResponded(InvitationRespondedEvent notification);
+
+    Task CardAssigned(int cardId, string cardTitle);
 }

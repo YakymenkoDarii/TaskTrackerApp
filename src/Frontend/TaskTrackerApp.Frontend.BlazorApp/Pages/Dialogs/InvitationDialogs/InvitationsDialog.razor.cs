@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using TaskTrackerApp.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.Domain.DTOs.BoardInvitations;
+using TaskTrackerApp.Frontend.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
@@ -40,33 +40,37 @@ public partial class InvitationsDialog : IDisposable
         _isLoading = false;
     }
 
-    private void HandleInviteReceived(InvitationReceivedEvent notification)
+    private async void HandleInviteReceived(InvitationReceivedEvent notification)
     {
-        var newInvite = new MyInvitationDto
+        await InvokeAsync(() =>
         {
-            Id = notification.InvitationId,
-            BoardId = notification.BoardId,
-            SenderName = notification.Sender,
-            BoardTitle = notification.BoardName,
-            SenderAvatarUrl = null
-        };
+            var newInvite = new MyInvitationDto
+            {
+                Id = notification.InvitationId,
+                BoardId = notification.BoardId,
+                SenderName = notification.Sender,
+                BoardTitle = notification.BoardName,
+                SenderAvatarUrl = null
+            };
 
-        _invitations.Insert(0, newInvite);
-
-        Snackbar.Add($"Invited to {notification.BoardName} by {notification.Sender}", Severity.Info);
-
-        StateHasChanged();
+            _invitations.Insert(0, newInvite);
+            Snackbar.Add($"Invited to {notification.BoardName} by {notification.Sender}", Severity.Info);
+            StateHasChanged();
+        });
     }
 
-    private void HandleInviteRevoked(int invitationId)
+    private async void HandleInviteRevoked(int invitationId)
     {
-        var invite = _invitations.FirstOrDefault(i => i.Id == invitationId);
-        if (invite != null)
+        await InvokeAsync(() =>
         {
-            _invitations.Remove(invite);
-            Snackbar.Add("An invitation was revoked.", Severity.Warning);
-            StateHasChanged();
-        }
+            var invite = _invitations.FirstOrDefault(i => i.Id == invitationId);
+            if (invite != null)
+            {
+                _invitations.Remove(invite);
+                Snackbar.Add("An invitation was revoked.", Severity.Warning);
+                StateHasChanged();
+            }
+        });
     }
 
     private async Task Respond(int invitationId, bool isAccepted)
@@ -87,6 +91,7 @@ public partial class InvitationsDialog : IDisposable
             if (item != null)
             {
                 _invitations.Remove(item);
+                StateHasChanged();
             }
         }
         else

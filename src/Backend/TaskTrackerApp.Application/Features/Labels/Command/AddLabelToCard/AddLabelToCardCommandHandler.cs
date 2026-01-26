@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Errors;
 using TaskTrackerApp.Domain.Results;
@@ -8,10 +9,12 @@ namespace TaskTrackerApp.Application.Features.Labels.Command.AddLabelToCard;
 public class AddLabelToCardCommandHandler : IRequestHandler<AddLabelToCardCommand, Result>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
+    private readonly ICardNotifier _cardNotifier;
 
-    public AddLabelToCardCommandHandler(IUnitOfWorkFactory uowFactory)
+    public AddLabelToCardCommandHandler(IUnitOfWorkFactory uowFactory, ICardNotifier cardNotifier)
     {
         _uowFactory = uowFactory;
+        _cardNotifier = cardNotifier;
     }
 
     public async Task<Result> Handle(AddLabelToCardCommand request, CancellationToken ct)
@@ -29,6 +32,8 @@ public class AddLabelToCardCommandHandler : IRequestHandler<AddLabelToCardComman
 
         card.Labels.Add(label);
         await uow.SaveChangesAsync(ct);
+
+        await _cardNotifier.NotifyLabelAddedAsync(card.Id, label.Id);
 
         return Result.Success();
     }
