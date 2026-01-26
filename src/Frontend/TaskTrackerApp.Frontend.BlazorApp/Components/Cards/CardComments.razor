@@ -15,8 +15,16 @@
     {
         <div class="d-flex gap-3 mb-6">
             <MudAvatar Color="Color.Primary" Size="Size.Medium">
-                @(_currentUserInitials)
+                @if (!string.IsNullOrEmpty(_currentUserAvatarUrl))
+                {
+                    <MudImage Src="@_currentUserAvatarUrl" Alt="Me" />
+                }
+                else
+                {
+                    @(_currentUserInitials)
+                }
             </MudAvatar>
+
             <div class="flex-grow-1">
                 <MudTextField @bind-Value="_newCommentText"
                               Placeholder="Write a comment..."
@@ -43,85 +51,87 @@
         </div>
     }
 
-    <MudStack Spacing="4">
-        @foreach (var comment in _comments)
-        {
-            <div class="d-flex gap-3">
-                <MudAvatar Size="Size.Medium" Color="Color.Secondary">
-                    @if (!string.IsNullOrEmpty(comment.AuthorAvatarUrl))
-                    {
-                        <MudImage Src="@comment.AuthorAvatarUrl" />
-                    }
-                    else
-                    {
-                        @(GetInitials(comment.AuthorName))
-                    }
-                </MudAvatar>
-
-                <div class="flex-grow-1">
-                    <div class="d-flex align-center gap-2">
-                        <MudText Typo="Typo.subtitle2" Class="fw-bold">@comment.AuthorName</MudText>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@comment.CreatedAt.ToString("MMM dd, yyyy h:mm tt")</MudText>
-
-                        @if (comment.IsEdited)
+    <div style="max-height: 400px; overflow-y: auto; overflow-x: hidden;" class="pr-2 custom-scrollbar">
+        <MudStack Spacing="4">
+            @foreach (var comment in _comments)
+            {
+                <div class="d-flex gap-3">
+                    <MudAvatar Size="Size.Medium" Color="Color.Secondary">
+                        @if (!string.IsNullOrEmpty(comment.AuthorAvatarUrl))
                         {
-                            <MudTooltip Text="@($"Edited at {comment.UpdatedAt?.ToString("t") ?? "unknown time"}")">
-                                <MudText Typo="Typo.caption"
-                                         Class="mud-text-secondary"
-                                         Style="cursor: help; border-bottom: 1px dotted gray;">
-                                    (edited)
-                                </MudText>
-                            </MudTooltip>
+                            <MudImage Src="@comment.AuthorAvatarUrl" />
+                        }
+                        else
+                        {
+                            @(GetInitials(comment.AuthorName))
+                        }
+                    </MudAvatar>
+
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-center gap-2">
+                            <MudText Typo="Typo.subtitle2" Class="fw-bold">@comment.AuthorName</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@comment.CreatedAt.ToString("MMM dd, yyyy h:mm tt")</MudText>
+
+                            @if (comment.IsEdited)
+                            {
+                                <MudTooltip Text="@($"Edited at {comment.UpdatedAt?.ToString("t") ?? "unknown time"}")">
+                                    <MudText Typo="Typo.caption"
+                                             Class="mud-text-secondary"
+                                             Style="cursor: help; border-bottom: 1px dotted gray;">
+                                        (edited)
+                                    </MudText>
+                                </MudTooltip>
+                            }
+                        </div>
+
+                        @if (_editingCommentId == comment.Id)
+                        {
+                            <div class="mt-2">
+                                <MudTextField @bind-Value="_editingText"
+                                              Variant="Variant.Outlined"
+                                              Lines="3"
+                                              AutoFocus="true"
+                                              Class="mb-2 bg-white" />
+
+                                <div class="d-flex gap-2">
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               OnClick="SaveEdit">Save</MudButton>
+
+                                    <MudButton Variant="Variant.Text"
+                                               Color="Color.Default"
+                                               Size="Size.Small"
+                                               OnClick="CancelEdit">Cancel</MudButton>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <MudPaper Elevation="0" Class="pa-2 mt-1 rounded" Style="background-color: transparent; border: 1px solid transparent;">
+                                <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">@comment.Text</MudText>
+                            </MudPaper>
+
+                            @if (!IsReadOnly && comment.CreatedById == _currentUserId)
+                            {
+                                <div class="d-flex gap-2 mt-1">
+                                    <MudLink Typo="Typo.caption"
+                                             Color="Color.Default"
+                                             Underline="Underline.Hover"
+                                             OnClick="@(() => StartEdit(comment))">Edit</MudLink>
+
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">•</MudText>
+
+                                    <MudLink Typo="Typo.caption"
+                                             OnClick="@(() => DeleteComment(comment))"
+                                             Color="Color.Error"
+                                             Underline="Underline.Hover">Delete</MudLink>
+                                </div>
+                            }
                         }
                     </div>
-
-                    @if (_editingCommentId == comment.Id)
-                    {
-                        <div class="mt-2">
-                            <MudTextField @bind-Value="_editingText"
-                                          Variant="Variant.Outlined"
-                                          Lines="3"
-                                          AutoFocus="true"
-                                          Class="mb-2 bg-white" />
-
-                            <div class="d-flex gap-2">
-                                <MudButton Variant="Variant.Filled"
-                                           Color="Color.Primary"
-                                           Size="Size.Small"
-                                           OnClick="SaveEdit">Save</MudButton>
-
-                                <MudButton Variant="Variant.Text"
-                                           Color="Color.Default"
-                                           Size="Size.Small"
-                                           OnClick="CancelEdit">Cancel</MudButton>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <MudPaper Elevation="0" Class="pa-2 mt-1 rounded" Style="background-color: transparent; border: 1px solid transparent;">
-                            <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">@comment.Text</MudText>
-                        </MudPaper>
-
-                        @if (!IsReadOnly && comment.CreatedById == _currentUserId)
-                        {
-                            <div class="d-flex gap-2 mt-1">
-                                <MudLink Typo="Typo.caption"
-                                         Color="Color.Default"
-                                         Underline="Underline.Hover"
-                                         OnClick="@(() => StartEdit(comment))">Edit</MudLink>
-
-                                <MudText Typo="Typo.caption" Class="mud-text-secondary">•</MudText>
-
-                                <MudLink Typo="Typo.caption"
-                                         OnClick="@(() => DeleteComment(comment))"
-                                         Color="Color.Error"
-                                         Underline="Underline.Hover">Delete</MudLink>
-                            </div>
-                        }
-                    }
                 </div>
-            </div>
-        }
-    </MudStack>
+            }
+        </MudStack>
+    </div>
 </div>

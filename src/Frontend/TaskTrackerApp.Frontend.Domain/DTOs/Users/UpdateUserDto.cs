@@ -1,4 +1,4 @@
-﻿namespace TaskTrackerApp.Domain.DTOs.User;
+﻿namespace TaskTrackerApp.Frontend.Domain.DTOs.Users;
 
 public class UpdateUserDto
 {

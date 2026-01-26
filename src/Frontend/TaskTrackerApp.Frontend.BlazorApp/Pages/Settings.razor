@@ -1,0 +1,124 @@
+﻿@page "/settings"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Authorization
+@using TaskTrackerApp.Frontend.Domain.DTOs.Auth
+@using TaskTrackerApp.Frontend.Domain.DTOs.Users
+
+@attribute [Authorize]
+
+<MudContainer MaxWidth=MaxWidth.Small Class="mt-8">
+    <MudText Typo=Typo.h4 Class="mb-6">Account Settings</MudText>
+
+    <MudTabs Elevation=2 Rounded=true ApplyEffectsToContainer=true PanelClass="pa-6">
+
+        <MudTabPanel Text="Profile" Icon=@Icons.Material.Filled.Person>
+            <EditForm EditContext="@_profileEditContext" OnValidSubmit="UpdateProfileAsync">
+                <DataAnnotationsValidator />
+
+                <MudGrid>
+                    <MudItem xs=12 Class="d-flex flex-column align-center justify-center mb-4">
+                        <MudAvatar Style="height:100px; width:100px; font-size:2rem;" Color=Color.Primary Class="mb-3">
+                            @if (!string.IsNullOrEmpty(_avatarUrl))
+                            {
+                                <MudImage Src=@_avatarUrl Alt="Avatar" />
+                            }
+                            else
+                            {
+                                @_initials
+                            }
+                        </MudAvatar>
+
+                        <MudFileUpload T=IBrowserFile FilesChanged=UploadAvatar>
+                            <ActivatorContent>
+                                <MudButton Variant=Variant.Outlined
+                                           Color=Color.Primary
+                                           StartIcon=@Icons.Material.Filled.CloudUpload>
+                                    Change Avatar
+                                </MudButton>
+                            </ActivatorContent>
+                        </MudFileUpload>
+                    </MudItem>
+
+                    <MudItem xs=12>
+                        <MudTextField @bind-Value=_profileModel.DisplayName
+                                      Label="Display Name"
+                                      Variant=Variant.Outlined
+                                      Adornment=Adornment.Start
+                                      AdornmentIcon=@Icons.Material.Filled.Badge
+                                      For="@(() => _profileModel.DisplayName)"
+                                      Class="mb-4" />
+
+                        <MudTextField @bind-Value=_profileModel.Tag
+                                      Label=@TagLabel
+                                      Variant=Variant.Outlined
+                                      Adornment=Adornment.Start
+                                      AdornmentText="@("@")"
+                                      For="@(() => _profileModel.Tag)"
+                                      Class="mb-4"
+                                      HelperText="Unique identifier for mentions" />
+
+                        <MudButton ButtonType="ButtonType.Submit"
+                                   Variant=Variant.Filled
+                                   Color=Color.Primary
+                                   FullWidth=true
+                                   Disabled=@_isSavingProfile>
+                            @if (_isSavingProfile)
+                            {
+                                <MudProgressCircular Class="ms-n1" Size=Size.Small Indeterminate=true />
+                                <MudText Class="ms-2">Saving...</MudText>
+                            }
+                            else
+                            {
+                                <MudText>Save Profile Changes</MudText>
+                            }
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </EditForm>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Security" Icon=@Icons.Material.Filled.Lock>
+            <EditForm EditContext="@_passwordEditContext" OnValidSubmit="ChangePasswordAsync">
+                <DataAnnotationsValidator />
+
+                <MudTextField @bind-Value=_passwordModel.OldPassword
+                              Label="Current Password"
+                              InputType=InputType.Password
+                              Variant=Variant.Outlined
+                              For="@(() => _passwordModel.OldPassword)"
+                              Class="mb-4" />
+
+                <MudTextField @bind-Value=_passwordModel.NewPassword
+                              Label="New Password"
+                              InputType=InputType.Password
+                              Variant=Variant.Outlined
+                              For="@(() => _passwordModel.NewPassword)"
+                              Class="mb-4" />
+
+                <MudTextField @bind-Value=_passwordModel.ConfirmPassword
+                              Label="Confirm New Password"
+                              InputType=InputType.Password
+                              Variant=Variant.Outlined
+                              For="@(() => _passwordModel.ConfirmPassword)"
+                              Validation=@(new Func<string, string?>(PasswordMatchValidation))
+                              Class="mb-6" />
+
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant=Variant.Filled
+                           Color=Color.Error
+                           FullWidth=true
+                           Disabled=@_isSavingPassword>
+                    @if (_isSavingPassword)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size=Size.Small Indeterminate=true />
+                        <MudText Class="ms-2">Updating...</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Change Password</MudText>
+                    }
+                </MudButton>
+            </EditForm>
+        </MudTabPanel>
+    </MudTabs>
+</MudContainer>
