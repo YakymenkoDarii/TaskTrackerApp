@@ -39,7 +39,7 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPut("update")]
+    [HttpPut()]
     public async Task<IActionResult> UpdateAsync([FromBody] UpdateUserDto userDto)
     {
         var command = new UpdateUserCommand
@@ -80,7 +80,7 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPut("update-avatar")]
+    [HttpPut("avatar")]
     public async Task<IActionResult> UpdateAvatarAsync(IFormFile file)
     {
         using var stream = file.OpenReadStream();
@@ -97,7 +97,7 @@ public class UsersController : ControllerBase
         return result.IsSuccess ? Ok(result) : BadRequest(result);
     }
 
-    [HttpPut("change-password")]
+    [HttpPut("password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
         var command = new ChangePasswordCommand

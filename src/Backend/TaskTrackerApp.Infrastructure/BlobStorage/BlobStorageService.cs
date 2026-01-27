@@ -1,6 +1,5 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using Microsoft.Extensions.Azure;
 using TaskTrackerApp.Application.Interfaces.BlobStorage;
 
 namespace TaskTrackerApp.Infrastructure.BlobStorage;
@@ -9,9 +8,9 @@ public class BlobStorageService : IBlobStorageService
 {
     private readonly BlobServiceClient _blobServiceClient;
 
-    public BlobStorageService(IAzureClientFactory<BlobServiceClient> clientFactory)
+    public BlobStorageService(BlobServiceClient blobServiceClient)
     {
-        _blobServiceClient = clientFactory.CreateClient("StorageConnection");
+        _blobServiceClient = blobServiceClient;
     }
 
     public async Task<string> UploadAsync(Stream stream, string containerName, string blobName, string contentType)

@@ -9,14 +9,14 @@ public interface IUsersApi
     [Get("/api/Users/search")]
     Task<IApiResponse<Result<IEnumerable<UserSummaryDto>>>> SearchUsersAsync([AliasAs("term")] string searchTerm, int? excludeBoardId = null, CancellationToken cancellationToken = default);
 
-    [Put("/api/Users/update")]
+    [Put("/api/Users")]
     Task<IApiResponse<Result>> UpdateAsync([Body] UpdateUserDto dto);
 
     [Multipart]
-    [Put("/api/Users/update-avatar")]
+    [Put("/api/Users/avatar")]
     Task<IApiResponse<Result<Uri>>> UpdateAvatarAsync([AliasAs("file")] StreamPart file);
 
-    [Put("/api/Users/change-password")]
+    [Put("/api/Users/password")]
     Task<IApiResponse<Result>> ChangePassword(ChangePasswordRequest request);
 
     [Get("/api/Users/me")]

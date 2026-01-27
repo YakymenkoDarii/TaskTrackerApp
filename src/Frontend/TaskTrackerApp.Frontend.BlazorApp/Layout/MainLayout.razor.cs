@@ -1,0 +1,96 @@
+﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using System.Security.Claims;
+using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
+using TaskTrackerApp.Frontend.Services.Services.Auth;
+using TaskTrackerApp.Frontend.Services.Services.Hubs;
+
+namespace TaskTrackerApp.Frontend.BlazorApp.Layout;
+
+public partial class MainLayout : IDisposable
+{
+    [Inject] private NavigationManager Navigation { get; set; }
+
+    [Inject] private IAuthService Auth { get; set; }
+
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
+
+    [Inject] private InvitationSignalRService InvitationHub { get; set; }
+
+    [Inject] private IUsersService UsersService { get; set; }
+
+    private bool _drawerOpen = true;
+
+    private string UserLetter = "?";
+    private string? UserAvatarUrl = null;
+    private int CurrentUserId;
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
+        await UpdateUserStateAsync();
+    }
+
+    private async void OnAuthStateChanged(Task<AuthenticationState> task)
+    {
+        await UpdateUserStateAsync();
+    }
+
+    private async Task UpdateUserStateAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity is not null && user.Identity.IsAuthenticated)
+            {
+                var tagName = user.FindFirst(ClaimTypes.Name)?.Value;
+                UserLetter = string.IsNullOrEmpty(tagName) ? "?" : tagName[0].ToString().ToUpper();
+
+                var result = await UsersService.GetProfileAsync();
+
+                if (result.IsSuccess)
+                {
+                    UserAvatarUrl = result.Value.AvatarUrl;
+
+                    if (!string.IsNullOrEmpty(result.Value.DisplayName))
+                    {
+                        UserLetter = result.Value.DisplayName[0].ToString().ToUpper();
+                    }
+                }
+
+                StateHasChanged();
+
+                await InvitationHub.StartConnection();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating user state: {ex.Message}");
+        }
+    }
+
+    private async Task LogoutAsync()
+    {
+        await Auth.LogoutAsync();
+        await InvitationHub.DisposeAsync();
+
+        if (AuthStateProvider is CustomAuthStateProvider customProvider)
+        {
+            customProvider.NotifyUserLogout();
+        }
+
+        Navigation.NavigateTo("/login", true);
+    }
+
+    public void Dispose()
+    {
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthStateChanged;
+    }
+}
