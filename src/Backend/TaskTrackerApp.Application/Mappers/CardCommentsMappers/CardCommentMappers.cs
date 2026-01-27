@@ -19,8 +19,18 @@ public static class CardCommentMappers
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt,
             CreatedById = entity.CreatedById,
-            AuthorName = entity.CreatedBy.DisplayName,
-            AuthorAvatarUrl = entity.CreatedBy?.AvatarUrl
+            AuthorName = entity.CreatedBy?.DisplayName,
+            AuthorAvatarUrl = entity.CreatedBy?.AvatarUrl,
+            Attachments = entity.Attachments?
+                .Select(a => new TaskTrackerApp.Domain.DTOs.CommentAttachment.CommentAttachmentDto
+                {
+                    Id = a.Id,
+                    FileName = a.FileName,
+                    Url = a.Url,
+                    ContentType = a.ContentType,
+                    Size = a.Size
+                })
+                .ToList() ?? new()
         };
     }
 
@@ -38,9 +48,9 @@ public static class CardCommentMappers
         };
     }
 
-    public static void ApplyUpdate(this CardComment entity, UpdateCardCommentCommand dto)
+    public static void ApplyUpdate(this CardComment entity, UpdateCardCommentCommand dto, bool hasFileChanges)
     {
-        if (entity.Text != dto.Text)
+        if (entity.Text != dto.Text || hasFileChanges)
         {
             entity.Text = dto.Text;
             entity.IsEdited = true;

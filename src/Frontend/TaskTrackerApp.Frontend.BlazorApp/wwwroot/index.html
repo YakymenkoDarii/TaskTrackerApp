@@ -29,5 +29,25 @@
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js?v=1"></script>
+    <script>
+        window.clipboardHelper = {
+            initialize: (dotNetHelper) => {
+                document.addEventListener('paste', async (e) => {
+                    if (e.clipboardData && e.clipboardData.items) {
+                        const items = e.clipboardData.items;
+                        for (let i = 0; i < items.length; i++) {
+                            if (items[i].type.indexOf('image') !== -1) {
+                                const blob = items[i].getAsFile();
+                                const buffer = await blob.arrayBuffer();
+                                const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+
+                                await dotNetHelper.invokeMethodAsync('OnImagePasted', base64, blob.name || "pasted-image.png", blob.type);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    </script>
 </body>
 </html>

@@ -1,4 +1,6 @@
-﻿namespace TaskTrackerApp.Domain.DTOs.CardComment;
+﻿using TaskTrackerApp.Domain.DTOs.CommentAttachment;
+
+namespace TaskTrackerApp.Domain.DTOs.CardComment;
 
 public class CardCommentDto
 {
@@ -17,4 +19,6 @@ public class CardCommentDto
     public string AuthorName { get; set; }
 
     public string? AuthorAvatarUrl { get; set; }
+
+    public List<CommentAttachmentDto> Attachments { get; set; } = new();
 }
