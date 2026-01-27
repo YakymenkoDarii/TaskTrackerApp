@@ -20,10 +20,8 @@ public partial class MainLayout : IDisposable
     [Inject] private IUsersService UsersService { get; set; }
 
     private bool _drawerOpen = true;
-
     private string UserLetter = "?";
     private string? UserAvatarUrl = null;
-    private int CurrentUserId;
 
     private void DrawerToggle()
     {
@@ -33,12 +31,17 @@ public partial class MainLayout : IDisposable
     protected override async Task OnInitializedAsync()
     {
         AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
+
         await UpdateUserStateAsync();
     }
 
     private async void OnAuthStateChanged(Task<AuthenticationState> task)
     {
-        await UpdateUserStateAsync();
+        await InvokeAsync(async () =>
+        {
+            await UpdateUserStateAsync();
+            StateHasChanged();
+        });
     }
 
     private async Task UpdateUserStateAsync()
@@ -53,6 +56,14 @@ public partial class MainLayout : IDisposable
                 var tagName = user.FindFirst(ClaimTypes.Name)?.Value;
                 UserLetter = string.IsNullOrEmpty(tagName) ? "?" : tagName[0].ToString().ToUpper();
 
+                var avatarClaim = user.FindFirst("AvatarUrl");
+                if (!string.IsNullOrEmpty(avatarClaim?.Value))
+                {
+                    UserAvatarUrl = avatarClaim.Value;
+                }
+
+                StateHasChanged();
+
                 var result = await UsersService.GetProfileAsync();
 
                 if (result.IsSuccess)
@@ -65,14 +76,16 @@ public partial class MainLayout : IDisposable
                     }
                 }
 
-                StateHasChanged();
-
                 await InvitationHub.StartConnection();
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error updating user state: {ex.Message}");
+        }
+        finally
+        {
+            StateHasChanged();
         }
     }
 
