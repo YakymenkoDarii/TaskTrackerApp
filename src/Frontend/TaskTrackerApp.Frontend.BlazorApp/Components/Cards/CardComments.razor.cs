@@ -13,6 +13,8 @@ public partial class CardComments : IDisposable
 {
     [Inject] private ICardCommentsService CardCommentsService { get; set; }
 
+    [Inject] private IUsersService UsersService { get; set; }
+
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; }
 
     [Inject] private ISnackbar Snackbar { get; set; }
@@ -35,6 +37,7 @@ public partial class CardComments : IDisposable
 
     private int _currentUserId;
     private string _currentUserInitials = "?";
+    private string? _currentUserAvatarUrl;
 
     protected override async Task OnInitializedAsync()
     {
@@ -106,11 +109,24 @@ public partial class CardComments : IDisposable
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
+
         if (user.Identity.IsAuthenticated)
         {
             int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out _currentUserId);
+
             var name = user.FindFirst(ClaimTypes.Name)?.Value ?? "?";
             _currentUserInitials = GetInitials(name);
+
+            var result = await UsersService.GetProfileAsync();
+            if (result.IsSuccess)
+            {
+                _currentUserAvatarUrl = result.Value.AvatarUrl;
+
+                if (!string.IsNullOrEmpty(result.Value.DisplayName))
+                {
+                    _currentUserInitials = GetInitials(result.Value.DisplayName);
+                }
+            }
         }
     }
 

@@ -1,16 +1,11 @@
 ﻿using MediatR;
+using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Users.Commands.UpdateUsers;
 
-public class UpdateUserCommand : IRequest
+public class UpdateUserCommand : IRequest<Result>
 {
-    public int Id { get; set; }
-
     public string Tag { get; set; }
 
-    public string PasswordHash { get; set; }
-
     public string DisplayName { get; set; }
-
-    public string AvatarUrl { get; set; }
 }

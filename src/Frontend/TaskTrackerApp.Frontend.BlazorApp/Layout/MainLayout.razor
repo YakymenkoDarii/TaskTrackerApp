@@ -3,12 +3,6 @@
 @using TaskTrackerApp.Frontend.Services.Services.Auth
 @using TaskTrackerApp.Frontend.Services.Services.Hubs
 @inherits LayoutComponentBase
-@implements IDisposable
-
-@inject NavigationManager Navigation
-@inject IAuthService Auth
-@inject AuthenticationStateProvider AuthStateProvider
-@inject InvitationSignalRService InvitationHub
 
 <MudThemeProvider />
 <MudDialogProvider />
@@ -27,24 +21,37 @@
 
         <AuthorizeView>
             <Authorized>
-                <MudButton Variant="Variant.Filled"
-                           Color="Color.Error"
-                           OnClick="LogoutAsync">
-                    Logout
-                </MudButton>
+                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" LockScroll="true">
+                    <ActivatorContent>
+                        <MudAvatar Color="Color.Secondary" Class="cursor-pointer">
+                            @if (!string.IsNullOrEmpty(UserAvatarUrl))
+                            {
+                                <MudImage Src="@UserAvatarUrl" Alt="User Avatar" />
+                            }
+                            else
+                            {
+                                @UserLetter
+                            }
+                        </MudAvatar>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <MudMenuItem Href="/settings" Icon="@Icons.Material.Filled.Settings">
+                            Settings
+                        </MudMenuItem>
+                        <MudMenuItem OnClick="LogoutAsync" Icon="@Icons.Material.Filled.Logout">
+                            Logout
+                        </MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
             </Authorized>
             <NotAuthorized>
                 <MudButton Variant="Variant.Filled"
-                           Color="Color.Primary"
+                           Color="Color.Secondary"
                            OnClick="@(() => Navigation.NavigateTo("/login"))">
                     Login
                 </MudButton>
             </NotAuthorized>
         </AuthorizeView>
-
-        <MudAvatar Color="Color.Secondary">
-            @UserLetter
-        </MudAvatar>
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen"
@@ -57,69 +64,3 @@
         @Body
     </MudMainContent>
 </MudLayout>
-
-@code {
-    bool _drawerOpen = true;
-    private string? UserLetter = "U";
-
-    void DrawerToggle()
-    {
-        _drawerOpen = !_drawerOpen;
-    }
-
-    private async Task LogoutAsync()
-    {
-        await Auth.LogoutAsync();
-
-        await InvitationHub.DisposeAsync();
-
-        if (AuthStateProvider is CustomAuthStateProvider customProvider)
-        {
-            customProvider.NotifyUserLogout();
-        }
-
-        Navigation.NavigateTo("/login", true);
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
-
-        await CheckAndStartHubs();
-    }
-
-    private async void OnAuthStateChanged(Task<AuthenticationState> task)
-    {
-        await CheckAndStartHubs();
-    }
-
-    private async Task CheckAndStartHubs()
-    {
-        try
-        {
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity is not null && user.Identity.IsAuthenticated)
-            {
-                var tagName = user.FindFirst(ClaimTypes.Name)?.Value;
-                if (!string.IsNullOrEmpty(tagName))
-                {
-                    UserLetter = tagName[0].ToString().ToUpper();
-                    StateHasChanged();
-                }
-
-                await InvitationHub.StartConnection();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"SignalR Connection Error: {ex.Message}");
-        }
-    }
-
-    public void Dispose()
-    {
-        AuthStateProvider.AuthenticationStateChanged -= OnAuthStateChanged;
-    }
-}

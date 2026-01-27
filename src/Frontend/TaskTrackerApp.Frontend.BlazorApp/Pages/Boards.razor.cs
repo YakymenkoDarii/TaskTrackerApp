@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using System.Security.Claims;
-using TaskTrackerApp.Frontend.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.BoardDialogs;
 using TaskTrackerApp.Frontend.Domain;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
+using TaskTrackerApp.Frontend.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 using TaskTrackerApp.Frontend.Services.Services.Hubs;
 

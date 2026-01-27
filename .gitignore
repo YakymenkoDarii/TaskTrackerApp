@@ -365,3 +365,8 @@ FodyWeavers.xsd
 /src/Frontend/TemplateEngineHost/vs/.vstemplates.local
 /src/Frontend/TemplateEngineHost/vs/.vstemplates.local.etag
 /src/Frontend/TemplateEngineHost/vs/templatecache.json
+
+
+# Azurite configuration
+.vscode
+.azurite

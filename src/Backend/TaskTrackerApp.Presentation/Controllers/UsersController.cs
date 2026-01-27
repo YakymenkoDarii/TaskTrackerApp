@@ -1,9 +1,12 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TaskTrackerApp.Application.Features.Users.Commands.ChangePassword;
 using TaskTrackerApp.Application.Features.Users.Commands.CreateUsers;
 using TaskTrackerApp.Application.Features.Users.Commands.DeleteUsers;
+using TaskTrackerApp.Application.Features.Users.Commands.UpdateUserAvatar;
 using TaskTrackerApp.Application.Features.Users.Commands.UpdateUsers;
+using TaskTrackerApp.Application.Features.Users.Queries.GetMyProfile;
 using TaskTrackerApp.Application.Features.Users.Queries.SearchUsersQuery;
 using TaskTrackerApp.Domain.DTOs.User;
 
@@ -36,21 +39,18 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateAsync(int id, [FromBody] UpdateUserDto userDto)
+    [HttpPut()]
+    public async Task<IActionResult> UpdateAsync([FromBody] UpdateUserDto userDto)
     {
         var command = new UpdateUserCommand
         {
-            Id = id,
             Tag = userDto.Tag,
-            PasswordHash = userDto.PasswordHash,
             DisplayName = userDto.DisplayName,
-            AvatarUrl = userDto.AvatarUrl
         };
 
-        await _mediator.Send(command);
+        var result = await _mediator.Send(command);
 
-        return Ok(command);
+        return Ok(result);
     }
 
     [HttpDelete]
@@ -78,5 +78,47 @@ public class UsersController : ControllerBase
         var result = await _mediator.Send(query);
 
         return Ok(result);
+    }
+
+    [HttpPut("avatar")]
+    public async Task<IActionResult> UpdateAvatarAsync(IFormFile file)
+    {
+        using var stream = file.OpenReadStream();
+
+        var command = new UpdateUserAvatarCommand
+        {
+            FileContent = stream,
+            FileName = file.FileName,
+            ContentType = file.ContentType
+        };
+
+        var result = await _mediator.Send(command);
+
+        return result.IsSuccess ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpPut("password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        var command = new ChangePasswordCommand
+        {
+            OldPassword = request.OldPassword,
+            NewPassword = request.NewPassword,
+            NewPasswordConfirm = request.ConfirmPassword,
+        };
+
+        var result = await _mediator.Send(command);
+
+        return Ok(result);
+    }
+
+    [HttpGet("me")]
+    public async Task<IActionResult> GetCurrentProfile()
+    {
+        var query = new GetMyProfileQuery();
+
+        var result = await _mediator.Send(query);
+
+        return result.IsSuccess ? Ok(result) : BadRequest(result);
     }
 }

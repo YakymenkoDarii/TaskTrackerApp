@@ -1,3 +1,4 @@
+using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -96,6 +97,9 @@ builder.Services.AddRateLimiter(options =>
         limiter.QueueLimit = 0;
     });
 });
+
+builder.Services.AddTransient(x =>
+    new BlobServiceClient(builder.Configuration["StorageConnection:blobServiceUri"]));
 
 var app = builder.Build();
 

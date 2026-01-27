@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
+﻿using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Domain.Events.Card;
 using TaskTrackerApp.Frontend.Domain.Events.Column;
 using TaskTrackerApp.Frontend.Domain.Events.Invitations;

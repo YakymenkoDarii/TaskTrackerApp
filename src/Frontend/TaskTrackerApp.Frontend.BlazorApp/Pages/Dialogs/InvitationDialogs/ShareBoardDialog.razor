@@ -100,9 +100,18 @@
                             <div class="d-flex justify-space-between align-center w-100">
 
                                 <div class="d-flex align-center gap-3">
+
                                     <MudAvatar Size="Size.Small" Color="Color.Primary">
-                                        @(member.Name?.FirstOrDefault() ?? '?')
+                                        @if (!string.IsNullOrEmpty(member.AvatarUrl))
+                                        {
+                                            <MudImage Src="@member.AvatarUrl" />
+                                        }
+                                        else
+                                        {
+                                            @(member.Name?.FirstOrDefault() ?? '?')
+                                        }
                                     </MudAvatar>
+
                                     <div>
                                         <MudText Typo="Typo.body2" Class="fw-bold">
                                             @member.Name @(IsMe(member.UserId) ? "(You)" : "")
