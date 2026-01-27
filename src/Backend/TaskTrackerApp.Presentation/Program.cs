@@ -98,7 +98,7 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-builder.Services.AddSingleton(x =>
+builder.Services.AddTransient(x =>
     new BlobServiceClient(builder.Configuration["StorageConnection:blobServiceUri"]));
 
 var app = builder.Build();
