@@ -19,6 +19,9 @@ public partial class MainLayout : IDisposable
 
     [Inject] private IUsersService UsersService { get; set; }
 
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; }
+
     private bool _drawerOpen = true;
     private string UserLetter = "?";
     private string? UserAvatarUrl = null;
@@ -78,6 +81,64 @@ public partial class MainLayout : IDisposable
 
                 await InvitationHub.StartConnection();
             }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating user state: {ex.Message}");
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AuthStateTask != null)
+        {
+            var authState = await AuthStateTask;
+            var user = authState.User;
+
+            if (user.Identity != null && user.Identity.IsAuthenticated)
+            {
+                await LoadUserProfile(user);
+            }
+            else
+            {
+                UserLetter = "?";
+                UserAvatarUrl = null;
+            }
+        }
+    }
+
+    private async Task LoadUserProfile(ClaimsPrincipal user)
+    {
+        try
+        {
+            var tagName = user.FindFirst(ClaimTypes.Name)?.Value;
+            UserLetter = string.IsNullOrEmpty(tagName) ? "?" : tagName[0].ToString().ToUpper();
+
+            var avatarClaim = user.FindFirst("AvatarUrl");
+            if (!string.IsNullOrEmpty(avatarClaim?.Value))
+            {
+                UserAvatarUrl = avatarClaim.Value;
+            }
+
+            StateHasChanged();
+
+            var result = await UsersService.GetProfileAsync();
+
+            if (result.IsSuccess)
+            {
+                UserAvatarUrl = result.Value.AvatarUrl;
+
+                if (!string.IsNullOrEmpty(result.Value.DisplayName))
+                {
+                    UserLetter = result.Value.DisplayName[0].ToString().ToUpper();
+                }
+            }
+
+            await InvitationHub.StartConnection();
         }
         catch (Exception ex)
         {
