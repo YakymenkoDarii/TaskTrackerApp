@@ -4,7 +4,7 @@ namespace TaskTrackerApp.Domain.Entities;
 
 public class CardComment : BaseEntity
 {
-    public string Text { get; set; } = string.Empty;
+    public string? Text { get; set; } = string.Empty;
 
     public bool IsEdited { get; set; }
 
