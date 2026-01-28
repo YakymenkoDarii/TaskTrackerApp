@@ -1,10 +1,12 @@
-﻿namespace TaskTrackerApp.Domain.DTOs.CardComment;
+﻿using TaskTrackerApp.Domain.DTOs.CommentAttachment;
+
+namespace TaskTrackerApp.Domain.DTOs.CardComment;
 
 public class CardCommentDto
 {
     public int Id { get; set; }
 
-    public string Text { get; set; } = string.Empty;
+    public string? Text { get; set; } = string.Empty;
 
     public bool IsEdited { get; set; }
 
@@ -17,4 +19,6 @@ public class CardCommentDto
     public string AuthorName { get; set; }
 
     public string? AuthorAvatarUrl { get; set; }
+
+    public List<CommentAttachmentDto> Attachments { get; set; } = new();
 }

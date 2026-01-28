@@ -17,7 +17,15 @@ public class CardCommentsRepository : Repository<CardComment, int>, ICardComment
                 .AsNoTracking()
                 .Where(c => c.CardId == cardId)
                 .Include(c => c.CreatedBy)
+                .Include(c => c.Attachments)
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
+    }
+
+    public async Task<CardComment?> GetByIdWithAttachmentsAsync(int id)
+    {
+        return await _context.CardComments
+            .Include(c => c.Attachments)
+            .FirstOrDefaultAsync(c => c.Id == id);
     }
 }

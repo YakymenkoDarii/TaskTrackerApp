@@ -7,4 +7,5 @@ public interface IBlobStorageService
     Task DeleteAsync(string containerName, string blobName);
 
     Task<Stream?> DownloadAsync(string containerName, string blobName);
+    Task DeleteFolderAsync(string containerName, string folderPrefix);
 }

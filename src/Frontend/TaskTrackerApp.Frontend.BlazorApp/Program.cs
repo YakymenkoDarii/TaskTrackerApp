@@ -13,7 +13,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddBlazoredLocalStorage();
 
 builder.Services.AddProjectServices(builder.Configuration);
-
 builder.Services.AddMudServices();
 
 builder.Services.AddAuthorizationCore();

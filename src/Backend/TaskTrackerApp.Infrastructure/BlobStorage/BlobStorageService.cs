@@ -48,4 +48,14 @@ public class BlobStorageService : IBlobStorageService
 
         return await blobClient.OpenReadAsync();
     }
+
+    public async Task DeleteFolderAsync(string containerName, string folderPrefix)
+    {
+        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+
+        await foreach (var blob in containerClient.GetBlobsAsync(prefix: folderPrefix))
+        {
+            await containerClient.DeleteBlobAsync(blob.Name);
+        }
+    }
 }
