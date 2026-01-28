@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Blazored.TextEditor;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
@@ -8,6 +9,7 @@ using System.Security.Claims;
 using TaskTrackerApp.Frontend.Domain.DTOs.CardComments;
 using TaskTrackerApp.Frontend.Domain.DTOs.CommentAttachments;
 using TaskTrackerApp.Frontend.Domain.Events.Comment;
+using TaskTrackerApp.Frontend.Domain.Models.CommentAttachments;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 using TaskTrackerApp.Frontend.Services.Helpers;
 using TaskTrackerApp.Frontend.Services.Services.Hubs;
@@ -38,18 +40,21 @@ public partial class CardComments : IDisposable
 
     private string _newCommentText = string.Empty;
     private bool _isFocused = false;
-    private List<IBrowserFile> _selectedFiles = new();
+    private List<FilePreviewModel> _selectedFiles = new();
 
     private DotNetObjectReference<CardComments>? _objRef;
 
     private int? _editingCommentId = null;
-    private string _editingText = string.Empty;
+    private BlazoredTextEditor _editQuillHtml;
     private List<int> _keepAttachmentIds = new();
     private List<IBrowserFile> _newEditFiles = new();
 
     private int _currentUserId;
     private string _currentUserInitials = "?";
     private string? _currentUserAvatarUrl;
+
+    private BlazoredTextEditor _quillHtml;
+    private bool _isSaving = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -86,13 +91,20 @@ public partial class CardComments : IDisposable
             var bytes = Convert.FromBase64String(base64Data);
             var file = new CustomBrowserFile(bytes, name, contentType);
 
+            var url = $"data:{contentType};base64,{base64Data}";
+
             if (_editingCommentId != null)
             {
                 _newEditFiles.Add(file);
             }
             else
             {
-                _selectedFiles.Add(file);
+                _selectedFiles.Add(new FilePreviewModel
+                {
+                    File = file,
+                    Url = url,
+                    IsImage = true
+                });
                 _isFocused = true;
             }
 
@@ -113,17 +125,27 @@ public partial class CardComments : IDisposable
             {
                 var buffer = new byte[file.Size];
                 await file.OpenReadStream(10 * 1024 * 1024).ReadAsync(buffer);
-
                 var safeFile = new CustomBrowserFile(buffer, file.Name, file.ContentType);
 
-                _selectedFiles.Add(safeFile);
+                var base64 = Convert.ToBase64String(buffer);
+                var url = $"data:{file.ContentType};base64,{base64}";
+
+                _selectedFiles.Add(new FilePreviewModel
+                {
+                    File = safeFile,
+                    Url = url,
+                    IsImage = file.ContentType.StartsWith("image/")
+                });
+                if (file.ContentType.StartsWith("image/"))
+                {
+                    await _quillHtml.InsertImage(url);
+                }
             }
             else
             {
                 Snackbar.Add($"File {file.Name} is too big (Max 10MB)", Severity.Warning);
             }
         }
-        _isFocused = true;
     }
 
     private async Task HandlePaste(ClipboardEventArgs e)
@@ -131,7 +153,7 @@ public partial class CardComments : IDisposable
         _isFocused = true;
     }
 
-    private void RemoveFile(IBrowserFile file) => _selectedFiles.Remove(file);
+    private void RemoveFile(FilePreviewModel fileModel) => _selectedFiles.Remove(fileModel);
 
     private void HandleCommentAdded(CommentAddedEvent e)
     {
@@ -227,29 +249,34 @@ public partial class CardComments : IDisposable
 
     private async Task AddComment()
     {
-        if (string.IsNullOrWhiteSpace(_newCommentText) && !_selectedFiles.Any()) return;
+        var htmlContent = await _quillHtml.GetHTML();
+
+        if (string.IsNullOrWhiteSpace(htmlContent) && !_selectedFiles.Any()) return;
+
+        _isSaving = true;
 
         var createDto = new CreateCardCommentDto
         {
             CardId = CardId,
-            Text = _newCommentText,
+            Text = htmlContent,
             CreatedById = _currentUserId,
-            Files = _selectedFiles.ToList()
+            Files = _selectedFiles.Select(f => f.File).ToList()
         };
 
         var result = await CardCommentsService.CreateComment(createDto);
 
         if (result.IsSuccess)
         {
+            await _quillHtml.LoadHTMLContent("");
             _newCommentText = string.Empty;
             _selectedFiles.Clear();
-            _isFocused = false;
         }
         else
         {
             Snackbar.Add($"Error: {result.Error.Message}", Severity.Error);
-            Console.WriteLine($"Create Failed: {result.Error.Code} - {result.Error.Message}");
         }
+
+        _isSaving = false;
     }
 
     private async Task DeleteComment(CardCommentDto comment)
@@ -266,12 +293,19 @@ public partial class CardComments : IDisposable
         }
     }
 
-    private void StartEdit(CardCommentDto comment)
+    private async Task StartEdit(CardCommentDto comment)
     {
         _editingCommentId = comment.Id;
-        _editingText = comment.Text;
         _keepAttachmentIds = comment.Attachments.Select(a => a.Id).ToList();
         _newEditFiles.Clear();
+
+        StateHasChanged();
+        await Task.Delay(50);
+
+        if (_editQuillHtml != null)
+        {
+            await _editQuillHtml.LoadHTMLContent(comment.Text);
+        }
     }
 
     private void ToggleKeepFile(int id)
@@ -284,22 +318,44 @@ public partial class CardComments : IDisposable
 
     private async Task HandleEditFilesSelected(InputFileChangeEventArgs e)
     {
-        var files = e.GetMultipleFiles();
-        foreach (var file in files)
+        try
         {
-            if (file.Size <= 10 * 1024 * 1024)
+            var files = e.GetMultipleFiles();
+            foreach (var file in files)
             {
-                var buffer = new byte[file.Size];
-                await file.OpenReadStream(10 * 1024 * 1024).ReadAsync(buffer);
+                if (file.Size <= 10 * 1024 * 1024)
+                {
+                    using var stream = file.OpenReadStream(10 * 1024 * 1024);
+                    using var ms = new MemoryStream();
+                    await stream.CopyToAsync(ms);
+                    var buffer = ms.ToArray();
 
-                var safeFile = new CustomBrowserFile(buffer, file.Name, file.ContentType);
+                    var safeFile = new CustomBrowserFile(buffer, file.Name, file.ContentType);
 
-                _newEditFiles.Add(safeFile);
+                    _newEditFiles.Add(safeFile);
+
+                    if (file.ContentType.StartsWith("image/"))
+                    {
+                        var base64 = Convert.ToBase64String(buffer);
+                        var url = $"data:{file.ContentType};base64,{base64}";
+                        if (_editQuillHtml != null)
+                        {
+                            await _editQuillHtml.InsertImage(url);
+                        }
+                    }
+                }
+                else
+                {
+                    Snackbar.Add($"File {file.Name} is too big (Max 10MB)", Severity.Warning);
+                }
             }
-            else
-            {
-                Snackbar.Add($"File {file.Name} is too big (Max 10MB)", Severity.Warning);
-            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading file: {ex.Message}");
+            Snackbar.Add("Failed to attach file.", Severity.Error);
         }
     }
 
@@ -307,10 +363,12 @@ public partial class CardComments : IDisposable
     {
         if (_editingCommentId == null) return;
 
+        var editedHtml = await _editQuillHtml.GetHTML();
+
         var updateDto = new UpdateCardCommentDto
         {
             Id = _editingCommentId.Value,
-            Text = _editingText,
+            Text = editedHtml,
             KeepAttachmentIds = _keepAttachmentIds,
             NewFiles = _newEditFiles
         };
@@ -332,23 +390,25 @@ public partial class CardComments : IDisposable
     private void CancelEdit()
     {
         _editingCommentId = null;
-        _editingText = string.Empty;
     }
 
-    private string GetFileIcon(string? contentType)
+    private string GetFileIcon(string contentType)
     {
         if (string.IsNullOrEmpty(contentType)) return Icons.Material.Filled.InsertDriveFile;
-        if (contentType.Contains("pdf")) return Icons.Material.Filled.PictureAsPdf;
         if (contentType.Contains("image")) return Icons.Material.Filled.Image;
-        if (contentType.Contains("zip") || contentType.Contains("rar")) return Icons.Material.Filled.FolderZip;
+        if (contentType.Contains("pdf")) return Icons.Material.Filled.PictureAsPdf;
         return Icons.Material.Filled.InsertDriveFile;
     }
 
     private string FormatSize(long bytes)
     {
-        if (bytes < 1024) return $"{bytes} B";
-        if (bytes < 1024 * 1024) return $"{Math.Round(bytes / 1024.0, 1)} KB";
-        return $"{Math.Round(bytes / 1024.0 / 1024.0, 1)} MB";
+        var sizeInMb = bytes / 1024f / 1024f;
+        if (sizeInMb < 1)
+        {
+            var sizeInKb = bytes / 1024f;
+            return $"{sizeInKb:F0} KB";
+        }
+        return $"{sizeInMb:F1} MB";
     }
 
     private async Task OpenAttachment(string url)
@@ -375,6 +435,16 @@ public partial class CardComments : IDisposable
 
         var ext = Path.GetExtension(att.FileName)?.ToLowerInvariant();
         return ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".webp" or ".bmp";
+    }
+
+    private Color GetFileIconColor(string contentType)
+    {
+        if (string.IsNullOrEmpty(contentType)) return Color.Default;
+        if (contentType.Contains("pdf")) return Color.Error;
+        if (contentType.Contains("image")) return Color.Info;
+        if (contentType.Contains("word") || contentType.Contains("document")) return Color.Primary; // Blue for Word
+        if (contentType.Contains("sheet") || contentType.Contains("excel")) return Color.Success; // Green for Excel
+        return Color.Secondary;
     }
 
     public void Dispose()
