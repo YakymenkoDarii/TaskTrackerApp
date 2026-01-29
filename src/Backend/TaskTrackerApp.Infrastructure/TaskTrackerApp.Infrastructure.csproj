@@ -20,5 +20,4 @@
   <ItemGroup>
     <ProjectReference Include="..\TaskTrackerApp.Application\TaskTrackerApp.Application.csproj" />
   </ItemGroup>
-
 </Project>

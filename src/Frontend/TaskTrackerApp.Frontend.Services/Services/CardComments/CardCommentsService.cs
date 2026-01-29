@@ -1,5 +1,5 @@
-﻿using System.Net.Http.Headers;
-using Refit;
+﻿using Refit;
+using System.Net.Http.Headers;
 using TaskTrackerApp.Frontend.Domain.DTOs.CardComments;
 using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Results;
