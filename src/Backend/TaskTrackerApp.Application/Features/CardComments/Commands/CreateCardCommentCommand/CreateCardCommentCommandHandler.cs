@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Features.CardComments.Commands.CreateCardCommentCommand;
+using TaskTrackerApp.Application.HelperMethods;
 using TaskTrackerApp.Application.Interfaces.BlobStorage;
 using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
@@ -43,6 +44,16 @@ public class CreateCardCommentCommandHandler : IRequestHandler<CreateCardComment
         await uow.CardCommentsRepository.AddAsync(comment);
         await uow.SaveChangesAsync(cancellationToken);
 
+        var cleanHtml = await ImageConverter.UploadEmbeddedImagesAsync(
+        comment.Text,
+        comment.CardId,
+        comment.Id,
+        comment.Attachments,
+        _blobService
+        );
+
+        comment.Text = cleanHtml;
+
         if (request.Attachments != null && request.Attachments.Any())
         {
             foreach (var attachmentDto in request.Attachments)
@@ -70,9 +81,9 @@ public class CreateCardCommentCommandHandler : IRequestHandler<CreateCardComment
                     Size = attachmentDto.Size
                 });
             }
-
-            await uow.SaveChangesAsync(cancellationToken);
         }
+
+        await uow.SaveChangesAsync(cancellationToken);
 
         var user = await uow.UserRepository.GetById(comment.CreatedById);
 

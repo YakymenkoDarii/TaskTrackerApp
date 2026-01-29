@@ -86,34 +86,8 @@ public partial class CardComments : IDisposable
     [JSInvokable]
     public void OnImagePasted(string base64Data, string name, string contentType)
     {
-        try
-        {
-            var bytes = Convert.FromBase64String(base64Data);
-            var file = new CustomBrowserFile(bytes, name, contentType);
-
-            var url = $"data:{contentType};base64,{base64Data}";
-
-            if (_editingCommentId != null)
-            {
-                _newEditFiles.Add(file);
-            }
-            else
-            {
-                _selectedFiles.Add(new FilePreviewModel
-                {
-                    File = file,
-                    Url = url,
-                    IsImage = true
-                });
-                _isFocused = true;
-            }
-
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error pasting image: {ex.Message}");
-        }
+        _isFocused = true;
+        StateHasChanged();
     }
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
@@ -130,15 +104,18 @@ public partial class CardComments : IDisposable
                 var base64 = Convert.ToBase64String(buffer);
                 var url = $"data:{file.ContentType};base64,{base64}";
 
-                _selectedFiles.Add(new FilePreviewModel
-                {
-                    File = safeFile,
-                    Url = url,
-                    IsImage = file.ContentType.StartsWith("image/")
-                });
                 if (file.ContentType.StartsWith("image/"))
                 {
                     await _quillHtml.InsertImage(url);
+                }
+                else
+                {
+                    _selectedFiles.Add(new FilePreviewModel
+                    {
+                        File = safeFile,
+                        Url = url,
+                        IsImage = false
+                    });
                 }
             }
             else
@@ -332,8 +309,6 @@ public partial class CardComments : IDisposable
 
                     var safeFile = new CustomBrowserFile(buffer, file.Name, file.ContentType);
 
-                    _newEditFiles.Add(safeFile);
-
                     if (file.ContentType.StartsWith("image/"))
                     {
                         var base64 = Convert.ToBase64String(buffer);
@@ -343,13 +318,16 @@ public partial class CardComments : IDisposable
                             await _editQuillHtml.InsertImage(url);
                         }
                     }
+                    else
+                    {
+                        _newEditFiles.Add(safeFile);
+                    }
                 }
                 else
                 {
                     Snackbar.Add($"File {file.Name} is too big (Max 10MB)", Severity.Warning);
                 }
             }
-
             StateHasChanged();
         }
         catch (Exception ex)
@@ -442,8 +420,8 @@ public partial class CardComments : IDisposable
         if (string.IsNullOrEmpty(contentType)) return Color.Default;
         if (contentType.Contains("pdf")) return Color.Error;
         if (contentType.Contains("image")) return Color.Info;
-        if (contentType.Contains("word") || contentType.Contains("document")) return Color.Primary; // Blue for Word
-        if (contentType.Contains("sheet") || contentType.Contains("excel")) return Color.Success; // Green for Excel
+        if (contentType.Contains("word") || contentType.Contains("document")) return Color.Primary;
+        if (contentType.Contains("sheet") || contentType.Contains("excel")) return Color.Success;
         return Color.Secondary;
     }
 

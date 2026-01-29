@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using TaskTrackerApp.Application.HelperMethods;
 using TaskTrackerApp.Application.Interfaces.BlobStorage;
 using TaskTrackerApp.Application.Interfaces.Common;
 using TaskTrackerApp.Application.Interfaces.Services;
@@ -64,9 +65,20 @@ public class UpdateCardCommentCommandHandler : IRequestHandler<UpdateCardComment
 
             if (attachmentsToDelete.Any())
             {
-                hasFileChanges = true;
                 foreach (var attachment in attachmentsToDelete)
                 {
+                    bool isEmbeddedImage = attachment.FileName.StartsWith("embedded-image", StringComparison.OrdinalIgnoreCase);
+
+                    if (isEmbeddedImage)
+                    {
+                        if (request.Text.Contains(attachment.Url))
+                        {
+                            continue;
+                        }
+                    }
+
+                    hasFileChanges = true;
+
                     var blobPath = $"card-{comment.CardId}/comment-{comment.Id}/{attachment.StoredFileName}";
 
                     await _blobService.DeleteAsync(BlobContainerNames.CommentAttachments, blobPath);
@@ -86,11 +98,11 @@ public class UpdateCardCommentCommandHandler : IRequestHandler<UpdateCardComment
                 var blobPath = $"card-{comment.CardId}/comment-{comment.Id}/{storedName}";
 
                 var url = await _blobService.UploadAsync(
-                    fileInput.FileContent,
-                    BlobContainerNames.CommentAttachments,
-                    blobPath,
-                    fileInput.ContentType
-                );
+                                fileInput.FileContent,
+                                BlobContainerNames.CommentAttachments,
+                                blobPath,
+                                fileInput.ContentType
+                            );
 
                 comment.Attachments.Add(new CommentAttachment
                 {
@@ -105,16 +117,27 @@ public class UpdateCardCommentCommandHandler : IRequestHandler<UpdateCardComment
 
         comment.ApplyUpdate(request, hasFileChanges);
 
+        var cleanHtml = await ImageConverter.UploadEmbeddedImagesAsync(
+        comment.Text,
+        comment.CardId,
+        comment.Id,
+        comment.Attachments,
+        _blobService
+    );
+
+        comment.Text = cleanHtml;
+
         await uow.SaveChangesAsync(cancellationToken);
 
-        var attachmentDtos = comment.Attachments.Select(a => new CommentAttachmentDto
-        {
-            Id = a.Id,
-            FileName = a.FileName,
-            Url = a.Url,
-            ContentType = a.ContentType,
-            Size = a.Size
-        }).ToList();
+        var attachmentDtos = comment.Attachments
+                .Select(a => new CommentAttachmentDto
+                {
+                    Id = a.Id,
+                    FileName = a.FileName,
+                    Url = a.Url,
+                    ContentType = a.ContentType,
+                    Size = a.Size
+                }).ToList();
 
         var evt = new CommentUpdatedEvent(
             comment.Id,
