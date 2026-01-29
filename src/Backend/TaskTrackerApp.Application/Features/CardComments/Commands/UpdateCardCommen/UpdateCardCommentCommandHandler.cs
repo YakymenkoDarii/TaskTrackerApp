@@ -65,11 +65,24 @@ public class UpdateCardCommentCommandHandler : IRequestHandler<UpdateCardComment
 
             if (attachmentsToDelete.Any())
             {
-                hasFileChanges = true;
                 foreach (var attachment in attachmentsToDelete)
                 {
+                    bool isEmbeddedImage = attachment.FileName.StartsWith("embedded-image", StringComparison.OrdinalIgnoreCase);
+
+                    if (isEmbeddedImage)
+                    {
+                        if (request.Text.Contains(attachment.Url))
+                        {
+                            continue;
+                        }
+                    }
+
+                    hasFileChanges = true;
+
                     var blobPath = $"card-{comment.CardId}/comment-{comment.Id}/{attachment.StoredFileName}";
+
                     await _blobService.DeleteAsync(BlobContainerNames.CommentAttachments, blobPath);
+
                     comment.Attachments.Remove(attachment);
                 }
             }
