@@ -1,20 +1,22 @@
 ﻿@using TaskTrackerApp.Frontend.Domain.DTOs.CardComments
 @using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using TaskTrackerApp.Frontend.Domain.Models.CommentAttachments;
 @using System.Security.Claims
 
 <div class="mt-6">
     <div class="d-flex justify-space-between align-center mb-4">
         <div class="d-flex align-center gap-2">
-            <MudIcon Icon="@Icons.Material.Filled.Forum" Class="mud-text-secondary" />
-            <MudText Typo="Typo.h6">Comments</MudText>
+            <MudIcon Icon=@Icons.Material.Filled.Forum Class="mud-text-secondary" />
+            <MudText Typo=Typo.h6>Comments</MudText>
         </div>
     </div>
 
     @if (!IsReadOnly)
     {
         <div class="d-flex gap-3 mb-6">
-            <MudAvatar Color="Color.Primary" Size="Size.Medium">
+            <MudAvatar Color=Color.Primary Size=Size.Medium>
                 @if (!string.IsNullOrEmpty(_currentUserAvatarUrl))
                 {
                     <MudImage Src="@_currentUserAvatarUrl" Alt="Me" />
@@ -25,28 +27,63 @@
                 }
             </MudAvatar>
 
-            <div class="flex-grow-1">
-                <MudTextField @bind-Value="_newCommentText"
-                              Placeholder="Write a comment..."
-                              Variant="Variant.Outlined"
-                              Lines="@(_isFocused ? 3 : 1)"
-                              OnAdornmentClick="@(() => _isFocused = true)"
-                              OnBlur="@OnInputBlur"
-                              Immediate="true"
-                              Class="mb-2 bg-white"
-                              style="background-color: white;" />
+            <div class="d-flex flex-column flex-grow-1">
 
-                @if (_isFocused || !string.IsNullOrWhiteSpace(_newCommentText))
+                <div class="rounded mb-2" style="border: 1px solid var(--mud-palette-primary); background: white; overflow: hidden;">
+                    <BlazoredTextEditor @ref="@_quillHtml" Placeholder="Write a comment...">
+                        <ToolbarContent>
+                            <span class="ql-formats">
+                                <button class="ql-bold"></button>
+                                <button class="ql-italic"></button>
+                                <button class="ql-underline"></button>
+                                <button class="ql-strike"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-list" value="ordered"></button>
+                                <button class="ql-list" value="bullet"></button>
+                            </span>
+                        </ToolbarContent>
+                        <EditorContent>
+                            @((MarkupString)_newCommentText)
+                        </EditorContent>
+                    </BlazoredTextEditor>
+                </div>
+
+                @if (_selectedFiles.Any())
                 {
-                    <div class="d-flex gap-2">
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   OnClick="AddComment"
-                                   Disabled="@(string.IsNullOrWhiteSpace(_newCommentText))">
-                            Save
-                        </MudButton>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        @foreach (var fileModel in _selectedFiles)
+                        {
+                            <MudChip T="FilePreviewModel" OnClose="@(() => RemoveFile(fileModel))"
+                                     Size="Size.Small" Color="Color.Surface" Variant="Variant.Outlined">
+                                <MudIcon Icon="@GetFileIcon(fileModel.File.ContentType)" Size="Size.Small" Class="mr-1" />
+                                @fileModel.File.Name
+                            </MudChip>
+                        }
                     </div>
                 }
+
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <InputFile id="fileInput" OnChange="HandleFileSelected" multiple style="display:none" />
+                        <MudButton HtmlTag="label" for="fileInput"
+                                   Variant="Variant.Text"
+                                   StartIcon="@Icons.Material.Filled.AttachFile"
+                                   Color="Color.Default"
+                                   Size="Size.Small"
+                                   Style="text-transform: none; font-weight: 500;">
+                            Attach Image/File
+                        </MudButton>
+                    </div>
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               OnClick="AddComment"
+                               Disabled="@(_isSaving)"
+                               Class="px-6">
+                        Save
+                    </MudButton>
+                </div>
             </div>
         </div>
     }
@@ -56,7 +93,7 @@
             @foreach (var comment in _comments)
             {
                 <div class="d-flex gap-3">
-                    <MudAvatar Size="Size.Medium" Color="Color.Secondary">
+                    <MudAvatar Size=Size.Medium Color=Color.Secondary>
                         @if (!string.IsNullOrEmpty(comment.AuthorAvatarUrl))
                         {
                             <MudImage Src="@comment.AuthorAvatarUrl" />
@@ -68,64 +105,123 @@
                     </MudAvatar>
 
                     <div class="flex-grow-1">
-                        <div class="d-flex align-center gap-2">
-                            <MudText Typo="Typo.subtitle2" Class="fw-bold">@comment.AuthorName</MudText>
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@comment.CreatedAt.ToString("MMM dd, yyyy h:mm tt")</MudText>
-
+                        <div class="d-flex align-center gap-2 mb-1">
+                            <MudText Typo=Typo.subtitle2 Class="fw-bold">@comment.AuthorName</MudText>
+                            <MudText Typo=Typo.caption Class="mud-text-secondary">@comment.CreatedAt.ToString("MMM dd, yyyy h:mm tt")</MudText>
                             @if (comment.IsEdited)
                             {
-                                <MudTooltip Text="@($"Edited at {comment.UpdatedAt?.ToString("t") ?? "unknown time"}")">
-                                    <MudText Typo="Typo.caption"
-                                             Class="mud-text-secondary"
-                                             Style="cursor: help; border-bottom: 1px dotted gray;">
-                                        (edited)
-                                    </MudText>
+                                <MudTooltip Text="@($"Edited at {comment.UpdatedAt?.ToString("t")}")">
+                                    <MudText Typo=Typo.caption Class="mud-text-secondary" Style="cursor: help;">(edited)</MudText>
                                 </MudTooltip>
                             }
                         </div>
 
                         @if (_editingCommentId == comment.Id)
                         {
-                            <div class="mt-2">
-                                <MudTextField @bind-Value="_editingText"
-                                              Variant="Variant.Outlined"
-                                              Lines="3"
-                                              AutoFocus="true"
-                                              Class="mb-2 bg-white" />
+                            <div class="pa-3 rounded border" style="background: white; border-color: var(--mud-palette-primary);">
+
+                                <div class="rounded mb-2" style="border: 1px solid #ccc; background: white;">
+                                    <BlazoredTextEditor @ref="@_editQuillHtml" Placeholder="Edit comment...">
+                                        <ToolbarContent>
+                                            <span class="ql-formats">
+                                                <button class="ql-bold"></button>
+                                                <button class="ql-italic"></button>
+                                                <button class="ql-underline"></button>
+                                                <button class="ql-strike"></button>
+                                            </span>
+                                            <span class="ql-formats">
+                                                <button class="ql-list" value="ordered"></button>
+                                                <button class="ql-list" value="bullet"></button>
+                                            </span>
+                                        </ToolbarContent>
+                                    </BlazoredTextEditor>
+                                </div>
+
+                                @if (comment.Attachments.Any())
+                                {
+                                    <MudText Typo=Typo.caption Class="mb-1 d-block fw-bold">Keep Attachments:</MudText>
+                                    <div class="d-flex flex-wrap gap-2 mb-3">
+                                        @foreach (var att in comment.Attachments)
+                                        {
+                                            var isKept = _keepAttachmentIds.Contains(att.Id);
+                                            <MudChip T="string"
+                                                     Variant="@(isKept ? Variant.Outlined : Variant.Text)"
+                                                     Color="@(isKept ? Color.Primary : Color.Error)"
+                                                     OnClick="@(() => ToggleKeepFile(att.Id))"
+                                                     Icon="@(isKept ? Icons.Material.Filled.Check : Icons.Material.Filled.Delete)"
+                                                     Size="Size.Small">
+                                                @att.FileName
+                                            </MudChip>
+                                        }
+                                    </div>
+                                }
+
+                                <InputFile id="@($"editFile-{comment.Id}")" OnChange="HandleEditFilesSelected" multiple style="display:none" />
+
+                                <div class="d-flex flex-wrap gap-2 align-center mb-3">
+                                    <label for="@($"editFile-{comment.Id}")"
+                                           class="mud-button-root mud-button mud-button-text mud-button-text-primary mud-button-small mud-ripple"
+                                           style="cursor: pointer; display: inline-flex;">
+                                        <span class="mud-button-label">
+                                            <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" Class="mr-1" />
+                                            Add Files
+                                        </span>
+                                    </label>
+
+                                    @foreach (var newFile in _newEditFiles)
+                                    {
+                                        <MudChip T="IBrowserFile" Size=Size.Small Icon="@Icons.Material.Filled.NewReleases">@newFile.Name</MudChip>
+                                    }
+                                </div>
 
                                 <div class="d-flex gap-2">
-                                    <MudButton Variant="Variant.Filled"
-                                               Color="Color.Primary"
-                                               Size="Size.Small"
-                                               OnClick="SaveEdit">Save</MudButton>
-
-                                    <MudButton Variant="Variant.Text"
-                                               Color="Color.Default"
-                                               Size="Size.Small"
-                                               OnClick="CancelEdit">Cancel</MudButton>
+                                    <MudButton Variant=Variant.Filled Color=Color.Primary Size=Size.Small OnClick=SaveEdit>Save Changes</MudButton>
+                                    <MudButton Variant=Variant.Text Color=Color.Default Size=Size.Small OnClick=CancelEdit>Cancel</MudButton>
                                 </div>
                             </div>
                         }
                         else
                         {
-                            <MudPaper Elevation="0" Class="pa-2 mt-1 rounded" Style="background-color: transparent; border: 1px solid transparent;">
-                                <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">@comment.Text</MudText>
-                            </MudPaper>
+                            <div class="mt-1">
+                                <div class="mud-typography mud-typography-body2 comment-content" style="word-break: break-word;">
+                                    @((MarkupString)comment.Text)
+                                </div>
+
+                                @if (comment.Attachments != null && comment.Attachments.Any())
+                                {
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        @foreach (var att in comment.Attachments)
+                                        {
+                                            <a href="@att.Url" target="_blank" style="text-decoration: none;">
+                                                <div class="d-flex align-center pa-2 rounded border"
+                                                     style="background-color: white; border-color: #e0e0e0; min-width: 200px; max-width: 300px; transition: background-color 0.2s;">
+
+                                                    <MudIcon Icon="@GetFileIcon(att.ContentType)"
+                                                             Color="@GetFileIconColor(att.ContentType)"
+                                                             Size="Size.Large"
+                                                             Class="mr-3" />
+
+                                                    <div style="overflow: hidden;">
+                                                        <MudText Typo="Typo.body2" Class="fw-bold text-truncate" Color="Color.Default">
+                                                            @att.FileName
+                                                        </MudText>
+                                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                                            @FormatSize(att.Size)
+                                                        </MudText>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        }
+                                    </div>
+                                }
+                            </div>
 
                             @if (!IsReadOnly && comment.CreatedById == _currentUserId)
                             {
                                 <div class="d-flex gap-2 mt-1">
-                                    <MudLink Typo="Typo.caption"
-                                             Color="Color.Default"
-                                             Underline="Underline.Hover"
-                                             OnClick="@(() => StartEdit(comment))">Edit</MudLink>
-
-                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">•</MudText>
-
-                                    <MudLink Typo="Typo.caption"
-                                             OnClick="@(() => DeleteComment(comment))"
-                                             Color="Color.Error"
-                                             Underline="Underline.Hover">Delete</MudLink>
+                                    <MudLink Typo=Typo.caption Color=Color.Default Underline=Underline.Hover OnClick=@(() => StartEdit(comment))>Edit</MudLink>
+                                    <MudText Typo=Typo.caption Class="mud-text-secondary">•</MudText>
+                                    <MudLink Typo=Typo.caption OnClick=@(() => DeleteComment(comment)) Color=Color.Error Underline=Underline.Hover>Delete</MudLink>
                                 </div>
                             }
                         }
@@ -135,3 +231,15 @@
         </MudStack>
     </div>
 </div>
+
+<style>
+    .comment-content img {
+        max-width: 100% !important;
+        height: auto !important;
+        border-radius: 8px;
+        margin-top: 8px;
+        margin-bottom: 8px;
+        display: block;
+        border: 1px solid #e0e0e0;
+    }
+</style>

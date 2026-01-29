@@ -6,6 +6,7 @@ using TaskTrackerApp.Application.Features.CardComments.Commands.DeleteCardCommen
 using TaskTrackerApp.Application.Features.CardComments.Commands.UpdateCardCommen;
 using TaskTrackerApp.Application.Features.CardComments.Queries;
 using TaskTrackerApp.Domain.DTOs.CardComment;
+using TaskTrackerApp.Domain.DTOs.CommentAttachment;
 
 namespace TaskTrackerApp.Presentation.Controllers;
 
@@ -40,23 +41,33 @@ public class CardCommentsController : ControllerBase
     }
 
     [HttpPost("create")]
-    public async Task<IActionResult> CreateCommentAsync(CreateCardCommentDto createDto)
+    public async Task<IActionResult> CreateCommentAsync([FromForm] CreateCardCommentDto createDto)
     {
         var command = new CreateCardCommentCommand
         {
             CardId = createDto.CardId,
             Text = createDto.Text,
             CreatedById = createDto.CreatedById,
+            Attachments = new List<AttachmentInputDto>()
         };
+
+        if (createDto.Files != null)
+        {
+            foreach (var file in createDto.Files)
+            {
+                command.Attachments.Add(new AttachmentInputDto
+                {
+                    FileName = file.FileName,
+                    ContentType = file.ContentType,
+                    Size = file.Length,
+                    FileContent = file.OpenReadStream()
+                });
+            }
+        }
 
         var result = await _mediator.Send(command);
 
-        if (result.IsSuccess)
-        {
-            return Ok(result);
-        }
-
-        return BadRequest(result);
+        return Ok(result);
     }
 
     [HttpDelete("{id}")]
@@ -78,13 +89,28 @@ public class CardCommentsController : ControllerBase
     }
 
     [HttpPut("update")]
-    public async Task<IActionResult> UpdateCommentAsync(UpdateCardCommentDto updateDto)
+    public async Task<IActionResult> UpdateCommentAsync([FromForm] UpdateCardCommentDto updateDto)
     {
         var command = new UpdateCardCommentCommand
         {
             Id = updateDto.Id,
             Text = updateDto.Text,
+            KeepAttachmentIds = updateDto.KeepAttachmentIds ?? new List<int>(),
+            NewAttachments = new List<AttachmentInputDto>()
         };
+        if (updateDto.NewAttachments != null)
+        {
+            foreach (var file in updateDto.NewAttachments)
+            {
+                command.NewAttachments.Add(new AttachmentInputDto
+                {
+                    FileName = file.FileName,
+                    ContentType = file.ContentType,
+                    Size = file.Length,
+                    FileContent = file.OpenReadStream()
+                });
+            }
+        }
 
         var result = await _mediator.Send(command);
 

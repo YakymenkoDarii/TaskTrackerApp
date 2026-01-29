@@ -1,4 +1,5 @@
-﻿using Refit;
+﻿using System.Net.Http.Headers;
+using Refit;
 using TaskTrackerApp.Frontend.Domain.DTOs.CardComments;
 using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Results;
@@ -20,7 +21,40 @@ public class CardCommentsService : ICardCommentsService
     {
         try
         {
-            var response = await _api.CreateCommentAsync(createDto);
+            using var content = new MultipartFormDataContent();
+
+            content.Add(new StringContent(createDto.CardId.ToString()), nameof(createDto.CardId));
+            content.Add(new StringContent(createDto.CreatedById.ToString()), nameof(createDto.CreatedById));
+            content.Add(new StringContent(createDto.Text ?? string.Empty), nameof(createDto.Text));
+
+            if (createDto.Files != null)
+            {
+                foreach (var file in createDto.Files)
+                {
+                    var memoryStream = new MemoryStream();
+                    await file.OpenReadStream(10 * 1024 * 1024).CopyToAsync(memoryStream);
+                    memoryStream.Position = 0;
+
+                    var streamContent = new StreamContent(memoryStream);
+
+                    var contentType = string.IsNullOrWhiteSpace(file.ContentType)
+                        ? "application/octet-stream"
+                        : file.ContentType;
+
+                    try
+                    {
+                        streamContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+                    }
+                    catch (FormatException)
+                    {
+                        streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                    }
+
+                    content.Add(streamContent, "Files", file.Name);
+                }
+            }
+
+            var response = await _api.CreateCommentAsync(content);
             return response.ToResult();
         }
         catch (ApiException ex)
@@ -71,7 +105,47 @@ public class CardCommentsService : ICardCommentsService
     {
         try
         {
-            var response = await _api.UpdateCommentAsync(updateDto);
+            using var content = new MultipartFormDataContent();
+
+            content.Add(new StringContent(updateDto.Id.ToString()), nameof(updateDto.Id));
+            content.Add(new StringContent(updateDto.Text ?? string.Empty), nameof(updateDto.Text));
+
+            if (updateDto.KeepAttachmentIds != null)
+            {
+                foreach (var id in updateDto.KeepAttachmentIds)
+                {
+                    content.Add(new StringContent(id.ToString()), nameof(updateDto.KeepAttachmentIds));
+                }
+            }
+
+            if (updateDto.NewFiles != null)
+            {
+                foreach (var file in updateDto.NewFiles)
+                {
+                    var memoryStream = new MemoryStream();
+                    await file.OpenReadStream(10 * 1024 * 1024).CopyToAsync(memoryStream);
+                    memoryStream.Position = 0;
+
+                    var streamContent = new StreamContent(memoryStream);
+
+                    var contentType = string.IsNullOrWhiteSpace(file.ContentType)
+                        ? "application/octet-stream"
+                        : file.ContentType;
+
+                    try
+                    {
+                        streamContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+                    }
+                    catch (FormatException)
+                    {
+                        streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                    }
+
+                    content.Add(streamContent, "NewAttachments", file.Name);
+                }
+            }
+
+            var response = await _api.UpdateCommentAsync(content);
             return response.ToResult();
         }
         catch (ApiException ex)

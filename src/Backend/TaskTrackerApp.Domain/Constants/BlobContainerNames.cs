@@ -3,4 +3,5 @@
 public static class BlobContainerNames
 {
     public const string UserAvatars = "user-avatars";
+    public const string CommentAttachments = "card-attachments";
 }

@@ -26,6 +26,8 @@ public class TaskTrackerDbContext : DbContext
 
     public DbSet<Label> Labels { get; set; }
 
+    public DbSet<CommentAttachment> CommentAttachments { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -138,6 +140,14 @@ public class TaskTrackerDbContext : DbContext
                                   .HasForeignKey("LabelId")
                                   .OnDelete(DeleteBehavior.Restrict)
                   );
+        });
+
+        modelBuilder.Entity<CommentAttachment>(entity =>
+        {
+            entity.HasOne(a => a.Comment)
+                  .WithMany(c => c.Attachments)
+                  .HasForeignKey(a => a.CommentId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

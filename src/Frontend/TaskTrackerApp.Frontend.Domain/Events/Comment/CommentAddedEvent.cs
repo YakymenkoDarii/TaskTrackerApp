@@ -1,4 +1,6 @@
-﻿namespace TaskTrackerApp.Frontend.Domain.Events.Comment;
+﻿using TaskTrackerApp.Frontend.Domain.DTOs.CommentAttachments;
+
+namespace TaskTrackerApp.Frontend.Domain.Events.Comment;
 public record CommentAddedEvent(
     int Id,
     int CardId,
@@ -6,5 +8,6 @@ public record CommentAddedEvent(
     int CreatedById,
     string CreatedByName,
     string? AvatarUrl,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    List<CommentAttachmentDto> Attachments
 );

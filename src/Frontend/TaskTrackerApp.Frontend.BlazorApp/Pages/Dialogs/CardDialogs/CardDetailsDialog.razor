@@ -118,7 +118,14 @@
                             <MudSelectItem T="int?" Value=@member.UserId>
                                 <div class="d-flex align-center gap-2">
                                     <MudAvatar Size=Size.Small Color=Color.Primary>
-                                        @(member.Name?.FirstOrDefault() ?? '?')
+                                        @if (!string.IsNullOrEmpty(member.AvatarUrl))
+                                        {
+                                            <MudImage Src="@member.AvatarUrl" Alt="@member.Name" />
+                                        }
+                                        else
+                                        {
+                                            @(member.Name?.FirstOrDefault().ToString().ToUpper() ?? "?")
+                                        }
                                     </MudAvatar>
                                     <MudText>@member.Name</MudText>
                                 </div>

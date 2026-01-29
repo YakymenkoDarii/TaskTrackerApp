@@ -20,5 +20,7 @@ public interface IUnitOfWork : IDisposable
 
     ILabelsRepository LabelsRepository { get; }
 
+    ICommentAttachmentsRepository CommentAttachmentsRepository { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

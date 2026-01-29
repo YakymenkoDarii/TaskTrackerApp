@@ -10,11 +10,11 @@ public interface ICardCommentsApi
     Task<IApiResponse<Result<IEnumerable<CardCommentDto>>>> GetCommentsByCardIdasync(int cardId);
 
     [Post("/api/CardComments/create")]
-    Task<IApiResponse<Result>> CreateCommentAsync(CreateCardCommentDto createDto);
+    Task<IApiResponse<Result>> CreateCommentAsync([Body] MultipartFormDataContent content);
 
     [Delete("/api/CardComments/{id}")]
     Task<IApiResponse<Result>> DeleteCommentAsync(int id);
 
     [Put("/api/CardComments/update")]
-    Task<IApiResponse<Result>> UpdateCommentAsync(UpdateCardCommentDto updateDto);
+    Task<IApiResponse<Result>> UpdateCommentAsync([Body] MultipartFormDataContent content);
 }

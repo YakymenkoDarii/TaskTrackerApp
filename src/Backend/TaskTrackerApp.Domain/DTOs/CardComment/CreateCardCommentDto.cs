@@ -1,10 +1,14 @@
-﻿namespace TaskTrackerApp.Domain.DTOs.CardComment;
+﻿using Microsoft.AspNetCore.Http;
+
+namespace TaskTrackerApp.Domain.DTOs.CardComment;
 
 public class CreateCardCommentDto
 {
     public int CardId { get; set; }
 
-    public string Text { get; set; }
+    public string? Text { get; set; }
 
     public int CreatedById { get; set; }
+
+    public List<IFormFile>? Files { get; set; }
 }
