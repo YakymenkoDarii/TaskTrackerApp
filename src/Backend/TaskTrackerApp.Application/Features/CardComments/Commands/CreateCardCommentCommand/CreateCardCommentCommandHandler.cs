@@ -7,6 +7,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Constants;
 using TaskTrackerApp.Domain.DTOs.CommentAttachment;
 using TaskTrackerApp.Domain.Entities;
+using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Events.Comment;
 using TaskTrackerApp.Domain.Results;
 
@@ -29,6 +30,13 @@ public class CreateCardCommentCommandHandler : IRequestHandler<CreateCardComment
     public async Task<Result> Handle(CreateCardCommentCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();
+
+        var card = await uow.CardRepository.GetById(request.CardId);
+        var isArchived = await uow.BoardRepository.IsBoardArchivedAsync(card.BoardId);
+        if (isArchived)
+        {
+            return BoardErrors.Archived;
+        }
 
         var comment = new CardComment
         {

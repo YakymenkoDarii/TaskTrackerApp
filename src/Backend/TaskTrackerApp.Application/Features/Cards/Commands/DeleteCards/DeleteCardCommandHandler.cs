@@ -3,7 +3,7 @@ using TaskTrackerApp.Application.Features.Cards.Commands.DeleteCard;
 using TaskTrackerApp.Application.Interfaces.BlobStorage;
 using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
-using TaskTrackerApp.Domain.Constants; // Assuming this has your container name
+using TaskTrackerApp.Domain.Constants;
 using TaskTrackerApp.Domain.Events.Card;
 
 namespace TaskTrackerApp.Application.Features.Cards.Commands.DeleteCards;
@@ -32,6 +32,13 @@ internal class DeleteCardCommandHandler : IRequestHandler<DeleteCardCommand>
         if (card == null) return;
 
         int boardId = card.BoardId;
+
+        var isArchived = await uow.BoardRepository.IsBoardArchivedAsync(card.BoardId);
+
+        if (isArchived)
+        {
+            return;
+        }
 
         await uow.CardRepository.DeleteAsync(request.Id);
         await uow.SaveChangesAsync(cancellationToken);

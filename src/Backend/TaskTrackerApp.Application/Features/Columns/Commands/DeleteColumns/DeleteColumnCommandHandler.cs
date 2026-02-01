@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
+using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Events.Column;
 using TaskTrackerApp.Domain.Results;
 
@@ -24,6 +25,13 @@ internal class DeleteColumnCommandHandler : IRequestHandler<DeleteColumnCommand,
         using var uow = _uowFactory.Create();
 
         var column = await uow.ColumnRepository.GetById(request.Id);
+
+        var isArchived = await uow.BoardRepository.IsBoardArchivedAsync(column.BoardId);
+        if (isArchived)
+        {
+            return BoardErrors.Archived;
+        }
+
         if (column == null)
         {
             return Result.Success();

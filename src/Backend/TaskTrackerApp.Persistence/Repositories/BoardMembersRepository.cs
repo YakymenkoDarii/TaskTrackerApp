@@ -34,17 +34,32 @@ public class BoardMembersRepository : Repository<BoardMember, int>, IBoardMember
 
     public async Task<IEnumerable<BoardMember>> GetByUserIdAsync(int userId)
     {
-        var members = await _dbSet
-                .Include(m => m.Board)
-                .Where(c => c.UserId == userId)
-                .ToListAsync();
-
-        return members;
+        return await _dbSet
+                    .Include(m => m.Board)
+                    .Where(c => c.UserId == userId)
+                    .Where(c => !c.Board.IsArchived)
+                    .ToListAsync();
     }
 
     public async Task<bool> ExistsAsync(int boardId, int userId)
     {
         return await _dbSet
             .AnyAsync(m => m.BoardId == boardId && m.UserId == userId);
+    }
+
+    public async Task<BoardMember> GetMemberAsync(int boardId, int userId)
+    {
+        return await _dbSet
+            .FirstOrDefaultAsync(bm => bm.UserId == userId && bm.BoardId == boardId);
+    }
+
+    public async Task<IEnumerable<BoardMember>> GetArchivedByUserIdAsync(int userId)
+    {
+        return await _dbSet
+                .Include(m => m.Board)
+                .IgnoreQueryFilters()
+                .Where(c => c.UserId == userId)
+                .Where(c => c.Board.IsArchived)
+                .ToListAsync();
     }
 }

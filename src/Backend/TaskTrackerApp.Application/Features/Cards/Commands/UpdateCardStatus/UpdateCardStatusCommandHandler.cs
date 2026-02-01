@@ -2,6 +2,7 @@
 using TaskTrackerApp.Application.Features.Cards.Commands.UpdateStatusCards;
 using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
+using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Events.Card;
 using TaskTrackerApp.Domain.Results;
 
@@ -23,6 +24,12 @@ public class UpdateCardStatusCommandHandler : IRequestHandler<UpdateCardStatusCo
         using var uow = _uowFactory.Create();
 
         var card = await uow.CardRepository.GetById(request.Id);
+
+        var isArchived = await uow.BoardRepository.IsBoardArchivedAsync(card.BoardId);
+        if (isArchived)
+        {
+            return BoardErrors.Archived;
+        }
 
         await uow.CardRepository.UpdateCardStatus(request.Id, request.IsCompleted);
 

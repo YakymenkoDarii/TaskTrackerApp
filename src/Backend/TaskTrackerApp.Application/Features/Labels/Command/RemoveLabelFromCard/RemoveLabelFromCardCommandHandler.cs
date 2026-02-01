@@ -2,6 +2,7 @@
 using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Labels.Command.RemoveLabelFromCard;
@@ -22,6 +23,13 @@ public class RemoveLabelFromCardCommandHandler : IRequestHandler<RemoveLabelFrom
         using var uow = _uowFactory.Create();
 
         var card = await uow.CardRepository.GetCardDetailsAsync(request.CardId);
+
+        var isArchived = await uow.BoardRepository.IsBoardArchivedAsync(card.BoardId);
+        if (isArchived)
+        {
+            return BoardErrors.Archived;
+        }
+
         if (card == null) return Result.Failure(Error.NotFound);
 
         var label = card.Labels.FirstOrDefault(l => l.Id == request.LabelId);

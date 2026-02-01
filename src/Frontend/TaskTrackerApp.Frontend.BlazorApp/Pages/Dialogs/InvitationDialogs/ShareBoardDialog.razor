@@ -5,7 +5,7 @@
 <MudDialog>
     <DialogContent>
 
-        @if (_isCurrentUserAdmin)
+        @if (_isCurrentUserAdmin && !IsReadOnly)
         {
             <div class="d-flex gap-3 align-center mb-4">
                 <div class="flex-grow-1">
@@ -124,7 +124,7 @@
 
                                 <div class="d-flex align-center gap-2">
 
-                                    @if (_isCurrentUserAdmin)
+                                    @if (_isCurrentUserAdmin && !IsReadOnly)
                                     {
                                         <MudSelect T="BoardRole"
                                                    Value="@ParseRole(member.Role)"
@@ -156,7 +156,7 @@
                                                            OnClick="@(() => HandleRemoveMember(member))" />
                                         </MudTooltip>
                                     }
-                                    else if (_isCurrentUserAdmin)
+                                    else if (_isCurrentUserAdmin && !IsReadOnly)
                                     {
                                         <MudTooltip Text="Remove User">
                                             <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline"
@@ -191,12 +191,16 @@
                                             <MudText Typo="Typo.body2" Class="fw-bold">@invite.InviteeEmail</MudText>
                                             <MudText Typo="Typo.caption">Invited as @invite.Role • Pending</MudText>
                                         </div>
-                                        <MudButton Variant="Variant.Outlined"
-                                                   Color="Color.Error"
-                                                   Size="Size.Small"
-                                                   OnClick="@(() => RevokeInvite(invite.Id))">
-                                            Revoke
-                                        </MudButton>
+
+                                        @if (!IsReadOnly)
+                                        {
+                                            <MudButton Variant="Variant.Outlined"
+                                                       Color="Color.Error"
+                                                       Size="Size.Small"
+                                                       OnClick="@(() => RevokeInvite(invite.Id))">
+                                                Revoke
+                                            </MudButton>
+                                        }
                                     </div>
                                 </MudListItem>
                                 <MudDivider />

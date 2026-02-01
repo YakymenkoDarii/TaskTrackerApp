@@ -9,6 +9,7 @@ using TaskTrackerApp.Domain.Constants;
 using TaskTrackerApp.Domain.DTOs.CommentAttachment;
 using TaskTrackerApp.Domain.Entities;
 using TaskTrackerApp.Domain.Errors.Auth;
+using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Errors.CardComments;
 using TaskTrackerApp.Domain.Events.Comment;
 using TaskTrackerApp.Domain.Results;
@@ -45,6 +46,13 @@ public class UpdateCardCommentCommandHandler : IRequestHandler<UpdateCardComment
         }
 
         var comment = await uow.CardCommentsRepository.GetByIdWithAttachmentsAsync(request.Id);
+
+        var card = await uow.CardRepository.GetById(comment.CardId);
+        var isArchived = await uow.BoardRepository.IsBoardArchivedAsync(card.BoardId);
+        if (isArchived)
+        {
+            return BoardErrors.Archived;
+        }
 
         if (comment == null)
         {

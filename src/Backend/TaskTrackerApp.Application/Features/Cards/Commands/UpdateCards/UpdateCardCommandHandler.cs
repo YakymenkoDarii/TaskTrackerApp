@@ -4,6 +4,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Application.Mappers.CardMappers;
 using TaskTrackerApp.Domain.DTOs.Card;
 using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Events.Card;
 using TaskTrackerApp.Domain.Results;
 
@@ -28,6 +29,13 @@ internal class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, Res
 
         var card = await uow.CardRepository.GetCardDetailsAsync(request.Id);
         if (card == null) return Result<CardDto>.Failure(new Error("Card.NotFound", "No card found"));
+
+        var isArchived = await uow.BoardRepository.IsBoardArchivedAsync(card.BoardId);
+        if (isArchived)
+        {
+            return BoardErrors.Archived;
+        }
+
         bool isMoving = (card.ColumnId != request.ColumnId) || (card.Position != request.Position);
 
         int oldColumnId = card.ColumnId;

@@ -25,8 +25,7 @@ public class GetAllBoardsQueryHandler : IRequestHandler<GetAllBoardsQuery, Resul
             Id = m.Board.Id,
             Title = m.Board.Title,
             Description = m.Board.Description,
-            // You might map the user's role here too if needed
-            // Role = m.Role.ToString()
+            IsArchived = m.Board.IsArchived,
         });
 
         return Result<IEnumerable<BoardDto>>.Success(boardDtos);

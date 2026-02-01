@@ -38,6 +38,7 @@ public class GetBoardByIdQueryHandler : IRequestHandler<GetBoardByIdQuery, Resul
             Id = board.Id,
             Title = board.Title,
             Description = board.Description,
+            IsArchived = board.IsArchived,
         };
 
         return Result<BoardDto>.Success(dto);

@@ -46,6 +46,7 @@ public class CardRepository : Repository<Card, int>, ICardRepository
         var query = _dbSet.Include(c => c.Board).AsQueryable();
 
         query = query.Where(c => c.AssigneeId == userId && c.DueDate.HasValue);
+        query = query.Where(c => !c.Board.IsArchived);
 
         if (includeOverdue)
         {
@@ -63,11 +64,11 @@ public class CardRepository : Repository<Card, int>, ICardRepository
 
     public async Task<IEnumerable<Card>> GetCardsByAsigneeIdAsync(int userId)
     {
-        var query = _dbSet.AsQueryable();
-
-        query = query.Where(c => c.AssigneeId == userId);
-
-        return await query.ToListAsync();
+        return await _dbSet
+                .Include(c => c.Board)
+                .Where(c => c.AssigneeId == userId)
+                .Where(c => !c.Board.IsArchived)
+                .ToListAsync();
     }
 
     public IQueryable<Card> GetQueryable()

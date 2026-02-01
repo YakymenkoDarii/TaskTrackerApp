@@ -1,9 +1,10 @@
 ﻿using MediatR;
+using TaskTrackerApp.Application.Features.Behaviors.Interfaces.Boards;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Columns.Commands.CreateColumns;
 
-public class CreateColumnCommand : IRequest<Result<int>>
+public class CreateColumnCommand : IRequest<Result<int>>, IBoardRelatedCommand
 {
     public string Title { get; set; }
 

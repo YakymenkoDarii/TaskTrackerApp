@@ -1,0 +1,60 @@
+﻿@page "/archive"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<PageTitle>Archived Boards</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-16">
+    
+    <div class="d-flex align-center gap-4 mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.Archive" Size="Size.Large" Color="Color.Warning" />
+        <MudText Typo="Typo.h4" Class="fw-bold">Archived Boards</MudText>
+    </div>
+
+    <MudText Typo="Typo.body1" Class="mb-8 text-secondary">
+        These boards are read-only. Restore them to make changes.
+    </MudText>
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-center mt-16">
+            <MudProgressCircular Color="Color.Warning" Indeterminate="true" />
+        </div>
+    }
+    else if (!archivedBoards.Any())
+    {
+        <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Class="mt-4">
+            The archive is empty.
+        </MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var board in archivedBoards)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Elevation="2" Class="height-100 hover-effect border-l-4 mud-border-warning" 
+                             Style="background-color: #fafafa;">
+                        
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6" Color="Color.Default">@board.Title</MudText>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                            </CardHeaderActions>
+                        </MudCardHeader>
+
+                        <MudCardContent>
+                            <div @onclick="@(() => HandleBoardClick(board.Id))" class="cursor-pointer">
+                                <MudText Typo="Typo.body2" Class="text-secondary">
+                                    @(string.IsNullOrWhiteSpace(board.Description) ? "No description" : board.Description)
+                                </MudText>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Default" Class="mt-3">Read Only</MudChip>
+                            </div>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
