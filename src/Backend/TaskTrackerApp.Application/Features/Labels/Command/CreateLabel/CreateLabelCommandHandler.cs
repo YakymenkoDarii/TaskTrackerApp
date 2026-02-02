@@ -5,6 +5,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Application.Mappers.LabelMappers;
 using TaskTrackerApp.Domain.DTOs.Labels;
 using TaskTrackerApp.Domain.Errors.Auth;
+using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Events.Labels;
 using TaskTrackerApp.Domain.Results;
 
@@ -34,6 +35,12 @@ public class CreateLabelCommandHandler : IRequestHandler<CreateLabelCommand, Res
         }
 
         var labelEntity = request.CreateLabel.ToEntity();
+
+        var isArchived = await uow.BoardRepository.IsBoardArchivedAsync(labelEntity.BoardId);
+        if (isArchived)
+        {
+            return BoardErrors.Archived;
+        }
 
         labelEntity.CreatedById = currentUserId.Value;
         labelEntity.UpdatedById = currentUserId.Value;

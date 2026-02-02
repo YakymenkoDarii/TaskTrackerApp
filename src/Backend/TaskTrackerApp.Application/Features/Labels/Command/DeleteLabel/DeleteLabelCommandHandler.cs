@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
+using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Errors.Label;
 using TaskTrackerApp.Domain.Events.Labels;
 using TaskTrackerApp.Domain.Results;
@@ -23,6 +24,13 @@ public class DeleteLabelCommandHandler : IRequestHandler<DeleteLabelCommand, Res
         using var uow = _uowFactory.Create();
 
         var label = await uow.LabelsRepository.GetById(request.LabelId);
+
+        var isArchived = await uow.BoardRepository.IsBoardArchivedAsync(label.BoardId);
+        if (isArchived)
+        {
+            return BoardErrors.Archived;
+        }
+
         if (label == null)
         {
             return Result.Failure(LabelErrors.NotFound);

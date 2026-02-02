@@ -15,10 +15,11 @@ public class BoardInvitationsRepository : Repository<BoardInvitation, int>, IBoa
     public async Task<IEnumerable<BoardInvitation>> GetPendingInvitationsAsync(int boardId)
     {
         return await _dbSet
-            .Include(i => i.Board)
-            .Include(i => i.Invitee)
-            .Where(i => i.BoardId == boardId && i.Status == InvitationStatus.Pending)
-            .ToListAsync();
+                .Include(i => i.Board)
+                .Include(i => i.Invitee)
+                .Where(i => i.BoardId == boardId && i.Status == InvitationStatus.Pending)
+                .Where(i => !i.Board.IsArchived)
+                .ToListAsync();
     }
 
     public async Task<bool> IsInvitationPendingAsync(int boardId, string email)
@@ -42,9 +43,10 @@ public class BoardInvitationsRepository : Repository<BoardInvitation, int>, IBoa
     public async Task<IEnumerable<BoardInvitation>> GetMyPendingAsync(int inviteeId)
     {
         return await _dbSet
-                .Include(i => i.Board)
-                .Include(i => i.Sender)
-                .Where(i => i.InviteeId == inviteeId && i.Status == InvitationStatus.Pending)
-                .ToListAsync();
+                    .Include(i => i.Board)
+                    .Include(i => i.Sender)
+                    .Where(i => i.InviteeId == inviteeId && i.Status == InvitationStatus.Pending)
+                    .Where(i => !i.Board.IsArchived)
+                    .ToListAsync();
     }
 }

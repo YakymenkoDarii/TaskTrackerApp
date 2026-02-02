@@ -11,6 +11,13 @@ public class BoardRepository : Repository<Board, int>, IBoardRepository
     {
     }
 
+    public override async Task<Board?> GetById(int id)
+    {
+        return await _dbSet
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(b => b.Id == id);
+    }
+
     public async Task<int> AddNewMemberAsync(BoardMember boardMember)
     {
         var memberEntry = await _context.BoardMembers.AddAsync(boardMember);
@@ -32,5 +39,23 @@ public class BoardRepository : Repository<Board, int>, IBoardRepository
                 .Select(bm => bm.UserId)
                 .Contains(u.Id))
             .ToListAsync();
+    }
+
+    public async Task<bool> ChangeBoardArchiveStatus(int boardId)
+    {
+        var rowsAffected = await _dbSet
+            .IgnoreQueryFilters()
+            .Where(b => b.Id == boardId)
+            .ExecuteUpdateAsync(setter => setter
+                .SetProperty(board => board.IsArchived, board => !board.IsArchived));
+
+        return rowsAffected > 0;
+    }
+
+    public async Task<bool> IsBoardArchivedAsync(int boardId)
+    {
+        return await _dbSet
+            .IgnoreQueryFilters()
+            .AnyAsync(b => b.Id == boardId && b.IsArchived);
     }
 }

@@ -1,9 +1,10 @@
 ﻿using MediatR;
+using TaskTrackerApp.Application.Features.Behaviors.Interfaces.Boards;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Columns.Commands.UpdateColumns;
 
-public class UpdateColumnCommand : IRequest<Result>
+public class UpdateColumnCommand : IRequest<Result>, IBoardRelatedCommand
 {
     public int Id { get; set; }
 

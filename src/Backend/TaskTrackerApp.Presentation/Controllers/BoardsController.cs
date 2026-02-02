@@ -2,10 +2,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using TaskTrackerApp.Application.Features.Boards.Commands.ArchiveBoard;
 using TaskTrackerApp.Application.Features.Boards.Commands.CreateBoards;
 using TaskTrackerApp.Application.Features.Boards.Commands.DeleteBoards;
 using TaskTrackerApp.Application.Features.Boards.Commands.UpdateBoards;
 using TaskTrackerApp.Application.Features.Boards.Queries.GetAllBoards;
+using TaskTrackerApp.Application.Features.Boards.Queries.GetArchivedBoards;
 using TaskTrackerApp.Application.Features.Boards.Queries.GetBoardById;
 using TaskTrackerApp.Domain.DTOs.Board;
 
@@ -110,5 +112,28 @@ public class BoardsController : ControllerBase
         await _mediator.Send(command);
 
         return NoContent();
+    }
+
+    [HttpPut("arhcive/{boardId}")]
+    public async Task<IActionResult> ChangeArchiveStatusBoardAsync(int boardId)
+    {
+        var command = new ChangeArchiveStatusBoardCommand
+        {
+            BoardId = boardId
+        };
+
+        var result = await _mediator.Send(command);
+
+        return Ok(result);
+    }
+
+    [HttpGet("archived")]
+    public async Task<IActionResult> GetArchived()
+    {
+        var query = new GetArchivedBoardsQuery();
+
+        var result = await _mediator.Send(query);
+
+        return Ok(result);
     }
 }

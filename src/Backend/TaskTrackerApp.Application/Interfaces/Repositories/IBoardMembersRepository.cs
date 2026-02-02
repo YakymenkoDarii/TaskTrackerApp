@@ -9,7 +9,11 @@ public interface IBoardMembersRepository : IRepository<BoardMember, int>
 
     Task<bool> ExistsAsync(int boardId, int userId);
 
+    Task<IEnumerable<BoardMember>> GetArchivedByUserIdAsync(int userId);
+
     Task<IEnumerable<BoardMember>> GetByBoardId(int boardId);
 
     Task<IEnumerable<BoardMember>> GetByUserIdAsync(int userId);
+
+    Task<BoardMember> GetMemberAsync(int boardId, int userId);
 }

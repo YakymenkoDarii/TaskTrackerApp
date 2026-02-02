@@ -1,10 +1,11 @@
 ﻿using MediatR;
+using TaskTrackerApp.Application.Features.Behaviors.Interfaces.Boards;
 using TaskTrackerApp.Domain.Enums;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.BoardInvitations.Commands.SendBoardInvitation;
 
-public class SendBoardInvitationCommand : IRequest<Result<int>>
+public class SendBoardInvitationCommand : IRequest<Result<int>>, IBoardRelatedCommand
 {
     public int BoardId { get; set; }
 

@@ -9,4 +9,6 @@ public interface IBoardRepository : IRepository<Board, int>
     Task<IEnumerable<User>> GetMembersAsync(int boardId);
 
     Task<int> AddNewMemberAsync(BoardMember boardMember);
+    Task<bool> ChangeBoardArchiveStatus(int boardId);
+    Task<bool> IsBoardArchivedAsync(int boardId);
 }

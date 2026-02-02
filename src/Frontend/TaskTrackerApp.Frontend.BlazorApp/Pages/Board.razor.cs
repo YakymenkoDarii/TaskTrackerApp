@@ -60,7 +60,10 @@ public partial class Board : IDisposable
     private BoardRole _currentUserRole = BoardRole.Viewer;
     private bool IsAdmin => _currentUserRole == BoardRole.Admin;
 
-    private bool CanEditContent => _currentUserRole == BoardRole.Admin || _currentUserRole == BoardRole.Member;
+    private bool CanEditContent =>
+        board != null
+        && !board.IsArchived
+        && (_currentUserRole == BoardRole.Admin || _currentUserRole == BoardRole.Member);
 
     protected override async Task OnInitializedAsync()
     {
@@ -450,20 +453,22 @@ public partial class Board : IDisposable
             {
                 int newId = createResult.Value;
 
-                var createdColumn = new ColumnDto
+                if (!columns.Any(c => c.Id == newId))
                 {
-                    Id = newId,
-                    Title = newColumnDto.Title,
-                    Description = newColumnDto.Description,
-                    Position = nextPosition
-                };
+                    var createdColumn = new ColumnDto
+                    {
+                        Id = newId,
+                        Title = newColumnDto.Title,
+                        Description = newColumnDto.Description,
+                        Position = nextPosition
+                    };
 
-                columns.Add(createdColumn);
+                    columns.Add(createdColumn);
+                    columns = columns.OrderBy(c => c.Position).ToList();
 
-                columns = columns.OrderBy(c => c.Position).ToList();
-
-                _columnDropContainer?.Refresh();
-                StateHasChanged();
+                    _columnDropContainer?.Refresh();
+                    StateHasChanged();
+                }
             }
         }
     }
@@ -499,6 +504,8 @@ public partial class Board : IDisposable
 
     private async Task HandleToggleComplete(CardDto card)
     {
+        if (!CanEditContent) return;
+
         bool oldState = card.IsCompleted;
 
         card.IsCompleted = !card.IsCompleted;
@@ -563,6 +570,50 @@ public partial class Board : IDisposable
         StateHasChanged();
     }
 
+    private async Task HandleToggleArchive()
+    {
+        if (!IsAdmin) return;
+
+        string title = board.IsArchived ? "Restore Board" : "Archive Board";
+        string message = board.IsArchived
+            ? "Do you want to restore this board? It will appear in your dashboard again."
+            : "Do you want to archive this board? It will be moved to the archive list and become read-only.";
+        string confirmText = board.IsArchived ? "Restore" : "Archive";
+
+        bool? confirmed = await DialogService.ShowMessageBox(
+            title,
+            message,
+            yesText: confirmText,
+            cancelText: "Cancel",
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
+
+        if (confirmed == true)
+        {
+            var result = await BoardsService.ChangeArchiveStatusBoardAsync(BoardId);
+
+            if (result.IsSuccess)
+            {
+                board.IsArchived = !board.IsArchived;
+
+                string successMsg = board.IsArchived ? "Board archived" : "Board restored";
+                Snackbar.Add(successMsg, Severity.Success);
+
+                if (board.IsArchived)
+                {
+                    Nav.NavigateTo("/boards");
+                }
+                else
+                {
+                    StateHasChanged();
+                }
+            }
+            else
+            {
+                Snackbar.Add("Failed to change board status.", Severity.Error);
+            }
+        }
+    }
+
     private async Task DetermineUserRole()
     {
         var userId = await GetUserId();
@@ -612,7 +663,11 @@ public partial class Board : IDisposable
 
     private void OpenShareDialog()
     {
-        var parameters = new DialogParameters { { "BoardId", BoardId } };
+        var parameters = new DialogParameters
+        {
+            { "BoardId", BoardId },
+            { "IsReadOnly", !CanEditContent }
+        };
         DialogService.ShowAsync<ShareBoardDialog>("Invite Members", parameters, new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true });
     }
 

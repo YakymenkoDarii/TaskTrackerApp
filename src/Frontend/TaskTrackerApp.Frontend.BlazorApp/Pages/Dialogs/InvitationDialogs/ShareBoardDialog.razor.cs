@@ -37,6 +37,8 @@ public partial class ShareBoardDialog : IDisposable
 
     [Parameter] public int BoardId { get; set; }
 
+    [Parameter] public bool IsReadOnly { get; set; }
+
     private BoardRole SelectedRole { get; set; } = BoardRole.Member;
 
     private List<BoardMemberDto> Members { get; set; } = new();
@@ -152,6 +154,8 @@ public partial class ShareBoardDialog : IDisposable
 
     private async Task SendInvite()
     {
+        if (IsReadOnly) return;
+
         if (SelectedUser == null) return;
 
         var command = new SendBoardInvitationRequestDto
@@ -178,6 +182,8 @@ public partial class ShareBoardDialog : IDisposable
 
     private async Task ChangeMemberRole(BoardMemberDto member, BoardRole newRole)
     {
+        if (IsReadOnly) return;
+
         if (!_isCurrentUserAdmin) return;
 
         if (member.Role == BoardRole.Admin.ToString() && newRole != BoardRole.Admin)
@@ -205,6 +211,8 @@ public partial class ShareBoardDialog : IDisposable
     {
         bool isMe = member.UserId == _currentUserId;
         bool isLastMember = Members.Count == 1;
+
+        if (IsReadOnly && !isMe) return;
 
         string title;
         string message;
@@ -276,6 +284,8 @@ public partial class ShareBoardDialog : IDisposable
 
     private async Task RevokeInvite(int invitationId)
     {
+        if (IsReadOnly) return;
+
         var result = await InvitationsService.RevokeInviteAsync(invitationId);
 
         if (result.IsSuccess)

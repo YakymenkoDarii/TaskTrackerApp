@@ -18,4 +18,10 @@ public interface IBoardsApi
 
     [Put("/api/Boards/{id}")]
     Task<IApiResponse<Result>> UpdateAsync(int id, UpdateBoardDto boardDto);
+
+    [Put("/api/Boards/arhcive/{boardId}")]
+    Task<IApiResponse<Result>> ChangeArchiveStatusBoardAsync(int boardId);
+
+    [Get("/api/Boards/archived")]
+    Task<IApiResponse<Result<IEnumerable<BoardDto>>>> GetArchivedAsync();
 }

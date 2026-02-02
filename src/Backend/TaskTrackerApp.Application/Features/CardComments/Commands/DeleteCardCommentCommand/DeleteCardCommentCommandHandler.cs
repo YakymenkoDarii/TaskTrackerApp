@@ -5,6 +5,7 @@ using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Constants;
 using TaskTrackerApp.Domain.Errors.Auth;
+using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Errors.CardComments;
 using TaskTrackerApp.Domain.Results;
 
@@ -34,6 +35,13 @@ public class DeleteCardCommentCommandHandler : IRequestHandler<DeleteCardComment
             return Result.Failure(AuthErrors.NotAuthenticated);
 
         var comment = await uow.CardCommentsRepository.GetByIdWithAttachmentsAsync(request.Id);
+
+        var card = await uow.CardRepository.GetById(comment.CardId);
+        var isArchived = await uow.BoardRepository.IsBoardArchivedAsync(card.BoardId);
+        if (isArchived)
+        {
+            return BoardErrors.Archived;
+        }
 
         if (comment == null)
         {

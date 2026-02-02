@@ -55,26 +55,54 @@ else
                                 OnTaskChanged="@LoadBoardDataAsync" />
                 </div>
 
-                <MudButton Variant="Variant.Filled"
-                           StartIcon="@Icons.Material.Filled.PeopleAlt"
-                           Color="Color.Secondary"
-                           Class="mr-4 fw-bold"
-                           OnClick="OpenShareDialog">
-                    Members
-                </MudButton>
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert"
+                         Color="Color.Inherit"
+                         Style="color: white; filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.5));"
+                         AnchorOrigin="Origin.BottomRight"
+                         TransformOrigin="Origin.TopRight">
 
-                @if (CanEditContent)
-                {
-                    <MudPaper Elevation="0"
-                              Class="d-flex align-center rounded pa-1 pl-3"
-                              Style="background-color: rgba(255, 255, 255, 0.9); border: 1px solid var(--mud-palette-lines-inputs);">
-                        <MudSwitch @bind-Value=@_isLayoutMode
-                                   Color=@Color.Primary
-                                   Label="Edit Layout"
-                                   Class="ml-2"
-                                   Style="color: var(--mud-palette-text-primary); font-weight: 500;" />
-                    </MudPaper>
-                }
+                    <MudMenuItem Icon="@Icons.Material.Filled.PeopleAlt"
+                                 OnClick="OpenShareDialog">
+                        Members
+                    </MudMenuItem>
+
+                    @if (CanEditContent)
+                    {
+                        <MudMenuItem Icon="@(_isLayoutMode? Icons.Material.Filled.Check : Icons.Material.Filled.ViewQuilt)"
+                                     OnClick="@(() => _isLayoutMode = !_isLayoutMode)">
+                            <div class="d-flex justify-space-between align-center">
+                                <MudText>Edit Layout</MudText>
+                                <MudSwitch Value="@_isLayoutMode"
+                                           Color="Color.Success"
+                                           ReadOnly="true"
+                                           Class="ml-3"
+                                           Size="Size.Small" />
+                            </div>
+                        </MudMenuItem>
+                    }
+
+                    <MudDivider />
+
+                    @if (IsAdmin)
+                    {
+                        @if (board.IsArchived)
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Filled.Unarchive"
+                                         IconColor="Color.Warning"
+                                         OnClick="HandleToggleArchive">
+                                Restore from Archive
+                            </MudMenuItem>
+                        }
+                        else
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Filled.Archive"
+                                         IconColor="Color.Error"
+                                         OnClick="HandleToggleArchive">
+                                Archive Board
+                            </MudMenuItem>
+                        }
+                    }
+                </MudMenu>
             </div>
         </div>
 
@@ -223,6 +251,7 @@ else
                                             <MudIconButton Icon="@(context.IsCompleted? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.Circle)"
                                                            Color="@(context.IsCompleted ? Color.Success : GetPriorityColor(context.Priority))"
                                                            Size="Size.Small"
+                                                           Disabled="@(!CanEditContent)"
                                                            OnClick="@(() => HandleToggleComplete(context))" />
                                         </MudTooltip>
                                     </div>

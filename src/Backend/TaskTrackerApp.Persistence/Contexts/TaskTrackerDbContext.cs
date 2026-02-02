@@ -46,6 +46,8 @@ public class TaskTrackerDbContext : DbContext
 
             entity.HasMany(b => b.Columns).WithOne(c => c.Board).HasForeignKey(c => c.BoardId);
             entity.HasMany(b => b.Cards).WithOne(c => c.Board).HasForeignKey(c => c.BoardId).OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasQueryFilter(b => !b.IsArchived);
         });
 
         modelBuilder.Entity<Column>(entity =>

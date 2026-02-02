@@ -95,4 +95,38 @@ public class BoardsService : IBoardsService
             return Result.Failure(new Error("UnknownError", ex.Message));
         }
     }
+
+    public async Task<Result> ChangeArchiveStatusBoardAsync(int boardId)
+    {
+        try
+        {
+            var response = await _boardsApi.ChangeArchiveStatusBoardAsync(boardId);
+            return response.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
+
+    public async Task<Result<IEnumerable<BoardDto>>> GetArchivedAsync()
+    {
+        try
+        {
+            var response = await _boardsApi.GetArchivedAsync();
+            return response.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result<IEnumerable<BoardDto>>.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result<IEnumerable<BoardDto>>.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
 }
