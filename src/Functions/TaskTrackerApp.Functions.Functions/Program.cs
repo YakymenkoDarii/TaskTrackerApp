@@ -1,17 +1,16 @@
 using Azure.Storage.Blobs;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using TaskTrackerApp.Application.DependencyInjection;
-using TaskTrackerApp.Application.Interfaces.Auth;
-using TaskTrackerApp.Application.Interfaces.BlobStorage;
-using TaskTrackerApp.Application.Interfaces.Common;
-using TaskTrackerApp.Application.Interfaces.Jobs;
-using TaskTrackerApp.Application.Interfaces.Services;
-using TaskTrackerApp.Functions.Functions.Stub;
-using TaskTrackerApp.Infrastructure.BlobStorage;
-using TaskTrackerApp.Infrastructure.Jobs;
-using TaskTrackerApp.Persistence.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using TaskTrackerApp.Functions.Functions.Data;
+using TaskTrackerApp.Functions.Functions.Data.Context;
+using TaskTrackerApp.Functions.Functions.Data.Repositories;
+using TaskTrackerApp.Functions.Functions.Interfaces.Repositories;
+using TaskTrackerApp.Functions.Functions.Interfaces.Services;
+using TaskTrackerApp.Functions.Functions.Services;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
@@ -19,36 +18,33 @@ var host = new HostBuilder()
     {
         var configuration = context.Configuration;
 
-        services.AddApplication();
-        services.AddPersistence(configuration);
+        var sqlConnectionString = configuration["DefaultConnection"]
+                                  ?? configuration.GetConnectionString("DefaultConnection");
 
-        services.RemoveAll<ICurrentUserService>();
-
-        services.AddScoped<IBlobStorageService, BlobStorageService>();
-
-        services.AddScoped<IPasswordHasher, StubPasswordHasher>();
-        services.AddScoped<ITokenService, StubTokenService>();
-        services.AddScoped<ICurrentUserService, StubCurrentUserService>();
-
-        services.AddScoped<StubNotifier>();
-        services.AddScoped<IBoardNotifier>(p => p.GetRequiredService<StubNotifier>());
-        services.AddScoped<ICardNotifier>(p => p.GetRequiredService<StubNotifier>());
-        services.AddScoped<IInvitationNotifier>(p => p.GetRequiredService<StubNotifier>());
-        services.AddScoped<IBlobStorageService, BlobStorageService>();
+        services.AddDbContext<ArchivalDbContext>(options =>
+            options.UseSqlServer(sqlConnectionString));
 
         services.AddScoped(x => new BlobServiceClient(
             configuration["AzureWebJobsStorage"],
             new BlobClientOptions(BlobClientOptions.ServiceVersion.V2023_11_03)
         ));
 
-        services.AddScoped(x => new CosmosClient(
-            configuration["CosmosDbConnection"]));
+        services.AddScoped(s =>
+        {
+            var connectionString = configuration["CosmosDbConnection"];
+            return new CosmosClient(connectionString);
+        });
 
-        services.AddScoped<ICosmosJobTracker>(s =>
-            new CosmosJobTracker(
+        services.AddScoped<ICosmosRepository>(s =>
+            new CosmosRepository(
                 s.GetRequiredService<CosmosClient>(),
-                "TaskTrackerDb",
-                "ArchivationJobs"));
+                databaseName: "TaskTrackerDb"
+            ));
+
+        services.AddScoped<IBoardRepository, BoardRepository>();
+
+        services.AddScoped<IBlobStorageService, BlobStorageService>();
+        services.AddScoped<IBoardArchivalService, BoardArchivalService>();
 
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();

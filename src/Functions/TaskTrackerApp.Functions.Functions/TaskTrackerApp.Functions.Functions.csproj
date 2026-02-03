@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -22,13 +22,8 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.24.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.12" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\Backend\TaskTrackerApp.Application\TaskTrackerApp.Application.csproj" />
-    <ProjectReference Include="..\..\Backend\TaskTrackerApp.Infrastructure\TaskTrackerApp.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Backend\TaskTrackerApp.Persistence\TaskTrackerApp.Persistence.csproj" />
   </ItemGroup>
 </Project>
