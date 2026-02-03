@@ -1,5 +1,4 @@
 ﻿using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
 using TaskTrackerApp.Functions.Functions.Interfaces.Services;
 
 namespace TaskTrackerApp.Functions.Functions;

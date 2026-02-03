@@ -1,10 +1,4 @@
-﻿using Azure.Storage.Blobs.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaskTrackerApp.Functions.Functions.Data.Cosmos;
+﻿using TaskTrackerApp.Functions.Functions.Data.Cosmos;
 using TaskTrackerApp.Functions.Functions.Interfaces.Repositories;
 using TaskTrackerApp.Functions.Functions.Interfaces.Services;
 

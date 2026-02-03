@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TaskTrackerApp.Functions.Functions.Data.Dtos.BoardMember;
+﻿namespace TaskTrackerApp.Functions.Functions.Data.Dtos.BoardMember;
 
 public class BoardMemberDto
 {
