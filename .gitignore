@@ -370,3 +370,6 @@ FodyWeavers.xsd
 # Azurite configuration
 .vscode
 .azurite
+
+local.settings.json
+appsettings.Development.json

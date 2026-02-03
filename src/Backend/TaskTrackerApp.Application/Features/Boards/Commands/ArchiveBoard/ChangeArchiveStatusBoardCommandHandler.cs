@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.Common;
+using TaskTrackerApp.Application.Interfaces.Jobs;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Enums;
 using TaskTrackerApp.Domain.Errors.Board;
@@ -12,11 +13,16 @@ public class ChangeArchiveStatusBoardCommandHandler : IRequestHandler<ChangeArch
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWorkFactory _uowFactory;
+    private readonly ICosmosJobTracker _cosmosJobTracker;
 
-    public ChangeArchiveStatusBoardCommandHandler(ICurrentUserService currentUserService, IUnitOfWorkFactory uowFactory)
+    public ChangeArchiveStatusBoardCommandHandler(
+        ICurrentUserService currentUserService,
+        IUnitOfWorkFactory uowFactory,
+        ICosmosJobTracker cosmosJobTracker)
     {
         _currentUserService = currentUserService;
         _uowFactory = uowFactory;
+        _cosmosJobTracker = cosmosJobTracker;
     }
 
     public async Task<Result> Handle(ChangeArchiveStatusBoardCommand request, CancellationToken cancellationToken)
@@ -41,13 +47,24 @@ public class ChangeArchiveStatusBoardCommandHandler : IRequestHandler<ChangeArch
             return BoardMemberErrors.NotAuthorized;
         }
 
-        var isChanged = await uow.BoardRepository.ChangeBoardArchiveStatus(request.BoardId);
+        var board = await uow.BoardRepository.GetById(request.BoardId);
 
-        if (!isChanged)
+        if (board == null)
         {
             return BoardErrors.NotFound;
         }
-        await uow.SaveChangesAsync();
+
+        board.IsArchived = !board.IsArchived;
+
+        board.IsBackedUp = false;
+
+        if (board.IsArchived == false)
+        {
+            await _cosmosJobTracker.DeleteJobByBoardIdAsync(request.BoardId);
+        }
+
+        uow.BoardRepository.UpdateAsync(board);
+        await uow.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
     }

@@ -58,4 +58,34 @@ public class BoardRepository : Repository<Board, int>, IBoardRepository
             .IgnoreQueryFilters()
             .AnyAsync(b => b.Id == boardId && b.IsArchived);
     }
+
+    public async Task<IEnumerable<int>> GetBoardIdsToArchiveAsync()
+    {
+        return await _dbSet
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(b => b.IsArchived && !b.IsBackedUp)
+            .Select(b => b.Id)
+            .ToListAsync();
+    }
+
+    public async Task<Board> GetFullBoardDetails(int boardId)
+    {
+        var board = await _context.Boards
+        .IgnoreQueryFilters()
+        .Include(b => b.Members)
+            .ThenInclude(m => m.User)
+        .Include(b => b.Columns)
+            .ThenInclude(c => c.Cards)
+                .ThenInclude(card => card.Comments)
+                    .ThenInclude(com => com.Attachments)
+        .Include(b => b.Columns)
+            .ThenInclude(c => c.Cards)
+                .ThenInclude(card => card.Labels)
+        .AsSplitQuery()
+        .AsNoTracking()
+        .FirstOrDefaultAsync(b => b.Id == boardId);
+
+        return board;
+    }
 }
