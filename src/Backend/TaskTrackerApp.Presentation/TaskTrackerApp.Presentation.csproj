@@ -13,6 +13,7 @@
     <PackageReference Include="Azure.Storage.Files.Shares" Version="12.22.0" />
     <PackageReference Include="Azure.Storage.Queues" Version="12.22.0" />
     <PackageReference Include="EntityFramework" Version="6.5.1" />
+    <PackageReference Include="Hangfire" Version="1.8.22" />
     <PackageReference Include="MediatR" Version="13.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.9" />

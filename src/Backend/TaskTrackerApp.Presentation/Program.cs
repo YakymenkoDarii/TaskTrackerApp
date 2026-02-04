@@ -1,16 +1,20 @@
 using Azure.Storage.Blobs;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Azure.Cosmos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json.Serialization;
 using TaskTrackerApp.Application.DependencyInjection;
+using TaskTrackerApp.Application.Interfaces.Jobs;
 using TaskTrackerApp.Database;
 using TaskTrackerApp.Domain.Settings;
 using TaskTrackerApp.Frontend.Domain.Constants;
 using TaskTrackerApp.Infrastructure.DependencyInjection;
 using TaskTrackerApp.Infrastructure.Hubs;
+using TaskTrackerApp.Infrastructure.Jobs;
 using TaskTrackerApp.Persistence.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +25,17 @@ builder.Services
     .AddApplication()
     .AddPersistence(builder.Configuration)
     .AddInfrastructure();
+
+builder.Services.AddScoped(x => new CosmosClient(
+    builder.Configuration.GetConnectionString("CosmosDbConnection") ??
+    builder.Configuration["CosmosDbConnection"]
+));
+
+builder.Services.AddScoped<ICosmosJobTracker>(s =>
+    new CosmosJobTracker(
+        s.GetRequiredService<CosmosClient>(),
+        "TaskTrackerDb",
+        "ArchivationJobs"));
 
 builder.Services.AddSignalR();
 
@@ -101,14 +116,33 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddTransient(x =>
     new BlobServiceClient(builder.Configuration["StorageConnection:blobServiceUri"]));
 
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHangfireServer();
+
 var app = builder.Build();
 
 DatabaseInitializer.Initialize(connectionString);
+
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+
+    recurringJobManager.AddOrUpdate<IArchivalSyncJob>(
+        "nightly-board-archival",
+        job => job.RunAsync(),
+        Cron.Daily(3));
+}
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseHangfireDashboard();
 }
 
 app.UseHttpsRedirection();
