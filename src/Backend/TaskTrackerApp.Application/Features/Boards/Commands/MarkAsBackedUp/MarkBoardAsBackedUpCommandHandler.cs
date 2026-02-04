@@ -20,7 +20,7 @@ public class MarkBoardAsBackedUpCommandHandler : IRequestHandler<MarkBoardAsBack
 
         if (board != null)
         {
-            board.IsBackedUp = true;
+            board.IsQueuedForArchival = true;
 
             uow.BoardRepository.UpdateAsync(board);
             await uow.SaveChangesAsync(cancellationToken);

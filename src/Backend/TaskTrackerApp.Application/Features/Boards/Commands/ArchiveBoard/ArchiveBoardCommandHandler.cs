@@ -9,13 +9,13 @@ using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Boards.Commands.ArchiveBoard;
 
-public class ChangeArchiveStatusBoardCommandHandler : IRequestHandler<ChangeArchiveStatusBoardCommand, Result>
+public class ArchiveBoardCommandHandler : IRequestHandler<ArchiveBoardCommand, Result>
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly ICosmosJobTracker _cosmosJobTracker;
 
-    public ChangeArchiveStatusBoardCommandHandler(
+    public ArchiveBoardCommandHandler(
         ICurrentUserService currentUserService,
         IUnitOfWorkFactory uowFactory,
         ICosmosJobTracker cosmosJobTracker)
@@ -25,7 +25,7 @@ public class ChangeArchiveStatusBoardCommandHandler : IRequestHandler<ChangeArch
         _cosmosJobTracker = cosmosJobTracker;
     }
 
-    public async Task<Result> Handle(ChangeArchiveStatusBoardCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(ArchiveBoardCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();
 
@@ -54,14 +54,9 @@ public class ChangeArchiveStatusBoardCommandHandler : IRequestHandler<ChangeArch
             return BoardErrors.NotFound;
         }
 
-        board.IsArchived = !board.IsArchived;
+        board.IsArchived = true;
 
-        board.IsBackedUp = false;
-
-        if (board.IsArchived == false)
-        {
-            await _cosmosJobTracker.DeleteJobByBoardIdAsync(request.BoardId);
-        }
+        board.IsQueuedForArchival = false;
 
         uow.BoardRepository.UpdateAsync(board);
         await uow.SaveChangesAsync(cancellationToken);

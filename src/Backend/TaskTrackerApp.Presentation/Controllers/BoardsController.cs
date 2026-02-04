@@ -115,9 +115,9 @@ public class BoardsController : ControllerBase
     }
 
     [HttpPut("arhcive/{boardId}")]
-    public async Task<IActionResult> ChangeArchiveStatusBoardAsync(int boardId)
+    public async Task<IActionResult> ArchiveBoardAsync(int boardId)
     {
-        var command = new ChangeArchiveStatusBoardCommand
+        var command = new ArchiveBoardCommand
         {
             BoardId = boardId
         };

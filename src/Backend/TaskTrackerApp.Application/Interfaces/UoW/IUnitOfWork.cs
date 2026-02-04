@@ -21,6 +21,8 @@ public interface IUnitOfWork : IDisposable
     ILabelsRepository LabelsRepository { get; }
 
     ICommentAttachmentsRepository CommentAttachmentsRepository { get; }
+    IArchivedBoardsRepository ArchivedBoardsRepository { get; }
+    IArchivedBoardMembersRepository ArchivedBoardMembersRepository { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

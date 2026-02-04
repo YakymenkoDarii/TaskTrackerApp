@@ -41,13 +41,13 @@ public class BoardRepository : Repository<Board, int>, IBoardRepository
             .ToListAsync();
     }
 
-    public async Task<bool> ChangeBoardArchiveStatus(int boardId)
+    public async Task<bool> ArchiveBoardAsync(int boardId)
     {
         var rowsAffected = await _dbSet
             .IgnoreQueryFilters()
             .Where(b => b.Id == boardId)
             .ExecuteUpdateAsync(setter => setter
-                .SetProperty(board => board.IsArchived, board => !board.IsArchived));
+                .SetProperty(board => board.IsArchived, true));
 
         return rowsAffected > 0;
     }
@@ -64,28 +64,8 @@ public class BoardRepository : Repository<Board, int>, IBoardRepository
         return await _dbSet
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(b => b.IsArchived && !b.IsBackedUp)
+            .Where(b => b.IsArchived && !b.IsQueuedForArchival)
             .Select(b => b.Id)
             .ToListAsync();
-    }
-
-    public async Task<Board> GetFullBoardDetails(int boardId)
-    {
-        var board = await _context.Boards
-        .IgnoreQueryFilters()
-        .Include(b => b.Members)
-            .ThenInclude(m => m.User)
-        .Include(b => b.Columns)
-            .ThenInclude(c => c.Cards)
-                .ThenInclude(card => card.Comments)
-                    .ThenInclude(com => com.Attachments)
-        .Include(b => b.Columns)
-            .ThenInclude(c => c.Cards)
-                .ThenInclude(card => card.Labels)
-        .AsSplitQuery()
-        .AsNoTracking()
-        .FirstOrDefaultAsync(b => b.Id == boardId);
-
-        return board;
     }
 }

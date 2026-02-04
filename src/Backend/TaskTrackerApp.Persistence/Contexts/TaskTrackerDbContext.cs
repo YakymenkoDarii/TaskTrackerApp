@@ -28,6 +28,10 @@ public class TaskTrackerDbContext : DbContext
 
     public DbSet<CommentAttachment> CommentAttachments { get; set; }
 
+    public DbSet<ArchivedBoard> ArchivedBoards { get; set; }
+
+    public DbSet<ArchivedBoardMember> ArchivedBoardMembers { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -150,6 +154,29 @@ public class TaskTrackerDbContext : DbContext
                   .WithMany(c => c.Attachments)
                   .HasForeignKey(a => a.CommentId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ArchivedBoard>(entity =>
+        {
+            entity.HasKey(b => b.Id);
+        });
+
+        modelBuilder.Entity<ArchivedBoardMember>(entity =>
+        {
+            entity.HasKey(b => b.Id);
+
+            entity.HasOne(mb => mb.User)
+                  .WithMany()
+                  .HasForeignKey(mb => mb.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(mb => mb.ArchivedBoard)
+                  .WithMany()
+                  .HasForeignKey(mb => mb.ArchivedBoardId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(b => b.Role)
+                  .HasConversion<string>();
         });
     }
 }
