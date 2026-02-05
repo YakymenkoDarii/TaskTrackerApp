@@ -25,7 +25,6 @@ public class GetAllBoardsQueryHandler : IRequestHandler<GetAllBoardsQuery, Resul
             Id = m.Board.Id,
             Title = m.Board.Title,
             Description = m.Board.Description,
-            IsArchived = m.Board.IsArchived,
         });
 
         return Result<IEnumerable<BoardDto>>.Success(boardDtos);

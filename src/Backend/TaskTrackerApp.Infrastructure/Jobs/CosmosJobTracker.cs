@@ -44,13 +44,21 @@ public class CosmosJobTracker : ICosmosJobTracker
 
         using var iterator = _container.GetItemQueryIterator<ArchivationJob>(
             query,
-            requestOptions: new QueryRequestOptions { PartitionKey = new PartitionKey(boardId) }
+            requestOptions: new QueryRequestOptions
+            {
+                PartitionKey = new PartitionKey(boardId)
+            }
         );
 
-        if (iterator.HasMoreResults)
+        while (iterator.HasMoreResults)
         {
             var response = await iterator.ReadNextAsync();
-            return response.FirstOrDefault();
+
+            var item = response.FirstOrDefault();
+            if (item != null)
+            {
+                return item;
+            }
         }
 
         return null;

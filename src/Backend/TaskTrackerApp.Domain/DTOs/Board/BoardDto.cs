@@ -8,7 +8,5 @@ public class BoardDto
 
     public string Description { get; set; }
 
-    public bool IsArchived { get; set; }
-
     public DateTime LastTimeOpenned { get; set; }
 }

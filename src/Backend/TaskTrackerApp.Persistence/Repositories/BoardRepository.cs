@@ -64,7 +64,7 @@ public class BoardRepository : Repository<Board, int>, IBoardRepository
         return await _dbSet
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(b => b.IsArchived && !b.IsQueuedForArchival)
+            .Where(b => b.IsArchived && b.IsQueuedForArchival)
             .Select(b => b.Id)
             .ToListAsync();
     }

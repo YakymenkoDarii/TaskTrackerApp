@@ -5,6 +5,7 @@ using System.Security.Claims;
 using TaskTrackerApp.Application.Features.Boards.Commands.ArchiveBoard;
 using TaskTrackerApp.Application.Features.Boards.Commands.CreateBoards;
 using TaskTrackerApp.Application.Features.Boards.Commands.DeleteBoards;
+using TaskTrackerApp.Application.Features.Boards.Commands.UnArchiveBoard;
 using TaskTrackerApp.Application.Features.Boards.Commands.UpdateBoards;
 using TaskTrackerApp.Application.Features.Boards.Queries.GetAllBoards;
 using TaskTrackerApp.Application.Features.Boards.Queries.GetArchivedBoards;
@@ -133,6 +134,19 @@ public class BoardsController : ControllerBase
         var query = new GetArchivedBoardsQuery();
 
         var result = await _mediator.Send(query);
+
+        return Ok(result);
+    }
+
+    [HttpPut("unarchive/{boardId}")]
+    public async Task<IActionResult> UnArchiveBoardAsync(int boardId)
+    {
+        var command = new UnArchiveBoardCommand
+        {
+            BoardId = boardId
+        };
+
+        var result = await _mediator.Send(command);
 
         return Ok(result);
     }

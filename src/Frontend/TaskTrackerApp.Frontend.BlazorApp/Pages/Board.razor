@@ -48,7 +48,6 @@ else
             </div>
 
             <div class="d-flex align-center">
-
                 <div style="width: 250px;" class="mr-4">
                     <TaskSearch BoardId="@BoardId"
                                 Placeholder="Search..."
@@ -85,22 +84,11 @@ else
 
                     @if (IsAdmin)
                     {
-                        @if (board.IsArchived)
-                        {
-                            <MudMenuItem Icon="@Icons.Material.Filled.Unarchive"
-                                         IconColor="Color.Warning"
-                                         OnClick="HandleToggleArchive">
-                                Restore from Archive
-                            </MudMenuItem>
-                        }
-                        else
-                        {
-                            <MudMenuItem Icon="@Icons.Material.Filled.Archive"
-                                         IconColor="Color.Error"
-                                         OnClick="HandleToggleArchive">
-                                Archive Board
-                            </MudMenuItem>
-                        }
+                        <MudMenuItem Icon="@Icons.Material.Filled.Archive"
+                                     IconColor="Color.Error"
+                                     OnClick="HandleArchiveBoard">
+                            Archive Board
+                        </MudMenuItem>
                     }
                 </MudMenu>
             </div>
@@ -239,12 +227,11 @@ else
                     </ChildContent>
 
                     <ItemRenderer>
-                        <MudCard @key=@context.Id 
+                        <MudCard @key=@context.Id
                                  Class=@($"mb-2 hover-effect {(CanEditContent ? "cursor-move" : "cursor-pointer")} {(IsOverdue(context) ? "border-solid border-2 mud-border-error" : "")}")
                                  Elevation=1
                                  onclick=@(() => HandleCardClick(context))>
                             <MudCardContent Class="pa-2">
-
                                 <div class="d-flex align-center gap-2">
                                     <div @onclick:stopPropagation>
                                         <MudTooltip Text="@(context.IsCompleted ? "Mark incomplete" : $"Priority: {context.Priority}")">
@@ -286,7 +273,6 @@ else
                                         </MudText>
                                     </div>
                                 }
-
                             </MudCardContent>
                         </MudCard>
                     </ItemRenderer>

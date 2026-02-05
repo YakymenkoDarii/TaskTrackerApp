@@ -61,9 +61,8 @@ public partial class Board : IDisposable
     private bool IsAdmin => _currentUserRole == BoardRole.Admin;
 
     private bool CanEditContent =>
-        board != null
-        && !board.IsArchived
-        && (_currentUserRole == BoardRole.Admin || _currentUserRole == BoardRole.Member);
+           board != null
+           && (_currentUserRole == BoardRole.Admin || _currentUserRole == BoardRole.Member);
 
     protected override async Task OnInitializedAsync()
     {
@@ -570,46 +569,29 @@ public partial class Board : IDisposable
         StateHasChanged();
     }
 
-    private async Task HandleToggleArchive()
+    private async Task HandleArchiveBoard()
     {
         if (!IsAdmin) return;
 
-        string title = board.IsArchived ? "Restore Board" : "Archive Board";
-        string message = board.IsArchived
-            ? "Do you want to restore this board? It will appear in your dashboard again."
-            : "Do you want to archive this board? It will be moved to the archive list and become read-only.";
-        string confirmText = board.IsArchived ? "Restore" : "Archive";
-
         bool? confirmed = await DialogService.ShowMessageBox(
-            title,
-            message,
-            yesText: confirmText,
+            "Archive Board",
+            "Do you want to archive this board? It will be moved to the archive list and become read-only.",
+            yesText: "Archive",
             cancelText: "Cancel",
             options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
 
         if (confirmed == true)
         {
-            var result = await BoardsService.ChangeArchiveStatusBoardAsync(BoardId);
+            var result = await BoardsService.ArchiveBoardAsync(BoardId);
 
             if (result.IsSuccess)
             {
-                board.IsArchived = !board.IsArchived;
-
-                string successMsg = board.IsArchived ? "Board archived" : "Board restored";
-                Snackbar.Add(successMsg, Severity.Success);
-
-                if (board.IsArchived)
-                {
-                    Nav.NavigateTo("/boards");
-                }
-                else
-                {
-                    StateHasChanged();
-                }
+                Snackbar.Add("Board archived successfully", Severity.Success);
+                Nav.NavigateTo("/boards");
             }
             else
             {
-                Snackbar.Add("Failed to change board status.", Severity.Error);
+                Snackbar.Add("Failed to archive board.", Severity.Error);
             }
         }
     }

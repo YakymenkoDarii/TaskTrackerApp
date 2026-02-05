@@ -15,7 +15,9 @@ public interface IBoardsService
 
     Task<Result> UpdateAsync(int id, UpdateBoardDto dto);
 
-    Task<Result> ChangeArchiveStatusBoardAsync(int boardId);
+    Task<Result> ArchiveBoardAsync(int boardId);
 
-    Task<Result<IEnumerable<BoardDto>>> GetArchivedAsync();
+    Task<Result<IEnumerable<ArchivedBoardDto>>> GetArchivedAsync();
+
+    Task<Result> UnArchiveBoardAsync(int boardId);
 }

@@ -61,8 +61,7 @@ public class BoardArchivalService : IBoardArchivalService
                 });
             }
 
-            //Ater archivation logic rework
-            //await _boardRepository.DeleteBoardAsync(boardId);
+            await _boardRepository.DeleteAsync(boardId);
 
             job.Status = "Completed";
             job.CompletedAt = DateTime.UtcNow;
