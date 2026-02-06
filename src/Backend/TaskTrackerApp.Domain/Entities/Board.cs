@@ -14,7 +14,7 @@ public class Board : BaseEntity
 
     public DateTime LastTimeOpenned { get; set; } = DateTime.UtcNow;
 
-    public bool IsBackedUp { get; set; }
+    public bool IsQueuedForArchival { get; set; }
 
     public User CreatedBy { get; set; }
 

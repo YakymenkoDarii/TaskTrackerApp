@@ -96,11 +96,11 @@ public class BoardsService : IBoardsService
         }
     }
 
-    public async Task<Result> ChangeArchiveStatusBoardAsync(int boardId)
+    public async Task<Result> ArchiveBoardAsync(int boardId)
     {
         try
         {
-            var response = await _boardsApi.ChangeArchiveStatusBoardAsync(boardId);
+            var response = await _boardsApi.ArchiveBoardAsync(boardId);
             return response.ToResult();
         }
         catch (ApiException ex)
@@ -113,7 +113,7 @@ public class BoardsService : IBoardsService
         }
     }
 
-    public async Task<Result<IEnumerable<BoardDto>>> GetArchivedAsync()
+    public async Task<Result<IEnumerable<ArchivedBoardDto>>> GetArchivedAsync()
     {
         try
         {
@@ -122,11 +122,28 @@ public class BoardsService : IBoardsService
         }
         catch (ApiException ex)
         {
-            return Result<IEnumerable<BoardDto>>.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+            return Result<IEnumerable<ArchivedBoardDto>>.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
         }
         catch (Exception ex)
         {
-            return Result<IEnumerable<BoardDto>>.Failure(new Error("UnknownError", ex.Message));
+            return Result<IEnumerable<ArchivedBoardDto>>.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
+
+    public async Task<Result> UnArchiveBoardAsync(int boardId)
+    {
+        try
+        {
+            var response = await _boardsApi.UnArchiveBoardAsync(boardId);
+            return response.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure(new Error("UnknownError", ex.Message));
         }
     }
 }

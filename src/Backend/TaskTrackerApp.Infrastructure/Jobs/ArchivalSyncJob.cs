@@ -28,25 +28,43 @@ public class ArchivalSyncJob : IArchivalSyncJob
         if (!boardIds.Any()) return;
 
         string connectionString = _config.GetConnectionString("ServiceBusConnection");
-        string queueName = "export-board-queue";
+
+        string queueName = _config["ServiceBus:QueueName"];
 
         await using var client = new ServiceBusClient(connectionString);
         await using var sender = client.CreateSender(queueName);
 
-        using ServiceBusMessageBatch batch = await sender.CreateMessageBatchAsync();
+        ServiceBusMessageBatch batch = await sender.CreateMessageBatchAsync();
 
-        foreach (var id in boardIds)
+        try
         {
-            var message = new ServiceBusMessage(id.ToString());
+            foreach (var id in boardIds)
+            {
+                var message = new ServiceBusMessage(id.ToString());
 
-            if (!batch.TryAddMessage(message))
+                if (!batch.TryAddMessage(message))
+                {
+                    await sender.SendMessagesAsync(batch);
+
+                    batch.Dispose();
+
+                    batch = await sender.CreateMessageBatchAsync();
+
+                    if (!batch.TryAddMessage(message))
+                    {
+                        throw new Exception("Message is too large to fit in an empty batch.");
+                    }
+                }
+            }
+
+            if (batch.Count > 0)
             {
                 await sender.SendMessagesAsync(batch);
-                using var newBatch = await sender.CreateMessageBatchAsync();
-                newBatch.TryAddMessage(message);
             }
         }
-
-        await sender.SendMessagesAsync(batch);
+        finally
+        {
+            batch?.Dispose();
+        }
     }
 }

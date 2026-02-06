@@ -1,18 +1,28 @@
 ﻿@page "/archive"
+@using TaskTrackerApp.Frontend.Domain.DTOs.Boards
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 
 <PageTitle>Archived Boards</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-16">
-    
+
     <div class="d-flex align-center gap-4 mb-6">
         <MudIcon Icon="@Icons.Material.Filled.Archive" Size="Size.Large" Color="Color.Warning" />
         <MudText Typo="Typo.h4" Class="fw-bold">Archived Boards</MudText>
     </div>
 
     <MudText Typo="Typo.body1" Class="mb-8 text-secondary">
-        These boards are read-only. Restore them to make changes.
+        These boards are archived.
+        @if (isLoading)
+        {
+            <span>Loading...</span>
+        }
+        else
+        {
+
+            <span>Only Admins can restore them to make changes.</span>
+        }
     </MudText>
 
     @if (isLoading)
@@ -33,25 +43,43 @@
             @foreach (var board in archivedBoards)
             {
                 <MudItem xs="12" sm="6" md="4">
-                    <MudCard Elevation="2" Class="height-100 hover-effect border-l-4 mud-border-warning" 
+                    <MudCard Elevation="2" Class="height-100 border-l-4 mud-border-warning"
                              Style="background-color: #fafafa;">
-                        
+
                         <MudCardHeader>
                             <CardHeaderContent>
                                 <MudText Typo="Typo.h6" Color="Color.Default">@board.Title</MudText>
                             </CardHeaderContent>
                             <CardHeaderActions>
+                                <MudIcon Icon="@Icons.Material.Filled.Inventory2" Color="Color.Default" Class="mr-2" />
                             </CardHeaderActions>
                         </MudCardHeader>
 
                         <MudCardContent>
-                            <div @onclick="@(() => HandleBoardClick(board.Id))" class="cursor-pointer">
-                                <MudText Typo="Typo.body2" Class="text-secondary">
-                                    @(string.IsNullOrWhiteSpace(board.Description) ? "No description" : board.Description)
-                                </MudText>
-                                <MudChip T="string" Size="Size.Small" Color="Color.Default" Class="mt-3">Read Only</MudChip>
-                            </div>
+                            <MudText Typo="Typo.body2" Class="text-secondary mb-3">
+                                @(string.IsNullOrWhiteSpace(board.Description) ? "No description" : board.Description)
+                            </MudText>
                         </MudCardContent>
+
+                        <MudCardActions Class="d-flex justify-end">
+                            @if (board.CanUnarchive)
+                            {
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Warning"
+                                           StartIcon="@Icons.Material.Filled.Unarchive"
+                                           OnClick="@(() => HandleRestoreBoard(board))">
+                                    Restore
+                                </MudButton>
+                            }
+                            else
+                            {
+                                <MudTooltip Text="Only Admins can restore boards">
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">
+                                        Read Only
+                                    </MudChip>
+                                </MudTooltip>
+                            }
+                        </MudCardActions>
                     </MudCard>
                 </MudItem>
             }

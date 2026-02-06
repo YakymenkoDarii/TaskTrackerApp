@@ -35,7 +35,7 @@ builder.Services.AddScoped<ICosmosJobTracker>(s =>
     new CosmosJobTracker(
         s.GetRequiredService<CosmosClient>(),
         "TaskTrackerDb",
-        "ArchivationJobs"));
+        "ArchivedBoards"));
 
 builder.Services.AddSignalR();
 

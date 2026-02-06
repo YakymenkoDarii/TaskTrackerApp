@@ -4,6 +4,6 @@ using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Boards.Queries.GetArchivedBoards;
 
-public class GetArchivedBoardsQuery : IRequest<Result<IEnumerable<BoardDto>>>
+public class GetArchivedBoardsQuery : IRequest<Result<IEnumerable<ArchivedBoardDto>>>
 {
 }

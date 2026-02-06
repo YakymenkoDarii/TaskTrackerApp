@@ -2,12 +2,13 @@
 using TaskTrackerApp.Application.Interfaces.Common;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.DTOs.Board;
+using TaskTrackerApp.Domain.Enums;
 using TaskTrackerApp.Domain.Errors.User;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Boards.Queries.GetArchivedBoards;
 
-public class GetArchivedBoardsQueryHandler : IRequestHandler<GetArchivedBoardsQuery, Result<IEnumerable<BoardDto>>>
+public class GetArchivedBoardsQueryHandler : IRequestHandler<GetArchivedBoardsQuery, Result<IEnumerable<ArchivedBoardDto>>>
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWorkFactory _uowFactory;
@@ -18,7 +19,7 @@ public class GetArchivedBoardsQueryHandler : IRequestHandler<GetArchivedBoardsQu
         _uowFactory = uowFactory;
     }
 
-    public async Task<Result<IEnumerable<BoardDto>>> Handle(GetArchivedBoardsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<IEnumerable<ArchivedBoardDto>>> Handle(GetArchivedBoardsQuery request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();
 
@@ -28,16 +29,24 @@ public class GetArchivedBoardsQueryHandler : IRequestHandler<GetArchivedBoardsQu
             return UserErrors.NotFound;
         }
 
-        var members = await uow.BoardMembersRepository.GetArchivedByUserIdAsync(userId.Value);
+        var memberships = (await uow.ArchivedBoardMembersRepository.GetByUserIdAsync(userId.Value)).ToList();
+        List<ArchivedBoardDto> dtos = new();
 
-        var dtos = members.Select(m => new BoardDto
+        foreach (var membership in memberships)
         {
-            Id = m.Board.Id,
-            Title = m.Board.Title,
-            Description = m.Board.Description,
-            IsArchived = m.Board.IsArchived,
-        });
+            var board = await uow.ArchivedBoardsRepository.GetById(membership.ArchivedBoardId);
 
-        return dtos.ToList();
+            var dto = new ArchivedBoardDto
+            {
+                Id = board.Id,
+                Title = board.Title,
+                Description = board.Description,
+                CanUnarchive = membership.Role == BoardRole.Admin ? true : false,
+            };
+
+            dtos.Add(dto);
+        }
+
+        return dtos;
     }
 }

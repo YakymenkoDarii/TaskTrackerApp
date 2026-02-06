@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IBlobStorageService, BlobStorageService>();
+        services.AddScoped<IBoardBackupService, BoardBackupService>();
 
         services.AddScoped<IInvitationNotifier, InvitationNotifier>();
         services.AddScoped<IBoardNotifier, BoardNotifier>();

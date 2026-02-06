@@ -18,6 +18,8 @@ public class UnitOfWork : IUnitOfWork, IDisposable
     private ICardCommentsRepository? _cardCommentsRepository;
     private ILabelsRepository? _labelsRepository;
     private ICommentAttachmentsRepository? _commentAttachmentsRepository;
+    private IArchivedBoardsRepository? _archivedBoardsRepository;
+    private IArchivedBoardMembersRepository? _archivedBoardMembersRepository;
 
     public UnitOfWork(TaskTrackerDbContext dbContext)
     {
@@ -50,6 +52,12 @@ public class UnitOfWork : IUnitOfWork, IDisposable
 
     public ICommentAttachmentsRepository CommentAttachmentsRepository =>
         _commentAttachmentsRepository ??= new CommentAttachmentsRepository(_dbContext);
+
+    public IArchivedBoardsRepository ArchivedBoardsRepository =>
+        _archivedBoardsRepository ??= new ArchivedBoardsRepository(_dbContext);
+
+    public IArchivedBoardMembersRepository ArchivedBoardMembersRepository =>
+        _archivedBoardMembersRepository ??= new ArchivedBoardMembersRepository(_dbContext);
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

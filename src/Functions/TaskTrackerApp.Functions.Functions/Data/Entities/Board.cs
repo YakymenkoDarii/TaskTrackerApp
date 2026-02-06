@@ -8,7 +8,7 @@ public class Board
 
     public string Description { get; set; } = string.Empty;
 
-    public int CreateById { get; set; }
+    public int CreatedById { get; set; }
 
     public User CreatedBy { get; set; }
 

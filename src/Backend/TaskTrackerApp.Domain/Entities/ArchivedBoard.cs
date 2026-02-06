@@ -1,6 +1,6 @@
-﻿namespace TaskTrackerApp.Domain.DTOs.Board;
+﻿namespace TaskTrackerApp.Domain.Entities;
 
-public class BoardDto
+public class ArchivedBoard
 {
     public int Id { get; set; }
 
@@ -8,5 +8,5 @@ public class BoardDto
 
     public string Description { get; set; }
 
-    public DateTime LastTimeOpenned { get; set; }
+    public int OriginalBoardId { get; set; }
 }
