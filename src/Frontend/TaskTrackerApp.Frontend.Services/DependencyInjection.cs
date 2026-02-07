@@ -11,6 +11,7 @@ using TaskTrackerApp.Frontend.Services.Services.BoardMembers;
 using TaskTrackerApp.Frontend.Services.Services.Boards;
 using TaskTrackerApp.Frontend.Services.Services.CardComments;
 using TaskTrackerApp.Frontend.Services.Services.Cards;
+using TaskTrackerApp.Frontend.Services.Services.ChatMessages;
 using TaskTrackerApp.Frontend.Services.Services.Columns;
 using TaskTrackerApp.Frontend.Services.Services.Hubs;
 using TaskTrackerApp.Frontend.Services.Services.Labels;
@@ -33,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<IUsersService, UsersService>();
         services.AddScoped<ICardCommentsService, CardCommentsService>();
         services.AddScoped<ILabelService, LabelService>();
+        services.AddScoped<IChatService, ChatService>();
 
         services.AddBlazoredSessionStorage();
         services.AddScoped<ITokenStorage, TokenStorage>();
@@ -79,6 +81,10 @@ public static class DependencyInjection
             .AddHttpMessageHandler<AuthMessageHandler>();
 
         services.AddRefitClient<ILabelApi>()
+            .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!))
+            .AddHttpMessageHandler<AuthMessageHandler>();
+
+        services.AddRefitClient<IChatApi>()
             .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl!))
             .AddHttpMessageHandler<AuthMessageHandler>();
 

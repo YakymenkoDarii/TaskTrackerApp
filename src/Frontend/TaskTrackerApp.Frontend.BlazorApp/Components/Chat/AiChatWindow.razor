@@ -1,0 +1,48 @@
+﻿@using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
+
+
+<MudPopover Open="@Open" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="pa-4 chat-window-paper" MaxHeight="500">
+    <div class="d-flex flex-column" style="width: 350px; height: 450px;">
+        <div class="d-flex justify-space-between align-center mb-2 pb-2 border-bottom">
+            <MudText Typo="Typo.h6"><b>AI Assistant</b></MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="OnClose" />
+        </div>
+
+        <div class="flex-grow-1 overflow-auto pa-2 d-flex flex-column gap-2" id="chat-scroll">
+            @if (_isLoadingHistory)
+            {
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="align-self-center my-auto" />
+            }
+            else
+            {
+                @foreach (var msg in _messages)
+                {
+                    <div class="@(msg.Role == "User" ? "align-self-end" : "align-self-start")" style="max-width: 85%;">
+                        <MudPaper Class="@(msg.Role == "User" ? "pa-2 mud-theme-primary" : "pa-2 mud-theme-secondary")" Elevation="0">
+                            <MudText Typo="Typo.body2">@msg.Content</MudText>
+                        </MudPaper>
+                    </div>
+                }
+                @if (_isThinking)
+                {
+                    <div class="align-self-start">
+                        <MudText Typo="Typo.caption" Class="font-italic">AI is thinking...</MudText>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="mt-2 pt-2 border-top d-flex gap-2">
+            <MudTextField @bind-Value="_inputMessage"
+                          Placeholder="Ask about features..."
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          OnKeyUp="HandleKeyUp"
+                          Immediate="true" />
+            <MudIconButton Icon="@Icons.Material.Filled.Send"
+                           Color="Color.Primary"
+                           OnClick="SendMessageAsync"
+                           Disabled="@(_isThinking || string.IsNullOrWhiteSpace(_inputMessage))" />
+        </div>
+    </div>
+</MudPopover>

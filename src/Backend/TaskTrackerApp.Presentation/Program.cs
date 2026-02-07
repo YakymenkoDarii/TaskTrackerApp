@@ -24,7 +24,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services
     .AddApplication()
     .AddPersistence(builder.Configuration)
-    .AddInfrastructure();
+    .AddInfrastructure(builder.Configuration);
 
 builder.Services.AddScoped(x => new CosmosClient(
     builder.Configuration.GetConnectionString("CosmosDbConnection") ??
