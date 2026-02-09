@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskTrackerApp.Application.Features.Faq.Commands;
 using TaskTrackerApp.Application.Features.Faq.Commands.AskQuestion;

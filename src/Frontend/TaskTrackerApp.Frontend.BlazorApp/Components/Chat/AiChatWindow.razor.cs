@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using TaskTrackerApp.Frontend.Domain.DTOs.ChatMessages;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
-using TaskTrackerApp.Frontend.Services.Services.ChatMessages;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Components.Chat;
 

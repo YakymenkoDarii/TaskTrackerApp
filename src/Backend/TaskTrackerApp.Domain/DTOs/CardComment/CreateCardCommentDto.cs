@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-
-namespace TaskTrackerApp.Domain.DTOs.CardComment;
+﻿namespace TaskTrackerApp.Domain.DTOs.CardComment;
 
 public class CreateCardCommentDto
 {
