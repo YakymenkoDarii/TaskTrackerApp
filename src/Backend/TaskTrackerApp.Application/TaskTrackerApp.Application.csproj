@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="dbup-core" Version="6.0.15" />
     <PackageReference Include="MediatR" Version="13.1.0" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
   </ItemGroup>
 
   <ItemGroup>

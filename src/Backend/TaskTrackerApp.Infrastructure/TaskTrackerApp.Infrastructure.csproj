@@ -16,7 +16,11 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.11.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.KernelMemory.AI.AzureOpenAI" Version="0.90.241020.3" />
+    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.90.241020.3" />
+    <PackageReference Include="Microsoft.KernelMemory.MemoryDb.AzureAISearch" Version="0.90.241020.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="StackExchange.Redis" Version="2.10.14" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
   </ItemGroup>
 

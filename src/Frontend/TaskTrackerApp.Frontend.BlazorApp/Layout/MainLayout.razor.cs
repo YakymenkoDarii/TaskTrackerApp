@@ -24,6 +24,7 @@ public partial class MainLayout : IDisposable
 
     private bool _drawerOpen = true;
     private string UserLetter = "?";
+    private bool _chatOpen = false;
     private string? UserAvatarUrl = null;
 
     private void DrawerToggle()

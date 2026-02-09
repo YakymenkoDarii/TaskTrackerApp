@@ -1,4 +1,5 @@
 ﻿@using System.Security.Claims
+@using TaskTrackerApp.Frontend.BlazorApp.Components.Chat
 @using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
 @using TaskTrackerApp.Frontend.Services.Services.Auth
 @using TaskTrackerApp.Frontend.Services.Services.Hubs
@@ -21,6 +22,14 @@
 
         <AuthorizeView>
             <Authorized>
+                <MudTooltip Text="AI Assistant">
+                   <MudIconButton Icon="@Icons.Material.Filled.SmartToy" 
+                                  Color="Color.Inherit" 
+                                  OnClick="@(() => _chatOpen = !_chatOpen)" 
+                                  Class="mr-2"/>
+               </MudTooltip>
+               <AiChatWindow @bind-Open="_chatOpen" />
+
                 <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" LockScroll="true">
                     <ActivatorContent>
                         <MudAvatar Color="Color.Secondary" Class="cursor-pointer">
