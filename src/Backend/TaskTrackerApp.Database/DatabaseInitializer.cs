@@ -1,4 +1,6 @@
-﻿namespace TaskTrackerApp.Database;
+﻿using DbUp;
+
+namespace TaskTrackerApp.Database;
 
 public class DatabaseInitializer
 {

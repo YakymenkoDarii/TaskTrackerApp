@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
 using MudBlazor;
 using System.Security.Claims;
+using TaskTrackerApp.Domain.DTOs.Meeting;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.ColumnDialogs;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.InvitationDialogs;
@@ -45,6 +47,8 @@ public partial class Board : IDisposable
 
     [Inject] private BoardSignalRService BoardHub { get; set; }
 
+    [Inject] private IJSRuntime JS { get; set; }
+
     [SupplyParameterFromQuery]
     public int? OpenCard { get; set; }
 
@@ -64,13 +68,27 @@ public partial class Board : IDisposable
            board != null
            && (_currentUserRole == BoardRole.Admin || _currentUserRole == BoardRole.Member);
 
+    //Meeting fields
+    private MeetingDto? CurrentMeeting;
+
+    private bool IsInMeeting = false;
+    private string? MyPeerId;
+    private List<string> RemotePeerIds = new();
+    private DotNetObjectReference<Board>? _objRef;
+    private bool IsMinimized = false;
+    private bool IsMuted = true;
+    private bool IsVideoOff = true;
+    private bool IsScreenSharing = false;
+
     protected override async Task OnInitializedAsync()
     {
         await AddToRecentBoardsAsync(BoardId);
 
         await BoardHub.StartConnection();
-        await BoardHub.JoinBoard(BoardId);
         RegisterSignalREvents();
+        await BoardHub.JoinBoard(BoardId);
+
+        CurrentMeeting = await BoardHub.GetActiveMeetingAsync(BoardId);
 
         await LoadBoardDataAsync();
 
@@ -92,6 +110,40 @@ public partial class Board : IDisposable
         BoardHub.OnCardDeleted += async (e) => await InvokeAsync(() => OnCardDeleted(e));
         BoardHub.OnMemberRoleUpdated += async (e) => await InvokeAsync(() => OnMemberRoleUpdated(e));
         BoardHub.OnMemberRemoved += async (e) => await InvokeAsync(() => OnMemberRemoved(e));
+
+        BoardHub.OnMeetingStateUpdated += async (m) => await InvokeAsync(() =>
+        {
+            CurrentMeeting = m;
+            StateHasChanged();
+        });
+
+        BoardHub.OnUserJoinedMeeting += async (peerId) => await InvokeAsync(async () =>
+        {
+            if (IsInMeeting && peerId != MyPeerId && !RemotePeerIds.Contains(peerId))
+            {
+                RemotePeerIds.Add(peerId);
+                StateHasChanged();
+            }
+        });
+
+        BoardHub.OnUserLeftMeeting += async (peerId) => await InvokeAsync(() =>
+        {
+            if (RemotePeerIds.Contains(peerId))
+            {
+                RemotePeerIds.Remove(peerId);
+                StateHasChanged();
+            }
+        });
+
+        BoardHub.OnJoinMeetingResponse += async (peers) => await InvokeAsync(async () =>
+        {
+            foreach (var p in peers) RemotePeerIds.Add(p);
+            StateHasChanged();
+
+            await Task.Delay(100);
+
+            await JS.InvokeVoidAsync("simpleVideo.callUsers", peers);
+        });
     }
 
     private async Task OnCardMoved(CardMovedEvent e)
@@ -663,8 +715,99 @@ public partial class Board : IDisposable
         _ => Color.Default
     };
 
+    private async Task StartMeeting()
+    {
+        _objRef = DotNetObjectReference.Create(this);
+
+        var success = await JS.InvokeAsync<bool>("simpleVideo.startLocalStream", IsMuted, IsVideoOff);
+
+        if (!success)
+        {
+            Snackbar.Add("Could not access camera/mic", Severity.Error);
+            return;
+        }
+
+        MyPeerId = await JS.InvokeAsync<string>("simpleVideo.init", _objRef);
+
+        IsInMeeting = true;
+        IsMinimized = false;
+        StateHasChanged();
+
+        await Task.Delay(50);
+        await JS.InvokeVoidAsync("simpleVideo.attachLocalVideo");
+
+        await BoardHub.JoinMeetingAsync(BoardId, MyPeerId);
+    }
+
+    private async Task LeaveMeeting()
+    {
+        await JS.InvokeVoidAsync("simpleVideo.leave");
+
+        if (MyPeerId != null)
+        {
+            await BoardHub.LeaveMeetingAsync(BoardId, MyPeerId);
+        }
+
+        IsInMeeting = false;
+        IsMinimized = false;
+        IsMuted = true;
+        IsVideoOff = true;
+        IsScreenSharing = false;
+        RemotePeerIds.Clear();
+        MyPeerId = null;
+
+        _objRef?.Dispose();
+        _objRef = null;
+
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task OnRemoteStreamAdded(string peerId)
+    {
+        if (!RemotePeerIds.Contains(peerId))
+        {
+            RemotePeerIds.Add(peerId);
+            StateHasChanged();
+            await Task.Delay(50);
+        }
+    }
+
+    private async Task ToggleMute()
+    {
+        IsMuted = !IsMuted;
+        await JS.InvokeVoidAsync("simpleVideo.toggleAudio", !IsMuted);
+    }
+
+    private async Task ToggleCamera()
+    {
+        IsVideoOff = !IsVideoOff;
+        await JS.InvokeVoidAsync("simpleVideo.toggleVideo", !IsVideoOff);
+    }
+
+    private async Task ToggleScreenShare()
+    {
+        if (IsScreenSharing)
+        {
+            await JS.InvokeVoidAsync("simpleVideo.stopScreenShare");
+            IsScreenSharing = false;
+        }
+        else
+        {
+            var success = await JS.InvokeAsync<bool>("simpleVideo.startScreenShare");
+            if (success) IsScreenSharing = true;
+        }
+    }
+
     public void Dispose()
     {
+        BoardHub.OnMeetingStateUpdated -= (m) => InvokeAsync(() => CurrentMeeting = m);
+
+        if (IsInMeeting)
+        {
+            _ = LeaveMeeting();
+        }
+
         BoardHub.OnColumnCreated -= (e) => InvokeAsync(() => OnColumnCreated(e));
         BoardHub.OnColumnMoved -= (e) => InvokeAsync(() => OnColumnMoved(e));
         BoardHub.OnColumnDeleted -= (e) => InvokeAsync(() => OnColumnDeleted(e));
@@ -674,6 +817,8 @@ public partial class Board : IDisposable
         BoardHub.OnCardDeleted -= (e) => InvokeAsync(() => OnCardDeleted(e));
         BoardHub.OnMemberRoleUpdated -= (e) => InvokeAsync(() => OnMemberRoleUpdated(e));
         BoardHub.OnMemberRemoved -= (e) => InvokeAsync(() => OnMemberRemoved(e));
+
         _ = BoardHub.LeaveBoard(BoardId);
+        _objRef?.Dispose();
     }
 }

@@ -1,4 +1,5 @@
-﻿using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
+﻿using TaskTrackerApp.Domain.DTOs.Meeting;
+using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Domain.Events.Card;
 using TaskTrackerApp.Frontend.Domain.Events.Column;
 using TaskTrackerApp.Frontend.Domain.Events.Invitations;
@@ -37,4 +38,13 @@ public interface IBoardClient
     Task LabelUpdated(LabelUpdatedEvent e);
 
     Task LabelDeleted(LabelDeletedEvent e);
+
+    //Meeting
+    Task MeetingStateUpdated(MeetingDto? meeting);
+
+    Task JoinMeetingResponse(List<string> participantPeerIds);
+
+    Task UserJoinedMeeting(string peerId);
+
+    Task UserLeftMeeting(string peerId);
 }

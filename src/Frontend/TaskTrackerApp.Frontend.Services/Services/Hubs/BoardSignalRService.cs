@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
+using TaskTrackerApp.Domain.DTOs.Meeting;
 using TaskTrackerApp.Frontend.Domain.Constants;
 using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Domain.Events.Card;
@@ -52,6 +53,15 @@ public class BoardSignalRService : IAsyncDisposable
 
     public event Action<LabelDeletedEvent>? OnLabelDeleted;
 
+    //Meeting
+    public event Action<MeetingDto?>? OnMeetingStateUpdated;
+
+    public event Action<List<string>>? OnJoinMeetingResponse;
+
+    public event Action<string>? OnUserJoinedMeeting;
+
+    public event Action<string>? OnUserLeftMeeting;
+
     public BoardSignalRService(
         NavigationManager navigationManager,
         ITokenStorage tokenStorage,
@@ -98,6 +108,12 @@ public class BoardSignalRService : IAsyncDisposable
         _hubConnection.On<LabelCreatedEvent>(nameof(IBoardClient.LabelCreated), e => OnLabelCreated?.Invoke(e));
         _hubConnection.On<LabelUpdatedEvent>(nameof(IBoardClient.LabelUpdated), e => OnLabelUpdated?.Invoke(e));
         _hubConnection.On<LabelDeletedEvent>(nameof(IBoardClient.LabelDeleted), e => OnLabelDeleted?.Invoke(e));
+
+        //Meeting
+        _hubConnection.On<MeetingDto?>(nameof(IBoardClient.MeetingStateUpdated), meeting => OnMeetingStateUpdated?.Invoke(meeting));
+        _hubConnection.On<List<string>>(nameof(IBoardClient.JoinMeetingResponse), peers => OnJoinMeetingResponse?.Invoke(peers));
+        _hubConnection.On<string>(nameof(IBoardClient.UserJoinedMeeting), peerId => OnUserJoinedMeeting?.Invoke(peerId));
+        _hubConnection.On<string>(nameof(IBoardClient.UserLeftMeeting), peerId => OnUserLeftMeeting?.Invoke(peerId));
     }
 
     public async Task StartConnection()
@@ -140,6 +156,31 @@ public class BoardSignalRService : IAsyncDisposable
         {
             await _hubConnection.InvokeAsync("LeaveBoardGroup", boardId);
         }
+    }
+
+    public async Task JoinMeetingAsync(int boardId, string peerId)
+    {
+        if (_hubConnection.State == HubConnectionState.Connected)
+        {
+            await _hubConnection.InvokeAsync("JoinMeeting", boardId, peerId);
+        }
+    }
+
+    public async Task LeaveMeetingAsync(int boardId, string peerId)
+    {
+        if (_hubConnection.State == HubConnectionState.Connected)
+        {
+            await _hubConnection.InvokeAsync("LeaveMeeting", boardId, peerId);
+        }
+    }
+
+    public async Task<MeetingDto?> GetActiveMeetingAsync(int boardId)
+    {
+        if (_hubConnection.State == HubConnectionState.Connected)
+        {
+            return await _hubConnection.InvokeAsync<MeetingDto?>("GetActiveMeeting", boardId);
+        }
+        return null;
     }
 
     public async ValueTask DisposeAsync()
