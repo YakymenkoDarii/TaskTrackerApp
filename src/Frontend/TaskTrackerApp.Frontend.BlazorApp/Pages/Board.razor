@@ -29,15 +29,61 @@ else
 
             <div class="meet-grid">
                 <div class="meet-video-card">
-                    <video id="localVideo" autoplay muted playsinline></video>
-                    <div class="meet-name-tag">You @(IsMuted ? "(Muted)" : "")</div>
+                    <video id="localVideo" autoplay muted playsinline
+                           class="meet-video @(IsVideoOff ? "hidden" : "")"></video>
+
+                    <div class="meet-avatar-overlay">
+                        <MudAvatar Color="Color.Secondary" Style="height:80px; width:80px; font-size:2rem;">
+                            @if (MainLayout != null && !string.IsNullOrEmpty(MainLayout.UserAvatarUrl))
+                            {
+                                <MudImage Src="@MainLayout.UserAvatarUrl" />
+                            }
+                            else
+                            {
+                                @((MainLayout?.UserDisplayName ?? "Y").Substring(0, 1).ToUpper())
+                            }
+                        </MudAvatar>
+                    </div>
+
+                    <div class="meet-name-tag">
+                        @(MainLayout?.UserDisplayName ?? "You")
+                        @if (IsMuted)
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.MicOff" Size="Size.Small" Color="Color.Error" Class="mr-1" />
+                        }
+                    </div>
                 </div>
 
-                @foreach (var peerId in RemotePeerIds)
+                @foreach (var user in RemoteParticipants)
                 {
                     <div class="meet-video-card">
-                        <video id="video-@peerId" autoplay playsinline></video>
-                        <div class="meet-name-tag">User @peerId.Substring(0, 4)</div>
+                        <video id="video-@user.PeerId" autoplay playsinline
+                               class="meet-video @(user.IsVideoOff ? "hidden" : "")"></video>
+
+                        <div class="meet-avatar-overlay">
+                            <MudAvatar Color="Color.Primary" Style="height:80px; width:80px; font-size:2rem;">
+                                @if (!string.IsNullOrEmpty(user.AvatarUrl))
+                                {
+                                    <MudImage Src="@user.AvatarUrl" />
+                                }
+                                else if (!string.IsNullOrEmpty(user.DisplayName))
+                                {
+                                    @user.DisplayName.Substring(0, 1).ToUpper()
+                                }
+                                else
+                                {
+                                    @("?")
+                                }
+                            </MudAvatar>
+                        </div>
+
+                        <div class="meet-name-tag">
+                            @if (user.IsMuted)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.MicOff" Size="Size.Small" Color="Color.Error" Class="mr-1" />
+                            }
+                            @user.DisplayName
+                        </div>
                     </div>
                 }
             </div>
@@ -67,7 +113,7 @@ else
             <MudIcon Icon="@Icons.Material.Filled.Videocam" Color="Color.Success" />
             <div>
                 <MudText Typo="Typo.subtitle2" Color="Color.Success">Meeting Active</MudText>
-                <MudText Typo="Typo.caption">@RemotePeerIds.Count others</MudText>
+                <MudText Typo="Typo.caption">@RemoteParticipants.Count others</MudText>
             </div>
             <MudTooltip Text="Maximize">
                 <MudIconButton Icon="@Icons.Material.Filled.OpenInFull" Color="Color.Inherit" OnClick="@(() => IsMinimized = false)" />
@@ -111,14 +157,14 @@ else
 
                 @if (!IsInMeeting)
                 {
-                    @if (CurrentMeeting != null && CurrentMeeting.ParticipantPeerIds.Any())
+                    @if (CurrentMeeting != null && CurrentMeeting.Participants.Any())
                     {
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Success"
                                    Size="Size.Small"
                                    OnClick="StartMeeting"
                                    StartIcon="@Icons.Material.Filled.Login">
-                            Join Call (@CurrentMeeting.ParticipantPeerIds.Count) • <MeetingTimer StartTime="@CurrentMeeting.StartTime" />
+                            Join Call (@CurrentMeeting.Participants.Count) • <MeetingTimer StartTime="@CurrentMeeting.StartTime" />
                         </MudButton>
                     }
                     else

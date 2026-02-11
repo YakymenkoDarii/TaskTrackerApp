@@ -1,4 +1,4 @@
-﻿using TaskTrackerApp.Domain.DTOs.Meeting;
+﻿using TaskTrackerApp.Frontend.Domain.DTOs.Meeting;
 using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Domain.Events.Card;
 using TaskTrackerApp.Frontend.Domain.Events.Column;
@@ -47,4 +47,6 @@ public interface IBoardClient
     Task UserJoinedMeeting(string peerId);
 
     Task UserLeftMeeting(string peerId);
+
+    Task ParticipantStateUpdated(string peerId, bool isMuted, bool isVideoOff);
 }

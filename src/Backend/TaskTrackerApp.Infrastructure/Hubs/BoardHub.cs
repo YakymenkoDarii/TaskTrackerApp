@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
+using TaskTrackerApp.Application.Features.Meeting.Queries.GetMeetingParticipantWithPeerId;
 using TaskTrackerApp.Application.Interfaces.Hubs;
 using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Domain.DTOs.Meeting;
@@ -10,10 +13,12 @@ namespace TaskTrackerApp.Infrastructure.Hubs;
 public class BoardHub : Hub<IBoardClient>
 {
     private readonly IMeetingService _meetingService;
+    private readonly IMediator _mediator;
 
-    public BoardHub(IMeetingService meetingService)
+    public BoardHub(IMeetingService meetingService, IMediator mediator)
     {
         _meetingService = meetingService;
+        _mediator = mediator;
     }
 
     public async Task JoinBoardGroup(int boardId)
@@ -31,17 +36,28 @@ public class BoardHub : Hub<IBoardClient>
 
     public async Task JoinMeeting(int boardId, string peerId)
     {
-        // 1. SAVE CONTEXT: Remember that this ConnectionId = this PeerId + BoardId
+        var query = new GetMeetingParticipantWithPeerIdQuery
+        {
+            PeerId = peerId
+        };
+
+        var result = await _mediator.Send(query);
+        var participant = result.Value;
+
+        var meeting = _meetingService.StartOrJoinMeeting(boardId, participant);
+
         Context.Items["MeetingBoardId"] = boardId;
         Context.Items["MeetingPeerId"] = peerId;
 
-        // 2. Standard Logic
-        var meeting = _meetingService.StartOrJoinMeeting(boardId, peerId);
-        var others = meeting.ParticipantPeerIds.Where(p => p != peerId).ToList();
+        var others = meeting.Participants
+                                .Where(p => p.PeerId != peerId)
+                                .Select(p => p.PeerId)
+                                .ToList();
 
         await Clients.Caller.JoinMeetingResponse(others);
+
+        await Clients.Group($"Board_{boardId}").UserJoinedMeeting(participant);
         await Clients.Group($"Board_{boardId}").MeetingStateUpdated(meeting);
-        await Clients.Group($"Board_{boardId}").UserJoinedMeeting(peerId);
     }
 
     public async Task LeaveMeeting(int boardId, string peerId)
@@ -64,6 +80,23 @@ public class BoardHub : Hub<IBoardClient>
         }
 
         await base.OnDisconnectedAsync(exception);
+    }
+
+    public async Task UpdateMediaState(int boardId, string peerId, bool isMuted, bool isVideoOff)
+    {
+        var meeting = _meetingService.GetMeeting(boardId);
+        if (meeting != null)
+        {
+            var participant = meeting.Participants.FirstOrDefault(p => p.PeerId == peerId);
+            if (participant != null)
+            {
+                participant.IsMuted = isMuted;
+                participant.IsVideoOff = isVideoOff;
+                _meetingService.StartOrJoinMeeting(boardId, participant);
+            }
+        }
+
+        await Clients.Group($"Board_{boardId}").ParticipantStateUpdated(peerId, isMuted, isVideoOff);
     }
 
     private async Task HandleLeave(int boardId, string peerId)

@@ -11,7 +11,7 @@ public interface IMeetingService
 {
     MeetingDto? GetMeeting(int boardId);
 
-    MeetingDto StartOrJoinMeeting(int boardId, string peerId);
-
     void LeaveMeeting(int boardId, string peerId);
+
+    MeetingDto StartOrJoinMeeting(int boardId, MeetingParticipant participant);
 }

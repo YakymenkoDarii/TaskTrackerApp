@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TaskTrackerApp.Domain.DTOs.Meeting;
+﻿namespace TaskTrackerApp.Frontend.Domain.DTOs.Meeting;
 
 public class MeetingDto
 {
@@ -12,5 +6,5 @@ public class MeetingDto
 
     public DateTime StartTime { get; set; }
 
-    public List<string> ParticipantPeerIds { get; set; } = new();
+    public List<MeetingParticipant> Participants { get; set; } = new();
 }

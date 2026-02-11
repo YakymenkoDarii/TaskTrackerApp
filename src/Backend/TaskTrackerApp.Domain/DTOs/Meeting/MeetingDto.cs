@@ -12,5 +12,5 @@ public class MeetingDto
 
     public DateTime StartTime { get; set; }
 
-    public List<string> ParticipantPeerIds { get; set; } = new();
+    public List<MeetingParticipant> Participants { get; set; } = new();
 }

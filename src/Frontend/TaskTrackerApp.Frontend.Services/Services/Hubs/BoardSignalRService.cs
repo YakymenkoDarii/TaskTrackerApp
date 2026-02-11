@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
-using TaskTrackerApp.Domain.DTOs.Meeting;
 using TaskTrackerApp.Frontend.Domain.Constants;
+using TaskTrackerApp.Frontend.Domain.DTOs.Meeting;
 using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Domain.Events.Card;
 using TaskTrackerApp.Frontend.Domain.Events.Column;
@@ -58,9 +58,11 @@ public class BoardSignalRService : IAsyncDisposable
 
     public event Action<List<string>>? OnJoinMeetingResponse;
 
-    public event Action<string>? OnUserJoinedMeeting;
+    public event Action<MeetingParticipant>? OnUserJoinedMeeting;
 
     public event Action<string>? OnUserLeftMeeting;
+
+    public event Action<string, bool, bool>? OnParticipantStateUpdated;
 
     public BoardSignalRService(
         NavigationManager navigationManager,
@@ -112,8 +114,9 @@ public class BoardSignalRService : IAsyncDisposable
         //Meeting
         _hubConnection.On<MeetingDto?>(nameof(IBoardClient.MeetingStateUpdated), meeting => OnMeetingStateUpdated?.Invoke(meeting));
         _hubConnection.On<List<string>>(nameof(IBoardClient.JoinMeetingResponse), peers => OnJoinMeetingResponse?.Invoke(peers));
-        _hubConnection.On<string>(nameof(IBoardClient.UserJoinedMeeting), peerId => OnUserJoinedMeeting?.Invoke(peerId));
+        _hubConnection.On<MeetingParticipant>(nameof(IBoardClient.UserJoinedMeeting), participant => OnUserJoinedMeeting?.Invoke(participant));
         _hubConnection.On<string>(nameof(IBoardClient.UserLeftMeeting), peerId => OnUserLeftMeeting?.Invoke(peerId));
+        _hubConnection.On<string, bool, bool>(nameof(IBoardClient.ParticipantStateUpdated), (peerId, isMuted, isVideoOff) => OnParticipantStateUpdated?.Invoke(peerId, isMuted, isVideoOff));
     }
 
     public async Task StartConnection()
@@ -181,6 +184,14 @@ public class BoardSignalRService : IAsyncDisposable
             return await _hubConnection.InvokeAsync<MeetingDto?>("GetActiveMeeting", boardId);
         }
         return null;
+    }
+
+    public async Task UpdateMediaStateAsync(int boardId, string peerId, bool isMuted, bool isVideoOff)
+    {
+        if (_hubConnection.State == HubConnectionState.Connected)
+        {
+            await _hubConnection.InvokeAsync("UpdateMediaState", boardId, peerId, isMuted, isVideoOff);
+        }
     }
 
     public async ValueTask DisposeAsync()

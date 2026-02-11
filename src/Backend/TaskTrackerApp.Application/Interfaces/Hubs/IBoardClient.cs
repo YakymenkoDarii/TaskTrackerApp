@@ -44,7 +44,9 @@ public interface IBoardClient
 
     Task JoinMeetingResponse(List<string> participantPeerIds);
 
-    Task UserJoinedMeeting(string peerId);
+    Task UserJoinedMeeting(MeetingParticipant participant);
 
     Task UserLeftMeeting(string peerId);
+
+    Task ParticipantStateUpdated(string peerId, bool isMuted, bool isVideoOff);
 }

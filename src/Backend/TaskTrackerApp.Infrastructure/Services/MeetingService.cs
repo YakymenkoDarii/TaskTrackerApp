@@ -26,7 +26,7 @@ public class MeetingService : IMeetingService
         return JsonSerializer.Deserialize<MeetingDto>(json);
     }
 
-    public MeetingDto StartOrJoinMeeting(int boardId, string peerId)
+    public MeetingDto StartOrJoinMeeting(int boardId, MeetingParticipant participant)
     {
         var key = $"meeting:{boardId}";
         var json = _db.StringGet(key);
@@ -38,15 +38,24 @@ public class MeetingService : IMeetingService
             {
                 BoardId = boardId,
                 StartTime = DateTime.UtcNow,
-                ParticipantPeerIds = new List<string> { peerId }
+                Participants = new List<MeetingParticipant> { participant }
             };
         }
         else
         {
             meeting = JsonSerializer.Deserialize<MeetingDto>(json)!;
-            if (!meeting.ParticipantPeerIds.Contains(peerId))
+
+            var existing = meeting.Participants.FirstOrDefault(p => p.PeerId == participant.PeerId);
+            if (existing == null)
             {
-                meeting.ParticipantPeerIds.Add(peerId);
+                meeting.Participants.Add(participant);
+            }
+            else
+            {
+                existing.DisplayName = participant.DisplayName;
+                existing.AvatarUrl = participant.AvatarUrl;
+                existing.IsMuted = participant.IsMuted;
+                existing.IsVideoOff = participant.IsVideoOff;
             }
         }
         _db.StringSet(key, JsonSerializer.Serialize(meeting), _expiry);
@@ -63,11 +72,13 @@ public class MeetingService : IMeetingService
         {
             var meeting = JsonSerializer.Deserialize<MeetingDto>(json)!;
 
-            if (meeting.ParticipantPeerIds.Contains(peerId))
-            {
-                meeting.ParticipantPeerIds.Remove(peerId);
+            var participantToRemove = meeting.Participants.FirstOrDefault(p => p.PeerId == peerId);
 
-                if (meeting.ParticipantPeerIds.Count == 0)
+            if (participantToRemove != null)
+            {
+                meeting.Participants.Remove(participantToRemove);
+
+                if (meeting.Participants.Count == 0)
                 {
                     _db.KeyDelete(key);
                 }

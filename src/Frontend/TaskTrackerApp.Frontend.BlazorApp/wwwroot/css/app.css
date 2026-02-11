@@ -149,34 +149,59 @@ html, body {
     gap: 20px;
     padding: 20px;
     overflow-y: auto;
+    width: 100%;
 }
 
 .meet-video-card {
     position: relative;
-    width: 400px;
+    background: #202124;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 480px;
     max-width: 100%;
     aspect-ratio: 16/9;
-    background: #3c4043;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
 
-    .meet-video-card video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+.meet-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 2;
+    position: absolute;
+}
+
+    .meet-video.hidden {
+        opacity: 0;
+        z-index: 0;
     }
+
+.meet-avatar-overlay {
+    position: absolute;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: #3c4043;
+}
 
 .meet-name-tag {
     position: absolute;
-    bottom: 10px;
-    left: 10px;
+    bottom: 15px;
+    left: 15px;
     color: white;
-    background: rgba(0,0,0,0.5);
-    padding: 4px 8px;
+    background: rgba(0,0,0,0.6);
+    padding: 5px 10px;
     border-radius: 4px;
     font-size: 0.9rem;
+    z-index: 10;
+    display: flex;
+    align-items: center;
 }
 
 .meet-controls {
