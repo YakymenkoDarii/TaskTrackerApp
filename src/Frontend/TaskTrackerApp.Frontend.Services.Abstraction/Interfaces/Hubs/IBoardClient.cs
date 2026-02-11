@@ -49,4 +49,6 @@ public interface IBoardClient
     Task UserLeftMeeting(string peerId);
 
     Task ParticipantStateUpdated(string peerId, bool isMuted, bool isVideoOff);
+
+    Task UserStoppedScreenShare(string peerId);
 }

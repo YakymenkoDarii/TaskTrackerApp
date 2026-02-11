@@ -46,6 +46,8 @@ internal class GetMeetingParticipantWithPeerIdQueryHandler : IRequestHandler<Get
             UserId = userId.Value,
             DisplayName = user.DisplayName,
             AvatarUrl = user.AvatarUrl,
+            IsMuted = request.IsMuted,
+            IsVideoOff = request.IsVideoOff,
         };
 
         return participant;

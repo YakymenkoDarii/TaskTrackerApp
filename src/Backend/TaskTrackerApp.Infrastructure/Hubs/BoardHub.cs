@@ -34,11 +34,13 @@ public class BoardHub : Hub<IBoardClient>
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"Board_{boardId}");
     }
 
-    public async Task JoinMeeting(int boardId, string peerId)
+    public async Task JoinMeeting(int boardId, string peerId, bool isMuted, bool isVideoOff)
     {
         var query = new GetMeetingParticipantWithPeerIdQuery
         {
-            PeerId = peerId
+            PeerId = peerId,
+            IsMuted = isMuted,
+            IsVideoOff = isVideoOff
         };
 
         var result = await _mediator.Send(query);
@@ -106,6 +108,11 @@ public class BoardHub : Hub<IBoardClient>
 
         await Clients.Group($"Board_{boardId}").UserLeftMeeting(peerId);
         await Clients.Group($"Board_{boardId}").MeetingStateUpdated(meeting);
+    }
+
+    public async Task StopScreenShare(int boardId, string peerId)
+    {
+        await Clients.Group($"Board_{boardId}").UserStoppedScreenShare(peerId);
     }
 
     public MeetingDto? GetActiveMeeting(int boardId)

@@ -7,4 +7,8 @@ namespace TaskTrackerApp.Application.Features.Meeting.Queries.GetMeetingParticip
 public class GetMeetingParticipantWithPeerIdQuery : IRequest<Result<MeetingParticipant>>
 {
     public string PeerId { get; set; }
+
+    public bool IsMuted { get; set; }
+
+    public bool IsVideoOff { get; set; }
 }

@@ -64,6 +64,8 @@ public class BoardSignalRService : IAsyncDisposable
 
     public event Action<string, bool, bool>? OnParticipantStateUpdated;
 
+    public event Action<string>? OnUserStoppedScreenShare;
+
     public BoardSignalRService(
         NavigationManager navigationManager,
         ITokenStorage tokenStorage,
@@ -117,6 +119,7 @@ public class BoardSignalRService : IAsyncDisposable
         _hubConnection.On<MeetingParticipant>(nameof(IBoardClient.UserJoinedMeeting), participant => OnUserJoinedMeeting?.Invoke(participant));
         _hubConnection.On<string>(nameof(IBoardClient.UserLeftMeeting), peerId => OnUserLeftMeeting?.Invoke(peerId));
         _hubConnection.On<string, bool, bool>(nameof(IBoardClient.ParticipantStateUpdated), (peerId, isMuted, isVideoOff) => OnParticipantStateUpdated?.Invoke(peerId, isMuted, isVideoOff));
+        _hubConnection.On<string>(nameof(IBoardClient.UserStoppedScreenShare), (peerId) => OnUserStoppedScreenShare?.Invoke(peerId));
     }
 
     public async Task StartConnection()
@@ -161,11 +164,11 @@ public class BoardSignalRService : IAsyncDisposable
         }
     }
 
-    public async Task JoinMeetingAsync(int boardId, string peerId)
+    public async Task JoinMeetingAsync(int boardId, string peerId, bool isMuted, bool isVideoOff)
     {
         if (_hubConnection.State == HubConnectionState.Connected)
         {
-            await _hubConnection.InvokeAsync("JoinMeeting", boardId, peerId);
+            await _hubConnection.InvokeAsync("JoinMeeting", boardId, peerId, isMuted, isVideoOff);
         }
     }
 
@@ -192,6 +195,12 @@ public class BoardSignalRService : IAsyncDisposable
         {
             await _hubConnection.InvokeAsync("UpdateMediaState", boardId, peerId, isMuted, isVideoOff);
         }
+    }
+
+    public async Task StopScreenShareAsync(int boardId, string peerId)
+    {
+        if (_hubConnection.State == HubConnectionState.Connected)
+            await _hubConnection.InvokeAsync("StopScreenShare", boardId, peerId);
     }
 
     public async ValueTask DisposeAsync()

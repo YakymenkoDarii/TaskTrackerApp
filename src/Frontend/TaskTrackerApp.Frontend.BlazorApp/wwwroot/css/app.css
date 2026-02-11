@@ -167,27 +167,27 @@ html, body {
 }
 
 .meet-video {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
     z-index: 2;
-    position: absolute;
+    background: black;
 }
-
-    .meet-video.hidden {
-        opacity: 0;
-        z-index: 0;
-    }
 
 .meet-avatar-overlay {
     position: absolute;
-    z-index: 1;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%;
-    height: 100%;
     background-color: #3c4043;
+    z-index: 1;
 }
 
 .meet-name-tag {
@@ -212,6 +212,12 @@ html, body {
     align-items: center;
     gap: 15px;
     border-top: 1px solid #3c4043;
+}
+
+.meet-video.hidden {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .meet-btn {
@@ -241,3 +247,41 @@ html, body {
         background: #8ab4f8;
         color: #202124;
     }
+
+.meet-screenshare-grid {
+    width: 100%;
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    justify-content: center;
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+}
+
+.meet-screenshare-card {
+    position: relative;
+    background: #000;
+    width: 800px;
+    max-width: 90vw;
+    aspect-ratio: 16/9;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+}
+
+    .meet-screenshare-card video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+video.hidden {
+    display: block;
+    visibility: hidden;
+    position: absolute;
+    height: 1px;
+    width: 1px;
+}

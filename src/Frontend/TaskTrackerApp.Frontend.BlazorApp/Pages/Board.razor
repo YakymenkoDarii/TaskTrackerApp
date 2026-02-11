@@ -27,11 +27,24 @@ else
                 <MudIconButton Icon="@Icons.Material.Filled.Minimize" Color="Color.Inherit" OnClick="@(() => IsMinimized = true)" />
             </div>
 
+            @if (IncomingScreens.Any())
+            {
+                <div class="meet-screenshare-grid" style="width:100%; display:flex; gap:10px; margin-bottom:20px; overflow-x:auto;">
+                    @foreach (var screen in IncomingScreens)
+                    {
+                        <div class="meet-screenshare-card">
+                            <video id="screen-@screen.PeerId" autoplay playsinline muted></video>
+                            <div class="meet-name-tag">
+                                <MudIcon Icon="@Icons.Material.Filled.ScreenShare" Size="Size.Small" Class="mr-1" />
+                                @screen.DisplayName
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
             <div class="meet-grid">
                 <div class="meet-video-card">
-                    <video id="localVideo" autoplay muted playsinline
-                           class="meet-video @(IsVideoOff ? "hidden" : "")"></video>
-
                     <div class="meet-avatar-overlay">
                         <MudAvatar Color="Color.Secondary" Style="height:80px; width:80px; font-size:2rem;">
                             @if (MainLayout != null && !string.IsNullOrEmpty(MainLayout.UserAvatarUrl))
@@ -45,37 +58,36 @@ else
                         </MudAvatar>
                     </div>
 
+                    <video id="localVideo" autoplay muted playsinline
+                           class="meet-video @(IsVideoOff ? "hidden" : "")"></video>
+
                     <div class="meet-name-tag">
-                        @(MainLayout?.UserDisplayName ?? "You")
                         @if (IsMuted)
                         {
                             <MudIcon Icon="@Icons.Material.Filled.MicOff" Size="Size.Small" Color="Color.Error" Class="mr-1" />
                         }
+                        @(MainLayout?.UserDisplayName ?? "You")
                     </div>
                 </div>
 
                 @foreach (var user in RemoteParticipants)
                 {
                     <div class="meet-video-card">
-                        <video id="video-@user.PeerId" autoplay playsinline
-                               class="meet-video @(user.IsVideoOff ? "hidden" : "")"></video>
-
                         <div class="meet-avatar-overlay">
                             <MudAvatar Color="Color.Primary" Style="height:80px; width:80px; font-size:2rem;">
                                 @if (!string.IsNullOrEmpty(user.AvatarUrl))
                                 {
                                     <MudImage Src="@user.AvatarUrl" />
                                 }
-                                else if (!string.IsNullOrEmpty(user.DisplayName))
-                                {
-                                    @user.DisplayName.Substring(0, 1).ToUpper()
-                                }
                                 else
                                 {
-                                    @("?")
+                                    @(user.DisplayName?.Substring(0, 1).ToUpper() ?? "?")
                                 }
                             </MudAvatar>
                         </div>
+
+                        <video id="video-@user.PeerId" autoplay playsinline
+                               class="meet-video @(user.IsVideoOff ? "hidden" : "")"></video>
 
                         <div class="meet-name-tag">
                             @if (user.IsMuted)
