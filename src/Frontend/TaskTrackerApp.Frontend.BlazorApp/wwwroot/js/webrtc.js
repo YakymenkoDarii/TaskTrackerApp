@@ -2,286 +2,310 @@
     localStream: null,
     screenStream: null,
     peer: null,
-    activeCalls: {},
-    screenCalls: {},
-    remoteStreams: {}, // Cache for stream reloading
     dotNetRef: null,
+    selectedAudioId: null,
+    selectedVideoId: null,
+    calls: {},
+    remoteStreams: {},
+    screenStreams: {},
+
+    createBlackTrack: () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 640;
+        canvas.height = 480;
+        const ctx = canvas.getContext('2d');
+        setInterval(() => {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, 640, 480);
+            const val = Math.floor(Math.random() * 255);
+            ctx.fillStyle = `rgba(${val}, 0, 0, 0.01)`;
+            ctx.fillRect(0, 0, 1, 1);
+        }, 33);
+        const stream = canvas.captureStream(30);
+        const track = stream.getVideoTracks()[0];
+        track.enabled = true;
+        return track;
+    },
+
+    isRealCamera: (track) => {
+        if (!track || track.readyState !== 'live') return false;
+        return track.label !== '' && !track.label.includes('Canvas');
+    },
 
     init: async (dotNetRef) => {
-        console.log("[JS] Initializing PeerJS...");
         window.simpleVideo.dotNetRef = dotNetRef;
-
-        const peer = new Peer(null, {
-            debug: 2,
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' }
-                ]
-            }
-        });
-        window.simpleVideo.peer = peer;
-
         return new Promise((resolve, reject) => {
+            const peer = new Peer(null);
+
             peer.on('open', (id) => {
-                console.log(`[JS] Peer Opened. My ID: ${id}`);
-
-                peer.on('call', (call) => {
-                    console.log(`[JS] Incoming call from: ${call.peer}`);
-
-                    // Answer logic
-                    if (call.metadata && call.metadata.type === 'screen') {
-                        call.answer();
-                    } else {
-                        // Answer with local stream (or undefined if spectator)
-                        call.answer(window.simpleVideo.localStream || undefined);
-                    }
-                    window.simpleVideo.registerCallEvents(call, dotNetRef);
-                });
+                window.simpleVideo.peer = peer;
                 resolve(id);
             });
 
-            peer.on('error', (err) => console.error('[JS] Peer Error:', err));
+            peer.on('call', (call) => {
+                const metadata = call.metadata || {};
+                if (metadata.type === 'screen') {
+                    call.answer();
+                    call.on('stream', (remoteScreenStream) => {
+                        window.simpleVideo.screenStreams[call.peer] = remoteScreenStream;
+                        dotNetRef.invokeMethodAsync('OnScreenShareAdded', call.peer, remoteScreenStream.id)
+                            .then(() => window.simpleVideo.reloadVideo(call.peer, true, false));
+                    });
+                } else {
+                    const streamToAnswer = new MediaStream();
+                    const audio = window.simpleVideo.localStream.getAudioTracks()[0];
+                    if (audio) streamToAnswer.addTrack(audio);
+
+                    const video = window.simpleVideo.localStream.getVideoTracks().find(t => t.readyState === 'live' && t.enabled);
+                    if (video && window.simpleVideo.isRealCamera(video)) streamToAnswer.addTrack(video);
+                    else streamToAnswer.addTrack(window.simpleVideo.createBlackTrack());
+
+                    call.answer(streamToAnswer);
+                    window.simpleVideo.calls[call.peer] = call;
+                    call.on('stream', (remoteStream) => {
+                        window.simpleVideo.remoteStreams[call.peer] = remoteStream;
+                        const checkVideoState = () => {
+                            const validVideo = remoteStream.getVideoTracks().some(t => window.simpleVideo.isRealCamera(t));
+                            window.simpleVideo.dotNetRef.invokeMethodAsync('OnRemoteStreamAdded', call.peer, validVideo);
+                            if (validVideo) window.simpleVideo.reloadVideo(call.peer, false, false);
+                        };
+                        checkVideoState();
+                        remoteStream.onaddtrack = checkVideoState;
+                        remoteStream.onremovetrack = checkVideoState;
+                    });
+                }
+            });
         });
     },
 
-    registerCallEvents: (call, dotNetRef) => {
-        const isScreen = call.metadata && call.metadata.type === 'screen';
-        console.log(`[JS] Registering events for call with: ${call.peer} (Screen: ${isScreen})`);
-
-        call.on('stream', (remoteStream) => {
-            console.log(`[JS] Stream received from ${call.peer}`);
-
-            // 1. Cache the stream so Blazor can reload it later
-            window.simpleVideo.remoteStreams[call.peer] = remoteStream;
-
-            // 2. Notify Blazor to update UI
-            if (dotNetRef) {
-                const method = isScreen ? 'OnScreenShareAdded' : 'OnRemoteStreamAdded';
-                const args = isScreen ? [call.peer, remoteStream.id] : [call.peer];
-                dotNetRef.invokeMethodAsync(method, ...args);
-            }
-
-            // 3. Attach immediately (in case DOM is ready)
-            window.simpleVideo.retryAttachStream(call.peer, remoteStream, isScreen);
-        });
-
-        if (isScreen) window.simpleVideo.screenCalls[call.peer] = call;
-        else window.simpleVideo.activeCalls[call.peer] = call;
-
-        call.on('close', () => console.log(`[JS] Call with ${call.peer} closed.`));
-        call.on('error', (err) => console.error(`[JS] Call Error (${call.peer}):`, err));
-    },
-
-    retryAttachStream: (peerId, stream, isScreen) => {
+    reloadVideo: (peerId, isScreen = false, shouldMute = false) => {
         const elementId = isScreen ? `screen-${peerId}` : `video-${peerId}`;
-        let attempts = 0;
-
-        const tryAttach = () => {
-            const el = document.getElementById(elementId);
-            if (el) {
-                // --- ROBUSTNESS CHECK ---
-                // If element is already playing THIS content, ignore update to prevent flicker/reset
-                if (el.srcObject) {
-                    try {
-                        const currentTracks = el.srcObject.getTracks().map(t => t.id).sort().join('');
-                        const newTracks = stream.getTracks().map(t => t.id).sort().join('');
-                        if (currentTracks === newTracks && !el.paused && !el.ended) {
-                            return;
-                        }
-                    } catch (e) { /* ignore comparison errors */ }
-                }
-
-                console.log(`[JS] Attaching stream to #${elementId}`);
-
-                el.autoplay = true;
-                el.playsInline = true;
-                el.muted = true; // Critical for autoplay policy
-                el.srcObject = stream;
-
-                const playPromise = el.play();
-                if (playPromise !== undefined) {
-                    playPromise
-                        .then(() => {
-                            // Unmute user video after it starts playing
-                            if (!isScreen) el.muted = false;
-                        })
-                        .catch(e => console.warn(`[JS] Autoplay blocked for ${elementId}:`, e));
-                }
-            } else if (attempts < 50) {
-                attempts++;
-                setTimeout(tryAttach, 100);
+        const stream = isScreen ? window.simpleVideo.screenStreams[peerId] : window.simpleVideo.remoteStreams[peerId];
+        const attemptPlay = (attemptNumber) => {
+            const videoElement = document.getElementById(elementId);
+            if (videoElement && stream) {
+                if (videoElement.srcObject !== stream) videoElement.srcObject = stream;
+                videoElement.muted = shouldMute;
+                videoElement.play().catch(e => { });
+            } else if (attemptNumber < 10) {
+                setTimeout(() => attemptPlay(attemptNumber + 1), 200 + (attemptNumber * 100));
             }
         };
-        tryAttach();
+        attemptPlay(1);
     },
 
-    // --- CALLED BY BLAZOR OnRemoteStreamAdded ---
-    reloadVideo: (peerId) => {
-        console.log(`[JS] Reloading video for ${peerId}...`);
-        const stream = window.simpleVideo.remoteStreams ? window.simpleVideo.remoteStreams[peerId] : null;
-        if (stream) {
-            window.simpleVideo.retryAttachStream(peerId, stream, false);
-        } else {
-            console.warn(`[JS] No cached stream found for ${peerId} to reload.`);
+    ensureVideoPlays: (peerId) => window.simpleVideo.reloadVideo(peerId, false, false),
+
+    attachLocalScreen: (peerId) => {
+        if (window.simpleVideo.screenStream) window.simpleVideo.screenStreams[peerId] = window.simpleVideo.screenStream;
+        window.simpleVideo.reloadVideo(peerId, true, true);
+    },
+
+    removePeer: (peerId) => {
+        if (window.simpleVideo.calls[peerId]) {
+            window.simpleVideo.calls[peerId].close();
+            delete window.simpleVideo.calls[peerId];
+        }
+        delete window.simpleVideo.remoteStreams[peerId];
+        delete window.simpleVideo.screenStreams[peerId];
+
+        const videoEl = document.getElementById(`video-${peerId}`);
+        if (videoEl) videoEl.srcObject = null;
+        const screenEl = document.getElementById(`screen-${peerId}`);
+        if (screenEl) screenEl.srcObject = null;
+    },
+
+    getDevices: async () => {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            return devices.map(d => ({
+                deviceId: d.deviceId,
+                kind: d.kind,
+                label: d.label ? d.label : (d.kind === 'audioinput' ? `Microphone ${d.deviceId.substr(0, 5)}...` : `Camera ${d.deviceId.substr(0, 5)}...`)
+            }));
+        } catch (err) {
+            return [];
         }
     },
 
-    startLocalStream: async (initMuted, initVideoOff) => {
+    switchAudioDevice: async (deviceId) => {
         try {
-            const constraints = {
-                audio: true,
-                video: initVideoOff ? false : true
-            };
-
-            let stream;
-            try {
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-            } catch (e) {
-                console.warn("[JS] Video failed, trying audio only", e);
-                stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            window.simpleVideo.selectedAudioId = deviceId;
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: { deviceId: { exact: deviceId } },
+                video: false
+            });
+            const newTrack = stream.getAudioTracks()[0];
+            const oldTrack = window.simpleVideo.localStream.getAudioTracks()[0];
+            if (oldTrack) {
+                newTrack.enabled = oldTrack.enabled;
+                oldTrack.stop();
+                window.simpleVideo.localStream.removeTrack(oldTrack);
             }
+            window.simpleVideo.localStream.addTrack(newTrack);
 
-            window.simpleVideo.localStream = stream;
-
-            if (initMuted) {
-                stream.getAudioTracks().forEach(t => t.enabled = false);
+            for (const peerId in window.simpleVideo.calls) {
+                const call = window.simpleVideo.calls[peerId];
+                if (call && call.peerConnection) {
+                    const sender = call.peerConnection.getSenders().find(s => s.track && s.track.kind === 'audio');
+                    if (sender) await sender.replaceTrack(newTrack);
+                }
             }
-
-            window.simpleVideo.attachLocalVideo();
             return true;
-        } catch (err) {
-            console.error("[JS] Camera access denied:", err);
+        } catch (e) {
             return false;
         }
     },
 
-    attachLocalVideo: () => {
-        const videoEl = document.getElementById("localVideo");
-        if (videoEl && window.simpleVideo.localStream) {
-            const vidTracks = window.simpleVideo.localStream.getVideoTracks();
-            if (vidTracks.length > 0) {
-                videoEl.srcObject = window.simpleVideo.localStream;
-                videoEl.muted = true;
-                videoEl.play().catch(e => console.warn("Local play error", e));
-            } else {
-                videoEl.srcObject = null;
+    switchVideoDevice: async (deviceId) => {
+        try {
+            window.simpleVideo.selectedVideoId = deviceId;
+            const currentVideo = window.simpleVideo.localStream.getVideoTracks()[0];
+            const isBlackTrack = !window.simpleVideo.isRealCamera(currentVideo);
+
+            if (isBlackTrack) return true;
+
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: { exact: deviceId } },
+                audio: false
+            });
+            const newTrack = stream.getVideoTracks()[0];
+
+            currentVideo.stop();
+            window.simpleVideo.localStream.removeTrack(currentVideo);
+            window.simpleVideo.localStream.addTrack(newTrack);
+
+            const localVideo = document.getElementById('localVideo');
+            if (localVideo) localVideo.srcObject = window.simpleVideo.localStream;
+
+            for (const peerId in window.simpleVideo.calls) {
+                const call = window.simpleVideo.calls[peerId];
+                if (call && call.peerConnection) {
+                    const sender = call.peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+                    if (sender) await sender.replaceTrack(newTrack);
+                }
             }
+            return true;
+        } catch (e) {
+            return false;
         }
     },
 
-    // ... Keep attachLocalScreen, ensureVideoPlays, callUsers, shareScreenWithUser ...
-    attachLocalScreen: (peerId) => {
-        const videoEl = document.getElementById(`screen-${peerId}`);
-        if (videoEl && window.simpleVideo.screenStream) {
-            videoEl.srcObject = window.simpleVideo.screenStream;
-            videoEl.muted = true;
+    startLocalStream: async (isMuted, isVideoOff) => {
+        try {
+            const constraints = {
+                audio: window.simpleVideo.selectedAudioId ? { deviceId: { exact: window.simpleVideo.selectedAudioId } } : true,
+                video: window.simpleVideo.selectedVideoId ? { deviceId: { exact: window.simpleVideo.selectedVideoId } } : true
+            };
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            window.simpleVideo.localStream = stream;
+            window.simpleVideo.toggleAudio(!isMuted);
+            if (isVideoOff) await window.simpleVideo.toggleVideo(false);
+            return true;
+        } catch (err) { return false; }
+    },
+
+    attachLocalVideo: () => {
+        const video = document.getElementById('localVideo');
+        if (video && window.simpleVideo.localStream) {
+            video.srcObject = window.simpleVideo.localStream;
+            video.muted = true;
         }
     },
-    ensureVideoPlays: (peerId) => {
-        const el = document.getElementById(`video-${peerId}`);
-        if (el) el.play().catch(e => { });
-    },
+
     callUsers: (peerIds) => {
+        if (!window.simpleVideo.peer || !window.simpleVideo.localStream) return;
+        const streamToSend = new MediaStream();
+
+        const audio = window.simpleVideo.localStream.getAudioTracks()[0];
+        if (audio) streamToSend.addTrack(audio);
+
+        const video = window.simpleVideo.localStream.getVideoTracks().find(t => t.readyState === 'live' && t.enabled);
+        if (video && window.simpleVideo.isRealCamera(video)) streamToSend.addTrack(video);
+        else streamToSend.addTrack(window.simpleVideo.createBlackTrack());
+
         peerIds.forEach(peerId => {
-            const call = window.simpleVideo.peer.call(peerId, window.simpleVideo.localStream);
-            window.simpleVideo.registerCallEvents(call, window.simpleVideo.dotNetRef);
+            if (window.simpleVideo.calls[peerId]) return;
+            const call = window.simpleVideo.peer.call(peerId, streamToSend, { metadata: { type: 'video' } });
+            window.simpleVideo.calls[peerId] = call;
+            call.on('stream', (remoteStream) => {
+                window.simpleVideo.remoteStreams[peerId] = remoteStream;
+                const checkVideoState = () => {
+                    const validVideo = remoteStream.getVideoTracks().some(t => window.simpleVideo.isRealCamera(t));
+                    window.simpleVideo.dotNetRef.invokeMethodAsync('OnRemoteStreamAdded', peerId, validVideo);
+                    if (validVideo) window.simpleVideo.reloadVideo(peerId, false, false);
+                };
+                checkVideoState();
+                remoteStream.onaddtrack = checkVideoState;
+                remoteStream.onremovetrack = checkVideoState;
+            });
         });
     },
-    shareScreenWithUser: (peerId) => {
-        if (window.simpleVideo.screenStream && window.simpleVideo.peer) {
-            const call = window.simpleVideo.peer.call(peerId, window.simpleVideo.screenStream, { metadata: { type: 'screen' } });
-            window.simpleVideo.registerCallEvents(call, window.simpleVideo.dotNetRef);
-        }
+
+    toggleAudio: (enabled) => {
+        if (window.simpleVideo.localStream) window.simpleVideo.localStream.getAudioTracks().forEach(t => t.enabled = enabled);
     },
 
-    // --- FIX FOR MISSING FUNCTION ---
-    toggleAudio: (shouldEnable) => {
-        console.log(`[JS] Toggling Audio: ${shouldEnable}`);
-        if (window.simpleVideo.localStream) {
-            window.simpleVideo.localStream.getAudioTracks().forEach(t => t.enabled = shouldEnable);
-        }
-    },
-
-    toggleVideo: async (shouldEnable) => {
-        console.log(`[JS] Toggling Video: ${shouldEnable}`);
-        let localStream = window.simpleVideo.localStream;
-
-        if (!shouldEnable && !localStream) return;
-
-        if (!shouldEnable) {
-            if (localStream) {
-                localStream.getVideoTracks().forEach(t => {
-                    t.stop();
-                    localStream.removeTrack(t);
-                });
+    toggleVideo: async (enabled) => {
+        const localStream = window.simpleVideo.localStream;
+        if (!localStream) return;
+        try {
+            let newTrack;
+            if (enabled) {
+                const constraints = window.simpleVideo.selectedVideoId
+                    ? { video: { deviceId: { exact: window.simpleVideo.selectedVideoId } } }
+                    : { video: true };
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                newTrack = stream.getVideoTracks()[0];
+            } else {
+                newTrack = window.simpleVideo.createBlackTrack();
             }
-            window.simpleVideo.attachLocalVideo();
-        }
-        else {
-            try {
-                const newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                const oldAudio = localStream ? localStream.getAudioTracks()[0] : null;
-                const isMuted = oldAudio ? !oldAudio.enabled : false;
+            localStream.getVideoTracks().forEach(t => t.stop());
+            localStream.removeTrack(localStream.getVideoTracks()[0]);
+            localStream.addTrack(newTrack);
 
-                newStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
-                if (localStream) localStream.getTracks().forEach(t => t.stop());
+            const localVideo = document.getElementById('localVideo');
+            if (localVideo) localVideo.srcObject = localStream;
 
-                window.simpleVideo.localStream = newStream;
-                window.simpleVideo.attachLocalVideo();
-
-                const newVideoTrack = newStream.getVideoTracks()[0];
-                const newAudioTrack = newStream.getAudioTracks()[0];
-
-                for (let peerId in window.simpleVideo.activeCalls) {
-                    const call = window.simpleVideo.activeCalls[peerId];
-                    // Skip dead connections
-                    if (!call || !call.peerConnection || call.peerConnection.signalingState === 'closed') continue;
-
-                    try {
-                        const senders = call.peerConnection.getSenders();
-                        const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-                        const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
-
-                        if (videoSender) {
-                            await videoSender.replaceTrack(newVideoTrack);
-                        } else {
-                            call.close();
-                            const newCall = window.simpleVideo.peer.call(peerId, newStream);
-                            window.simpleVideo.registerCallEvents(newCall, window.simpleVideo.dotNetRef);
-                        }
-                        if (audioSender) {
-                            await audioSender.replaceTrack(newAudioTrack);
-                        }
-                    } catch (e) { console.error(`[JS] Error updating peer ${peerId}`, e); }
+            for (const peerId in window.simpleVideo.calls) {
+                const call = window.simpleVideo.calls[peerId];
+                if (call && call.peerConnection) {
+                    const sender = call.peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+                    if (sender) await sender.replaceTrack(newTrack);
                 }
-            } catch (err) { console.error("Error toggling video:", err); }
-        }
+            }
+        } catch (err) { }
     },
 
     startScreenShare: async () => {
         try {
-            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
             window.simpleVideo.screenStream = stream;
-            const peers = Object.keys(window.simpleVideo.activeCalls);
-            peers.forEach(peerId => {
-                const call = window.simpleVideo.peer.call(peerId, stream, { metadata: { type: 'screen' } });
-                window.simpleVideo.registerCallEvents(call, window.simpleVideo.dotNetRef);
-            });
-            stream.getVideoTracks()[0].onended = () => { window.simpleVideo.stopScreenShare(); };
+            stream.getVideoTracks()[0].onended = () => {
+                window.simpleVideo.stopScreenShare();
+                window.simpleVideo.dotNetRef.invokeMethodAsync('ToggleScreenShare');
+            };
             return true;
         } catch (err) { return false; }
     },
+
     stopScreenShare: () => {
         if (window.simpleVideo.screenStream) {
-            window.simpleVideo.screenStream.getTracks().forEach(t => t.stop());
+            window.simpleVideo.screenStream.getTracks().forEach(track => track.stop());
             window.simpleVideo.screenStream = null;
         }
-        for (let peerId in window.simpleVideo.screenCalls) {
-            if (window.simpleVideo.screenCalls[peerId]) window.simpleVideo.screenCalls[peerId].close();
-        }
-        window.simpleVideo.screenCalls = {};
     },
+
+    shareScreenWithUser: (peerId) => {
+        if (!window.simpleVideo.peer || !window.simpleVideo.screenStream) return;
+        window.simpleVideo.peer.call(peerId, window.simpleVideo.screenStream, { metadata: { type: 'screen' } });
+    },
+
     leave: () => {
+        Object.values(window.simpleVideo.calls).forEach(call => call.close());
+        window.simpleVideo.calls = {};
+        window.simpleVideo.remoteStreams = {};
+        window.simpleVideo.screenStreams = {};
         if (window.simpleVideo.localStream) {
             window.simpleVideo.localStream.getTracks().forEach(track => track.stop());
             window.simpleVideo.localStream = null;
@@ -291,7 +315,5 @@
             window.simpleVideo.peer.destroy();
             window.simpleVideo.peer = null;
         }
-        window.simpleVideo.activeCalls = {};
-        window.simpleVideo.remoteStreams = {}; // Clear cache
     }
 };

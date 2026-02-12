@@ -19,9 +19,9 @@ else if (board == null)
 }
 else
 {
-    @if (IsInMeeting && !IsMinimized)
+    @if (IsInMeeting)
     {
-        <div class="meet-overlay">
+        <div class="meet-overlay" style="@(IsMinimized ? "display:none;" : "")">
             <div class="meet-header d-flex justify-space-between align-center">
                 <MudText Typo="Typo.h6" Style="color:white;">@board.Title - Meeting</MudText>
                 <MudIconButton Icon="@Icons.Material.Filled.Minimize" Color="Color.Inherit" OnClick="@(() => IsMinimized = true)" />
@@ -107,6 +107,40 @@ else
                 <button class="meet-btn @(IsVideoOff ? "active" : "")" @onclick="ToggleCamera">
                     <MudIcon Icon="@(IsVideoOff? Icons.Material.Filled.VideocamOff : Icons.Material.Filled.Videocam)" />
                 </button>
+
+                <MudMenu Icon="@Icons.Material.Filled.Settings"
+                         Variant="Variant.Filled"
+                         AnchorOrigin="Origin.TopCenter"
+                         TransformOrigin="Origin.BottomCenter"
+                         Class="meet-btn-settings">
+
+                    <ActivatorContent>
+                        <button class="meet-btn" @onclick="OpenSettings">
+                            <MudIcon Icon="@Icons.Material.Filled.Settings" />
+                        </button>
+                    </ActivatorContent>
+
+                    <ChildContent>
+                        <MudPaper Class="pa-3" Style="width: 300px;">
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Microphone</MudText>
+                            <MudSelect T="string" Value="@SelectedAudioId" ValueChanged="OnAudioDeviceChanged" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined">
+                                @foreach (var dev in AudioDevices)
+                                {
+                                    <MudSelectItem Value="@dev.DeviceId">@dev.Label</MudSelectItem>
+                                }
+                            </MudSelect>
+
+                            <MudText Typo="Typo.subtitle2" Class="mt-3 mb-2">Camera</MudText>
+                            <MudSelect T="string" Value="@SelectedVideoId" ValueChanged="OnVideoDeviceChanged" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined">
+                                @foreach (var dev in VideoDevices)
+                                {
+                                    <MudSelectItem Value="@dev.DeviceId">@dev.Label</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudPaper>
+                    </ChildContent>
+                </MudMenu>
+
                 <button class="meet-btn @(IsScreenSharing ? "screen-active" : "")" @onclick="ToggleScreenShare">
                     <MudIcon Icon="@(IsScreenSharing? Icons.Material.Filled.StopScreenShare : Icons.Material.Filled.ScreenShare)" />
                 </button>
@@ -115,25 +149,26 @@ else
                 </button>
             </div>
         </div>
-    }
 
-    @if (IsInMeeting && IsMinimized)
-    {
-        <MudPaper Class="pa-3 d-flex align-center gap-4 mud-theme-dark"
-                  Style="position:fixed; bottom:20px; right:20px; z-index:2000; border: 1px solid #444;"
-                  Elevation="10">
-            <MudIcon Icon="@Icons.Material.Filled.Videocam" Color="Color.Success" />
-            <div>
-                <MudText Typo="Typo.subtitle2" Color="Color.Success">Meeting Active</MudText>
-                <MudText Typo="Typo.caption">@RemoteParticipants.Count others</MudText>
-            </div>
-            <MudTooltip Text="Maximize">
-                <MudIconButton Icon="@Icons.Material.Filled.OpenInFull" Color="Color.Inherit" OnClick="@(() => IsMinimized = false)" />
-            </MudTooltip>
-            <MudTooltip Text="Leave">
-                <MudIconButton Icon="@Icons.Material.Filled.CallEnd" Color="Color.Error" OnClick="LeaveMeeting" />
-            </MudTooltip>
-        </MudPaper>
+   
+        @if (IsMinimized)
+        {
+            <MudPaper Class="pa-3 d-flex align-center gap-4 mud-theme-dark"
+                      Style="position:fixed; bottom:20px; right:20px; z-index:2000; border: 1px solid #444;"
+                      Elevation="10">
+                <MudIcon Icon="@Icons.Material.Filled.Videocam" Color="Color.Success" />
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Success">Meeting Active</MudText>
+                    <MudText Typo="Typo.caption">@RemoteParticipants.Count others</MudText>
+                </div>
+                <MudTooltip Text="Maximize">
+                    <MudIconButton Icon="@Icons.Material.Filled.OpenInFull" Color="Color.Inherit" OnClick="@(() => IsMinimized = false)" />
+                </MudTooltip>
+                <MudTooltip Text="Leave">
+                    <MudIconButton Icon="@Icons.Material.Filled.CallEnd" Color="Color.Error" OnClick="LeaveMeeting" />
+                </MudTooltip>
+            </MudPaper>
+        }
     }
 
     <div class="board-container d-flex flex-column h-100">

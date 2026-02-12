@@ -56,7 +56,7 @@ public class BoardSignalRService : IAsyncDisposable
     //Meeting
     public event Action<MeetingDto?>? OnMeetingStateUpdated;
 
-    public event Action<List<string>>? OnJoinMeetingResponse;
+    public event Action<List<MeetingParticipant>>? OnJoinMeetingResponse;
 
     public event Action<MeetingParticipant>? OnUserJoinedMeeting;
 
@@ -115,7 +115,7 @@ public class BoardSignalRService : IAsyncDisposable
 
         //Meeting
         _hubConnection.On<MeetingDto?>(nameof(IBoardClient.MeetingStateUpdated), meeting => OnMeetingStateUpdated?.Invoke(meeting));
-        _hubConnection.On<List<string>>(nameof(IBoardClient.JoinMeetingResponse), peers => OnJoinMeetingResponse?.Invoke(peers));
+        _hubConnection.On<List<MeetingParticipant>>(nameof(IBoardClient.JoinMeetingResponse), peers => OnJoinMeetingResponse?.Invoke(peers));
         _hubConnection.On<MeetingParticipant>(nameof(IBoardClient.UserJoinedMeeting), participant => OnUserJoinedMeeting?.Invoke(participant));
         _hubConnection.On<string>(nameof(IBoardClient.UserLeftMeeting), peerId => OnUserLeftMeeting?.Invoke(peerId));
         _hubConnection.On<string, bool, bool>(nameof(IBoardClient.ParticipantStateUpdated), (peerId, isMuted, isVideoOff) => OnParticipantStateUpdated?.Invoke(peerId, isMuted, isVideoOff));

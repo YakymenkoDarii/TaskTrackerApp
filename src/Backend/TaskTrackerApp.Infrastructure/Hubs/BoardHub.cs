@@ -52,9 +52,8 @@ public class BoardHub : Hub<IBoardClient>
         Context.Items["MeetingPeerId"] = peerId;
 
         var others = meeting.Participants
-                                .Where(p => p.PeerId != peerId)
-                                .Select(p => p.PeerId)
-                                .ToList();
+                                        .Where(p => p.PeerId != peerId)
+                                        .ToList();
 
         await Clients.Caller.JoinMeetingResponse(others);
 

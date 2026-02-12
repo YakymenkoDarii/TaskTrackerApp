@@ -42,7 +42,7 @@ public interface IBoardClient
     //Meeting
     Task MeetingStateUpdated(MeetingDto? meeting);
 
-    Task JoinMeetingResponse(List<string> participantPeerIds);
+    Task JoinMeetingResponse(List<MeetingParticipant> participantPeerIds);
 
     Task UserJoinedMeeting(string peerId);
 

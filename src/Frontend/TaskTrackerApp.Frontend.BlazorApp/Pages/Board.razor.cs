@@ -18,6 +18,7 @@ using TaskTrackerApp.Frontend.Domain.Enums;
 using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Domain.Events.Card;
 using TaskTrackerApp.Frontend.Domain.Events.Column;
+using TaskTrackerApp.Frontend.Domain.Models;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
@@ -85,6 +86,12 @@ public partial class Board : IDisposable
 
     private List<ScreenShareSession> IncomingScreens = new();
 
+    private List<MediaDeviceInfo> AudioDevices = new();
+    private List<MediaDeviceInfo> VideoDevices = new();
+    private string SelectedAudioId;
+    private string SelectedVideoId;
+    private bool IsSettingsOpen;
+
     protected override async Task OnInitializedAsync()
     {
         await AddToRecentBoardsAsync(BoardId);
@@ -140,42 +147,50 @@ public partial class Board : IDisposable
             }
         });
 
-        BoardHub.OnUserLeftMeeting += async (peerId) => await InvokeAsync(() =>
+        BoardHub.OnUserLeftMeeting += async (peerId) => await InvokeAsync(async () =>
         {
             var participant = RemoteParticipants.FirstOrDefault(p => p.PeerId == peerId);
-
             if (participant != null)
             {
                 RemoteParticipants.Remove(participant);
-                StateHasChanged();
             }
-        });
-        BoardHub.OnJoinMeetingResponse += async (peerIds) => await InvokeAsync(async () =>
-        {
-            foreach (var peerId in peerIds)
-            {
-                var fullParticipant = CurrentMeeting?.Participants.FirstOrDefault(p => p.PeerId == peerId);
 
-                if (fullParticipant != null)
-                {
-                    RemoteParticipants.Add(fullParticipant);
-                }
-                else
-                {
-                    RemoteParticipants.Add(new MeetingParticipant
-                    {
-                        PeerId = peerId,
-                        DisplayName = "Connecting...",
-                        UserId = 0
-                    });
-                }
+            var screen = IncomingScreens.FirstOrDefault(s => s.PeerId == peerId);
+            if (screen != null)
+            {
+                IncomingScreens.Remove(screen);
             }
 
             StateHasChanged();
 
-            await Task.Delay(100);
+            await JS.InvokeVoidAsync("simpleVideo.removePeer", peerId);
+        });
+        BoardHub.OnJoinMeetingResponse += async (participants) => await InvokeAsync(async () =>
+        {
+            var peerIdsToCall = new List<string>();
 
-            await JS.InvokeVoidAsync("simpleVideo.callUsers", peerIds);
+            foreach (var p in participants)
+            {
+                if (!RemoteParticipants.Any(x => x.PeerId == p.PeerId))
+                {
+                    RemoteParticipants.Add(new MeetingParticipant
+                    {
+                        PeerId = p.PeerId,
+                        DisplayName = p.DisplayName,
+                        AvatarUrl = p.AvatarUrl,
+                        IsMuted = p.IsMuted,
+                        IsVideoOff = p.IsVideoOff
+                    });
+
+                    peerIdsToCall.Add(p.PeerId);
+                }
+            }
+            StateHasChanged();
+
+            if (peerIdsToCall.Count > 0)
+            {
+                await JS.InvokeVoidAsync("simpleVideo.callUsers", peerIdsToCall);
+            }
         });
 
         BoardHub.OnParticipantStateUpdated += async (peerId, isMuted, isVideoOff) => await InvokeAsync(async () =>
@@ -823,17 +838,15 @@ public partial class Board : IDisposable
     }
 
     [JSInvokable]
-    public async Task OnRemoteStreamAdded(string peerId)
+    public async Task OnRemoteStreamAdded(string peerId, bool hasVideo)
     {
         var participant = RemoteParticipants.FirstOrDefault(p => p.PeerId == peerId);
 
         if (participant != null)
         {
-            participant.IsVideoOff = false;
             StateHasChanged();
 
             await Task.Delay(50);
-
             await JS.InvokeVoidAsync("simpleVideo.reloadVideo", peerId);
         }
         else
@@ -842,7 +855,7 @@ public partial class Board : IDisposable
             {
                 PeerId = peerId,
                 DisplayName = "Connecting...",
-                IsVideoOff = false
+                IsVideoOff = true
             });
             StateHasChanged();
 
@@ -872,7 +885,8 @@ public partial class Board : IDisposable
         }
     }
 
-    private async Task ToggleScreenShare()
+    [JSInvokable]
+    public async Task ToggleScreenShare()
     {
         if (IsScreenSharing)
         {
@@ -890,10 +904,12 @@ public partial class Board : IDisposable
         else
         {
             var success = await JS.InvokeAsync<bool>("simpleVideo.startScreenShare");
+
             if (success)
             {
                 IsScreenSharing = true;
                 var myName = MainLayout?.UserDisplayName ?? "You";
+
                 if (!IncomingScreens.Any(s => s.PeerId == MyPeerId))
                 {
                     IncomingScreens.Add(new ScreenShareSession
@@ -907,6 +923,11 @@ public partial class Board : IDisposable
                 StateHasChanged();
 
                 await JS.InvokeVoidAsync("simpleVideo.attachLocalScreen", MyPeerId);
+
+                foreach (var user in RemoteParticipants)
+                {
+                    await JS.InvokeVoidAsync("simpleVideo.shareScreenWithUser", user.PeerId);
+                }
             }
         }
     }
@@ -927,6 +948,43 @@ public partial class Board : IDisposable
             });
             StateHasChanged();
         }
+    }
+
+    private async Task OpenSettings()
+    {
+        IsSettingsOpen = !IsSettingsOpen;
+        if (IsSettingsOpen)
+        {
+            var devices = await JS.InvokeAsync<List<MediaDeviceInfo>>("simpleVideo.getDevices");
+
+            // Debugging: Check if we actually got items
+            Console.WriteLine($"Found {devices.Count} devices.");
+
+            AudioDevices = devices.Where(d => d.Kind == "audioinput").ToList();
+            VideoDevices = devices.Where(d => d.Kind == "videoinput").ToList();
+
+            // Set defaults if currently empty
+            if (string.IsNullOrEmpty(SelectedAudioId) && AudioDevices.Any())
+                SelectedAudioId = AudioDevices.First().DeviceId;
+
+            if (string.IsNullOrEmpty(SelectedVideoId) && VideoDevices.Any())
+                SelectedVideoId = VideoDevices.First().DeviceId;
+
+            // --- FIX: FORCE RE-RENDER ---
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnAudioDeviceChanged(string deviceId)
+    {
+        SelectedAudioId = deviceId;
+        await JS.InvokeVoidAsync("simpleVideo.switchAudioDevice", deviceId);
+    }
+
+    private async Task OnVideoDeviceChanged(string deviceId)
+    {
+        SelectedVideoId = deviceId;
+        await JS.InvokeVoidAsync("simpleVideo.switchVideoDevice", deviceId);
     }
 
     public void Dispose()
