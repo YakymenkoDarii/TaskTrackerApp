@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
 using MudBlazor;
 using System.Security.Claims;
+using TaskTrackerApp.Frontend.BlazorApp.Layout;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.ColumnDialogs;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.InvitationDialogs;
@@ -11,10 +13,12 @@ using TaskTrackerApp.Frontend.Domain;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Columns;
+using TaskTrackerApp.Frontend.Domain.DTOs.Meeting;
 using TaskTrackerApp.Frontend.Domain.Enums;
 using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Domain.Events.Card;
 using TaskTrackerApp.Frontend.Domain.Events.Column;
+using TaskTrackerApp.Frontend.Domain.Models;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
@@ -45,6 +49,10 @@ public partial class Board : IDisposable
 
     [Inject] private BoardSignalRService BoardHub { get; set; }
 
+    [Inject] private IJSRuntime JS { get; set; }
+
+    [CascadingParameter] public MainLayout? MainLayout { get; set; }
+
     [SupplyParameterFromQuery]
     public int? OpenCard { get; set; }
 
@@ -64,13 +72,35 @@ public partial class Board : IDisposable
            board != null
            && (_currentUserRole == BoardRole.Admin || _currentUserRole == BoardRole.Member);
 
+    //Meeting fields
+    private MeetingDto? CurrentMeeting;
+
+    private bool IsInMeeting = false;
+    private string? MyPeerId;
+    private List<MeetingParticipant> RemoteParticipants = new();
+    private DotNetObjectReference<Board>? _objRef;
+    private bool IsMinimized = false;
+    private bool IsMuted = true;
+    private bool IsVideoOff = true;
+    private bool IsScreenSharing = false;
+
+    private List<ScreenShareSession> IncomingScreens = new();
+
+    private List<MediaDeviceInfo> AudioDevices = new();
+    private List<MediaDeviceInfo> VideoDevices = new();
+    private string SelectedAudioId;
+    private string SelectedVideoId;
+    private bool IsSettingsOpen;
+
     protected override async Task OnInitializedAsync()
     {
         await AddToRecentBoardsAsync(BoardId);
 
         await BoardHub.StartConnection();
-        await BoardHub.JoinBoard(BoardId);
         RegisterSignalREvents();
+        await BoardHub.JoinBoard(BoardId);
+
+        CurrentMeeting = await BoardHub.GetActiveMeetingAsync(BoardId);
 
         await LoadBoardDataAsync();
 
@@ -92,6 +122,103 @@ public partial class Board : IDisposable
         BoardHub.OnCardDeleted += async (e) => await InvokeAsync(() => OnCardDeleted(e));
         BoardHub.OnMemberRoleUpdated += async (e) => await InvokeAsync(() => OnMemberRoleUpdated(e));
         BoardHub.OnMemberRemoved += async (e) => await InvokeAsync(() => OnMemberRemoved(e));
+
+        BoardHub.OnMeetingStateUpdated += async (m) => await InvokeAsync(() =>
+        {
+            CurrentMeeting = m;
+            StateHasChanged();
+        });
+
+        BoardHub.OnUserJoinedMeeting += async (participant) => await InvokeAsync(async () =>
+        {
+            if (IsInMeeting && participant.PeerId != MyPeerId)
+            {
+                if (!RemoteParticipants.Any(p => p.PeerId == participant.PeerId))
+                {
+                    RemoteParticipants.Add(participant);
+                    StateHasChanged();
+                }
+
+                if (IsScreenSharing)
+                {
+                    Console.WriteLine($"[ScreenShare] New user joined. Sharing screen with {participant.PeerId}...");
+                    await JS.InvokeVoidAsync("simpleVideo.shareScreenWithUser", participant.PeerId);
+                }
+            }
+        });
+
+        BoardHub.OnUserLeftMeeting += async (peerId) => await InvokeAsync(async () =>
+        {
+            var participant = RemoteParticipants.FirstOrDefault(p => p.PeerId == peerId);
+            if (participant != null)
+            {
+                RemoteParticipants.Remove(participant);
+            }
+
+            var screen = IncomingScreens.FirstOrDefault(s => s.PeerId == peerId);
+            if (screen != null)
+            {
+                IncomingScreens.Remove(screen);
+            }
+
+            StateHasChanged();
+
+            await JS.InvokeVoidAsync("simpleVideo.removePeer", peerId);
+        });
+        BoardHub.OnJoinMeetingResponse += async (participants) => await InvokeAsync(async () =>
+        {
+            var peerIdsToCall = new List<string>();
+
+            foreach (var p in participants)
+            {
+                if (!RemoteParticipants.Any(x => x.PeerId == p.PeerId))
+                {
+                    RemoteParticipants.Add(new MeetingParticipant
+                    {
+                        PeerId = p.PeerId,
+                        DisplayName = p.DisplayName,
+                        AvatarUrl = p.AvatarUrl,
+                        IsMuted = p.IsMuted,
+                        IsVideoOff = p.IsVideoOff
+                    });
+
+                    peerIdsToCall.Add(p.PeerId);
+                }
+            }
+            StateHasChanged();
+
+            if (peerIdsToCall.Count > 0)
+            {
+                await JS.InvokeVoidAsync("simpleVideo.callUsers", peerIdsToCall);
+            }
+        });
+
+        BoardHub.OnParticipantStateUpdated += async (peerId, isMuted, isVideoOff) => await InvokeAsync(async () =>
+        {
+            var participant = RemoteParticipants.FirstOrDefault(p => p.PeerId == peerId);
+            if (participant != null)
+            {
+                participant.IsMuted = isMuted;
+                participant.IsVideoOff = isVideoOff;
+                StateHasChanged();
+
+                if (!isVideoOff)
+                {
+                    await Task.Delay(50);
+                    await JS.InvokeVoidAsync("simpleVideo.ensureVideoPlays", peerId);
+                }
+            }
+        });
+
+        BoardHub.OnUserStoppedScreenShare += async (peerId) => await InvokeAsync(() =>
+        {
+            var screen = IncomingScreens.FirstOrDefault(s => s.PeerId == peerId);
+            if (screen != null)
+            {
+                IncomingScreens.Remove(screen);
+                StateHasChanged();
+            }
+        });
     }
 
     private async Task OnCardMoved(CardMovedEvent e)
@@ -663,8 +790,212 @@ public partial class Board : IDisposable
         _ => Color.Default
     };
 
+    private async Task StartMeeting()
+    {
+        _objRef = DotNetObjectReference.Create(this);
+
+        var success = await JS.InvokeAsync<bool>("simpleVideo.startLocalStream", IsMuted, IsVideoOff);
+
+        if (!success)
+        {
+            Snackbar.Add("Could not access camera/mic", Severity.Error);
+            return;
+        }
+
+        MyPeerId = await JS.InvokeAsync<string>("simpleVideo.init", _objRef);
+
+        IsInMeeting = true;
+        IsMinimized = false;
+        StateHasChanged();
+
+        await Task.Delay(50);
+        await JS.InvokeVoidAsync("simpleVideo.attachLocalVideo");
+
+        await BoardHub.JoinMeetingAsync(BoardId, MyPeerId, IsMuted, IsVideoOff);
+    }
+
+    private async Task LeaveMeeting()
+    {
+        await JS.InvokeVoidAsync("simpleVideo.leave");
+
+        if (MyPeerId != null)
+        {
+            await BoardHub.LeaveMeetingAsync(BoardId, MyPeerId);
+        }
+
+        IsInMeeting = false;
+        IsMinimized = false;
+        IsMuted = true;
+        IsVideoOff = true;
+        IsScreenSharing = false;
+        RemoteParticipants.Clear();
+        MyPeerId = null;
+
+        _objRef?.Dispose();
+        _objRef = null;
+
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task OnRemoteStreamAdded(string peerId, bool hasVideo)
+    {
+        var participant = RemoteParticipants.FirstOrDefault(p => p.PeerId == peerId);
+
+        if (participant != null)
+        {
+            StateHasChanged();
+
+            await Task.Delay(50);
+            await JS.InvokeVoidAsync("simpleVideo.reloadVideo", peerId);
+        }
+        else
+        {
+            RemoteParticipants.Add(new MeetingParticipant
+            {
+                PeerId = peerId,
+                DisplayName = "Connecting...",
+                IsVideoOff = true
+            });
+            StateHasChanged();
+
+            await Task.Delay(50);
+            await JS.InvokeVoidAsync("simpleVideo.reloadVideo", peerId);
+        }
+    }
+
+    private async Task ToggleMute()
+    {
+        IsMuted = !IsMuted;
+        await JS.InvokeVoidAsync("simpleVideo.toggleAudio", !IsMuted);
+
+        if (MyPeerId != null)
+            await BoardHub.UpdateMediaStateAsync(BoardId, MyPeerId, IsMuted, IsVideoOff);
+    }
+
+    private async Task ToggleCamera()
+    {
+        IsVideoOff = !IsVideoOff;
+
+        await JS.InvokeVoidAsync("simpleVideo.toggleVideo", !IsVideoOff);
+
+        if (MyPeerId != null)
+        {
+            await BoardHub.UpdateMediaStateAsync(BoardId, MyPeerId, IsMuted, IsVideoOff);
+        }
+    }
+
+    [JSInvokable]
+    public async Task ToggleScreenShare()
+    {
+        if (IsScreenSharing)
+        {
+            await JS.InvokeVoidAsync("simpleVideo.stopScreenShare");
+            IsScreenSharing = false;
+
+            var myScreen = IncomingScreens.FirstOrDefault(s => s.PeerId == MyPeerId);
+            if (myScreen != null) IncomingScreens.Remove(myScreen);
+
+            if (MyPeerId != null)
+                await BoardHub.StopScreenShareAsync(BoardId, MyPeerId);
+
+            StateHasChanged();
+        }
+        else
+        {
+            var success = await JS.InvokeAsync<bool>("simpleVideo.startScreenShare");
+
+            if (success)
+            {
+                IsScreenSharing = true;
+                var myName = MainLayout?.UserDisplayName ?? "You";
+
+                if (!IncomingScreens.Any(s => s.PeerId == MyPeerId))
+                {
+                    IncomingScreens.Add(new ScreenShareSession
+                    {
+                        PeerId = MyPeerId,
+                        DisplayName = $"{myName} (You)",
+                        StreamId = "local-screen"
+                    });
+                }
+
+                StateHasChanged();
+
+                await JS.InvokeVoidAsync("simpleVideo.attachLocalScreen", MyPeerId);
+
+                foreach (var user in RemoteParticipants)
+                {
+                    await JS.InvokeVoidAsync("simpleVideo.shareScreenWithUser", user.PeerId);
+                }
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnScreenShareAdded(string peerId, string streamId)
+    {
+        var user = RemoteParticipants.FirstOrDefault(u => u.PeerId == peerId);
+        var name = user?.DisplayName ?? "Unknown User";
+
+        if (!IncomingScreens.Any(s => s.PeerId == peerId))
+        {
+            IncomingScreens.Add(new ScreenShareSession
+            {
+                PeerId = peerId,
+                StreamId = streamId,
+                DisplayName = name
+            });
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenSettings()
+    {
+        IsSettingsOpen = !IsSettingsOpen;
+        if (IsSettingsOpen)
+        {
+            var devices = await JS.InvokeAsync<List<MediaDeviceInfo>>("simpleVideo.getDevices");
+
+            // Debugging: Check if we actually got items
+            Console.WriteLine($"Found {devices.Count} devices.");
+
+            AudioDevices = devices.Where(d => d.Kind == "audioinput").ToList();
+            VideoDevices = devices.Where(d => d.Kind == "videoinput").ToList();
+
+            // Set defaults if currently empty
+            if (string.IsNullOrEmpty(SelectedAudioId) && AudioDevices.Any())
+                SelectedAudioId = AudioDevices.First().DeviceId;
+
+            if (string.IsNullOrEmpty(SelectedVideoId) && VideoDevices.Any())
+                SelectedVideoId = VideoDevices.First().DeviceId;
+
+            // --- FIX: FORCE RE-RENDER ---
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnAudioDeviceChanged(string deviceId)
+    {
+        SelectedAudioId = deviceId;
+        await JS.InvokeVoidAsync("simpleVideo.switchAudioDevice", deviceId);
+    }
+
+    private async Task OnVideoDeviceChanged(string deviceId)
+    {
+        SelectedVideoId = deviceId;
+        await JS.InvokeVoidAsync("simpleVideo.switchVideoDevice", deviceId);
+    }
+
     public void Dispose()
     {
+        BoardHub.OnMeetingStateUpdated -= (m) => InvokeAsync(() => CurrentMeeting = m);
+
+        if (IsInMeeting)
+        {
+            _ = LeaveMeeting();
+        }
+
         BoardHub.OnColumnCreated -= (e) => InvokeAsync(() => OnColumnCreated(e));
         BoardHub.OnColumnMoved -= (e) => InvokeAsync(() => OnColumnMoved(e));
         BoardHub.OnColumnDeleted -= (e) => InvokeAsync(() => OnColumnDeleted(e));
@@ -674,6 +1005,8 @@ public partial class Board : IDisposable
         BoardHub.OnCardDeleted -= (e) => InvokeAsync(() => OnCardDeleted(e));
         BoardHub.OnMemberRoleUpdated -= (e) => InvokeAsync(() => OnMemberRoleUpdated(e));
         BoardHub.OnMemberRemoved -= (e) => InvokeAsync(() => OnMemberRemoved(e));
+
         _ = BoardHub.LeaveBoard(BoardId);
+        _objRef?.Dispose();
     }
 }

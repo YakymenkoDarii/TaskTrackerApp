@@ -25,7 +25,9 @@ public partial class MainLayout : IDisposable
     private bool _drawerOpen = true;
     private string UserLetter = "?";
     private bool _chatOpen = false;
-    private string? UserAvatarUrl = null;
+    public string UserDisplayName { get; private set; } = "You";
+
+    public string? UserAvatarUrl { get; private set; }
 
     private void DrawerToggle()
     {
@@ -58,6 +60,8 @@ public partial class MainLayout : IDisposable
             if (user.Identity is not null && user.Identity.IsAuthenticated)
             {
                 var tagName = user.FindFirst(ClaimTypes.Name)?.Value;
+
+                UserDisplayName = tagName ?? "You";
                 UserLetter = string.IsNullOrEmpty(tagName) ? "?" : tagName[0].ToString().ToUpper();
 
                 var avatarClaim = user.FindFirst("AvatarUrl");
@@ -76,6 +80,7 @@ public partial class MainLayout : IDisposable
 
                     if (!string.IsNullOrEmpty(result.Value.DisplayName))
                     {
+                        UserDisplayName = result.Value.DisplayName;
                         UserLetter = result.Value.DisplayName[0].ToString().ToUpper();
                     }
                 }

@@ -1,0 +1,38 @@
+﻿@implements IDisposable
+
+<span>@_timeString</span>
+
+@code {
+    [Parameter] public DateTime StartTime { get; set; }
+
+    private string _timeString = "00:00";
+    private System.Threading.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        UpdateTimer(null);
+
+        _timer = new System.Threading.Timer(UpdateTimer, null, 1000, 1000);
+    }
+
+    private void UpdateTimer(object? state)
+    {
+        var duration = DateTime.UtcNow - StartTime;
+
+        if (duration.TotalHours >= 1)
+        {
+            _timeString = $"{(int)duration.TotalHours}:{duration.Minutes:D2}:{duration.Seconds:D2}";
+        }
+        else
+        {
+            _timeString = $"{duration.Minutes:D2}:{duration.Seconds:D2}";
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IBlobStorageService, BlobStorageService>();
         services.AddScoped<IBoardBackupService, BoardBackupService>();
+        services.AddScoped<IMeetingService, MeetingService>();
 
         services.AddScoped<IChatHistoryService, ChatHistoryService>();
         services.AddScoped<IFaqService, FaqService>();

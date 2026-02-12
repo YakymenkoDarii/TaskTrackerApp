@@ -70,6 +70,8 @@
     </MudDrawer>
 
     <MudMainContent>
-        @Body
+        <CascadingValue Value="this">
+            @Body
+        </CascadingValue>
     </MudMainContent>
 </MudLayout>

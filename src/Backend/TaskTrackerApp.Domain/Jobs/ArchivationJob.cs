@@ -1,4 +1,6 @@
-﻿namespace TaskTrackerApp.Domain.Jobs;
+﻿using Newtonsoft.Json;
+
+namespace TaskTrackerApp.Domain.Jobs;
 
 public class ArchivationJob
 {

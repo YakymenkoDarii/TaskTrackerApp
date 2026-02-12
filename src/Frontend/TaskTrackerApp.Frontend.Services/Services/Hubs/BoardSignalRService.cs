@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
 using TaskTrackerApp.Frontend.Domain.Constants;
+using TaskTrackerApp.Frontend.Domain.DTOs.Meeting;
 using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Domain.Events.Card;
 using TaskTrackerApp.Frontend.Domain.Events.Column;
@@ -52,6 +53,19 @@ public class BoardSignalRService : IAsyncDisposable
 
     public event Action<LabelDeletedEvent>? OnLabelDeleted;
 
+    //Meeting
+    public event Action<MeetingDto?>? OnMeetingStateUpdated;
+
+    public event Action<List<MeetingParticipant>>? OnJoinMeetingResponse;
+
+    public event Action<MeetingParticipant>? OnUserJoinedMeeting;
+
+    public event Action<string>? OnUserLeftMeeting;
+
+    public event Action<string, bool, bool>? OnParticipantStateUpdated;
+
+    public event Action<string>? OnUserStoppedScreenShare;
+
     public BoardSignalRService(
         NavigationManager navigationManager,
         ITokenStorage tokenStorage,
@@ -98,6 +112,14 @@ public class BoardSignalRService : IAsyncDisposable
         _hubConnection.On<LabelCreatedEvent>(nameof(IBoardClient.LabelCreated), e => OnLabelCreated?.Invoke(e));
         _hubConnection.On<LabelUpdatedEvent>(nameof(IBoardClient.LabelUpdated), e => OnLabelUpdated?.Invoke(e));
         _hubConnection.On<LabelDeletedEvent>(nameof(IBoardClient.LabelDeleted), e => OnLabelDeleted?.Invoke(e));
+
+        //Meeting
+        _hubConnection.On<MeetingDto?>(nameof(IBoardClient.MeetingStateUpdated), meeting => OnMeetingStateUpdated?.Invoke(meeting));
+        _hubConnection.On<List<MeetingParticipant>>(nameof(IBoardClient.JoinMeetingResponse), peers => OnJoinMeetingResponse?.Invoke(peers));
+        _hubConnection.On<MeetingParticipant>(nameof(IBoardClient.UserJoinedMeeting), participant => OnUserJoinedMeeting?.Invoke(participant));
+        _hubConnection.On<string>(nameof(IBoardClient.UserLeftMeeting), peerId => OnUserLeftMeeting?.Invoke(peerId));
+        _hubConnection.On<string, bool, bool>(nameof(IBoardClient.ParticipantStateUpdated), (peerId, isMuted, isVideoOff) => OnParticipantStateUpdated?.Invoke(peerId, isMuted, isVideoOff));
+        _hubConnection.On<string>(nameof(IBoardClient.UserStoppedScreenShare), (peerId) => OnUserStoppedScreenShare?.Invoke(peerId));
     }
 
     public async Task StartConnection()
@@ -140,6 +162,45 @@ public class BoardSignalRService : IAsyncDisposable
         {
             await _hubConnection.InvokeAsync("LeaveBoardGroup", boardId);
         }
+    }
+
+    public async Task JoinMeetingAsync(int boardId, string peerId, bool isMuted, bool isVideoOff)
+    {
+        if (_hubConnection.State == HubConnectionState.Connected)
+        {
+            await _hubConnection.InvokeAsync("JoinMeeting", boardId, peerId, isMuted, isVideoOff);
+        }
+    }
+
+    public async Task LeaveMeetingAsync(int boardId, string peerId)
+    {
+        if (_hubConnection.State == HubConnectionState.Connected)
+        {
+            await _hubConnection.InvokeAsync("LeaveMeeting", boardId, peerId);
+        }
+    }
+
+    public async Task<MeetingDto?> GetActiveMeetingAsync(int boardId)
+    {
+        if (_hubConnection.State == HubConnectionState.Connected)
+        {
+            return await _hubConnection.InvokeAsync<MeetingDto?>("GetActiveMeeting", boardId);
+        }
+        return null;
+    }
+
+    public async Task UpdateMediaStateAsync(int boardId, string peerId, bool isMuted, bool isVideoOff)
+    {
+        if (_hubConnection.State == HubConnectionState.Connected)
+        {
+            await _hubConnection.InvokeAsync("UpdateMediaState", boardId, peerId, isMuted, isVideoOff);
+        }
+    }
+
+    public async Task StopScreenShareAsync(int boardId, string peerId)
+    {
+        if (_hubConnection.State == HubConnectionState.Connected)
+            await _hubConnection.InvokeAsync("StopScreenShare", boardId, peerId);
     }
 
     public async ValueTask DisposeAsync()

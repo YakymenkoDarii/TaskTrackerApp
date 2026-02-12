@@ -119,3 +119,169 @@ html, body {
     text-transform: none;
     font-weight: 500;
 }
+
+/*Meeting css*/
+.meet-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #202124;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+}
+
+.meet-header {
+    padding: 15px 20px;
+    color: white;
+    font-size: 1.2rem;
+    background: rgba(0,0,0,0.2);
+}
+
+.meet-grid {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.meet-video-card {
+    position: relative;
+    background: #202124;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 480px;
+    max-width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.meet-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 2;
+    background: black;
+}
+
+.meet-avatar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #3c4043;
+    z-index: 1;
+}
+
+.meet-name-tag {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    color: white;
+    background: rgba(0,0,0,0.6);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+}
+
+.meet-controls {
+    height: 80px;
+    background: #202124;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    border-top: 1px solid #3c4043;
+}
+
+.meet-video.hidden {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.meet-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: white;
+    background: #3c4043;
+}
+
+    .meet-btn:hover {
+        background: #45494d;
+    }
+
+    .meet-btn.active {
+        background: #ea4335;
+        color: white;
+    }
+
+    .meet-btn.screen-active {
+        background: #8ab4f8;
+        color: #202124;
+    }
+
+.meet-screenshare-grid {
+    width: 100%;
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    justify-content: center;
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+}
+
+.meet-screenshare-card {
+    position: relative;
+    background: #000;
+    width: 800px;
+    max-width: 90vw;
+    aspect-ratio: 16/9;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+}
+
+    .meet-screenshare-card video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+video.hidden {
+    display: block;
+    visibility: hidden;
+    position: absolute;
+    height: 1px;
+    width: 1px;
+}

@@ -19,9 +19,162 @@ else if (board == null)
 }
 else
 {
+    @if (IsInMeeting)
+    {
+        <div class="meet-overlay" style="@(IsMinimized ? "display:none;" : "")">
+            <div class="meet-header d-flex justify-space-between align-center">
+                <MudText Typo="Typo.h6" Style="color:white;">@board.Title - Meeting</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Minimize" Color="Color.Inherit" OnClick="@(() => IsMinimized = true)" />
+            </div>
+
+            @if (IncomingScreens.Any())
+            {
+                <div class="meet-screenshare-grid" style="width:100%; display:flex; gap:10px; margin-bottom:20px; overflow-x:auto;">
+                    @foreach (var screen in IncomingScreens)
+                    {
+                        <div class="meet-screenshare-card">
+                            <video id="screen-@screen.PeerId" autoplay playsinline muted></video>
+                            <div class="meet-name-tag">
+                                <MudIcon Icon="@Icons.Material.Filled.ScreenShare" Size="Size.Small" Class="mr-1" />
+                                @screen.DisplayName
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="meet-grid">
+                <div class="meet-video-card">
+                    <div class="meet-avatar-overlay">
+                        <MudAvatar Color="Color.Secondary" Style="height:80px; width:80px; font-size:2rem;">
+                            @if (MainLayout != null && !string.IsNullOrEmpty(MainLayout.UserAvatarUrl))
+                            {
+                                <MudImage Src="@MainLayout.UserAvatarUrl" />
+                            }
+                            else
+                            {
+                                @((MainLayout?.UserDisplayName ?? "Y").Substring(0, 1).ToUpper())
+                            }
+                        </MudAvatar>
+                    </div>
+
+                    <video id="localVideo" autoplay muted playsinline
+                           class="meet-video @(IsVideoOff ? "hidden" : "")"></video>
+
+                    <div class="meet-name-tag">
+                        @if (IsMuted)
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.MicOff" Size="Size.Small" Color="Color.Error" Class="mr-1" />
+                        }
+                        @(MainLayout?.UserDisplayName ?? "You")
+                    </div>
+                </div>
+
+                @foreach (var user in RemoteParticipants)
+                {
+                    <div class="meet-video-card">
+                        <div class="meet-avatar-overlay">
+                            <MudAvatar Color="Color.Primary" Style="height:80px; width:80px; font-size:2rem;">
+                                @if (!string.IsNullOrEmpty(user.AvatarUrl))
+                                {
+                                    <MudImage Src="@user.AvatarUrl" />
+                                }
+                                else
+                                {
+                                    @(user.DisplayName?.Substring(0, 1).ToUpper() ?? "?")
+                                }
+                            </MudAvatar>
+                        </div>
+
+                        <video id="video-@user.PeerId" autoplay playsinline
+                               class="meet-video @(user.IsVideoOff ? "hidden" : "")"></video>
+
+                        <div class="meet-name-tag">
+                            @if (user.IsMuted)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.MicOff" Size="Size.Small" Color="Color.Error" Class="mr-1" />
+                            }
+                            @user.DisplayName
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="meet-controls">
+                <button class="meet-btn @(IsMuted ? "active" : "")" @onclick="ToggleMute">
+                    <MudIcon Icon="@(IsMuted? Icons.Material.Filled.MicOff : Icons.Material.Filled.Mic)" />
+                </button>
+                <button class="meet-btn @(IsVideoOff ? "active" : "")" @onclick="ToggleCamera">
+                    <MudIcon Icon="@(IsVideoOff? Icons.Material.Filled.VideocamOff : Icons.Material.Filled.Videocam)" />
+                </button>
+
+                <MudMenu Icon="@Icons.Material.Filled.Settings"
+                         Variant="Variant.Filled"
+                         AnchorOrigin="Origin.TopCenter"
+                         TransformOrigin="Origin.BottomCenter"
+                         Class="meet-btn-settings">
+
+                    <ActivatorContent>
+                        <button class="meet-btn" @onclick="OpenSettings">
+                            <MudIcon Icon="@Icons.Material.Filled.Settings" />
+                        </button>
+                    </ActivatorContent>
+
+                    <ChildContent>
+                        <MudPaper Class="pa-3" Style="width: 300px;">
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Microphone</MudText>
+                            <MudSelect T="string" Value="@SelectedAudioId" ValueChanged="OnAudioDeviceChanged" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined">
+                                @foreach (var dev in AudioDevices)
+                                {
+                                    <MudSelectItem Value="@dev.DeviceId">@dev.Label</MudSelectItem>
+                                }
+                            </MudSelect>
+
+                            <MudText Typo="Typo.subtitle2" Class="mt-3 mb-2">Camera</MudText>
+                            <MudSelect T="string" Value="@SelectedVideoId" ValueChanged="OnVideoDeviceChanged" Dense="true" Margin="Margin.Dense" Variant="Variant.Outlined">
+                                @foreach (var dev in VideoDevices)
+                                {
+                                    <MudSelectItem Value="@dev.DeviceId">@dev.Label</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudPaper>
+                    </ChildContent>
+                </MudMenu>
+
+                <button class="meet-btn @(IsScreenSharing ? "screen-active" : "")" @onclick="ToggleScreenShare">
+                    <MudIcon Icon="@(IsScreenSharing? Icons.Material.Filled.StopScreenShare : Icons.Material.Filled.ScreenShare)" />
+                </button>
+                <button class="meet-btn active" style="background-color: #ea4335; width: 60px; border-radius: 20px;" @onclick="LeaveMeeting">
+                    <MudIcon Icon="@Icons.Material.Filled.CallEnd" />
+                </button>
+            </div>
+        </div>
+
+   
+        @if (IsMinimized)
+        {
+            <MudPaper Class="pa-3 d-flex align-center gap-4 mud-theme-dark"
+                      Style="position:fixed; bottom:20px; right:20px; z-index:2000; border: 1px solid #444;"
+                      Elevation="10">
+                <MudIcon Icon="@Icons.Material.Filled.Videocam" Color="Color.Success" />
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Success">Meeting Active</MudText>
+                    <MudText Typo="Typo.caption">@RemoteParticipants.Count others</MudText>
+                </div>
+                <MudTooltip Text="Maximize">
+                    <MudIconButton Icon="@Icons.Material.Filled.OpenInFull" Color="Color.Inherit" OnClick="@(() => IsMinimized = false)" />
+                </MudTooltip>
+                <MudTooltip Text="Leave">
+                    <MudIconButton Icon="@Icons.Material.Filled.CallEnd" Color="Color.Error" OnClick="LeaveMeeting" />
+                </MudTooltip>
+            </MudPaper>
+        }
+    }
+
     <div class="board-container d-flex flex-column h-100">
+
         <div class="board-header px-4 py-3 d-flex align-center justify-space-between flex-shrink-0">
-            <div>
+            <div style="min-width: 200px;">
                 @if (IsAdmin)
                 {
                     <EditableLabel @bind-Value=@board.Title
@@ -47,8 +200,33 @@ else
                 }
             </div>
 
-            <div class="d-flex align-center">
-                <div style="width: 250px;" class="mr-4">
+            <div class="d-flex align-center gap-4">
+
+                @if (!IsInMeeting)
+                {
+                    @if (CurrentMeeting != null && CurrentMeeting.Participants.Any())
+                    {
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Success"
+                                   Size="Size.Small"
+                                   OnClick="StartMeeting"
+                                   StartIcon="@Icons.Material.Filled.Login">
+                            Join Call (@CurrentMeeting.Participants.Count) • <MeetingTimer StartTime="@CurrentMeeting.StartTime" />
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudButton Variant="Variant.Outlined" 
+                                   Style="color: white; border-color: rgba(255,255,255,0.5);"
+                                   Size="Size.Small"
+                                   OnClick="StartMeeting" 
+                                   StartIcon="@Icons.Material.Filled.VideoCall">
+                            Start Call
+                        </MudButton>
+                    }
+                }
+
+                <div style="width: 250px;">
                     <TaskSearch BoardId="@BoardId"
                                 Placeholder="Search..."
                                 OnTaskChanged="@LoadBoardDataAsync" />
