@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using System.Security.Claims;
 using TaskTrackerApp.Application.Features.Meeting.Queries.GetMeetingParticipantWithPeerId;
 using TaskTrackerApp.Application.Interfaces.Hubs;
 using TaskTrackerApp.Application.Interfaces.Services;

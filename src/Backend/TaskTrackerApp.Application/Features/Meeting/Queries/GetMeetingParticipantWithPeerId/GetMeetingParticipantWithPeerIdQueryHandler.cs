@@ -1,10 +1,4 @@
 ﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using TaskTrackerApp.Application.Interfaces.Common;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.DTOs.Meeting;
