@@ -1,0 +1,20 @@
+﻿@page "/subscription/cancel"
+@inject NavigationManager Nav
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex flex-column align-center justify-center mt-16">
+    <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" Size="Size.Large" Style="width: 100px; height: 100px;" />
+
+    <MudText Typo="Typo.h4" Color="Color.Error" Class="mt-4">Payment Cancelled</MudText>
+
+    <MudText Typo="Typo.body1" Class="mt-2 text-center">
+        No worries! You haven't been charged.
+    </MudText>
+
+    <MudButton Variant="Variant.Outlined"
+               Color="Color.Secondary"
+               Class="mt-8"
+               OnClick="@(() => Nav.NavigateTo("/"))">
+        Back to Home
+    </MudButton>
+</MudContainer>

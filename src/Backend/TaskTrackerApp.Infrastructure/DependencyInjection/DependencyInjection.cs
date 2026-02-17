@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.KernelMemory;
 using StackExchange.Redis;
+using Stripe;
 using TaskTrackerApp.Application.Interfaces.Auth;
 using TaskTrackerApp.Application.Interfaces.BlobStorage;
 using TaskTrackerApp.Application.Interfaces.Jobs;
@@ -20,6 +21,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AzureAiSettings>(configuration.GetSection("AzureAiSettings"));
+        services.Configure<StripeSettings>(configuration.GetSection("Stripe"));
 
         var redisConnectionString = configuration.GetConnectionString("Redis") ?? "localhost:6379";
 
@@ -27,10 +29,11 @@ public static class DependencyInjection
             ConnectionMultiplexer.Connect(redisConnectionString));
 
         services.AddScoped<IPasswordHasher, PasswordHasher>();
-        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<ITokenService, Auth.TokenService>();
         services.AddScoped<IBlobStorageService, BlobStorageService>();
         services.AddScoped<IBoardBackupService, BoardBackupService>();
         services.AddScoped<IMeetingService, MeetingService>();
+        services.AddScoped<IPaymentService, PaymentService>();
 
         services.AddScoped<IChatHistoryService, ChatHistoryService>();
         services.AddScoped<IFaqService, FaqService>();
@@ -38,6 +41,8 @@ public static class DependencyInjection
         services.AddScoped<IInvitationNotifier, InvitationNotifier>();
         services.AddScoped<IBoardNotifier, BoardNotifier>();
         services.AddScoped<ICardNotifier, CardNotifier>();
+
+        StripeConfiguration.ApiKey = configuration["Stripe:SecretKey"];
 
         services.AddScoped<IArchivalSyncJob, ArchivalSyncJob>();
 

@@ -47,6 +47,11 @@
                         <MudMenuItem Href="/settings" Icon="@Icons.Material.Filled.Settings">
                             Settings
                         </MudMenuItem>
+                        <MudMenuItem OnClick="ManageSubscriptionAsync"
+                                     Icon="@(IsUserPro ? Icons.Material.Filled.CreditCard : Icons.Material.Filled.AutoAwesome)"
+                                     IconColor="@(IsUserPro ? Color.Default : Color.Warning)">
+                            @(IsUserPro ? "Billing & Subscription" : "Upgrade to Pro")
+                        </MudMenuItem>
                         <MudMenuItem OnClick="LogoutAsync" Icon="@Icons.Material.Filled.Logout">
                             Logout
                         </MudMenuItem>

@@ -11,4 +11,7 @@ public interface IUserRepository : IRepository<User, int>
     Task<User?> GetByRefreshTokenAsync(string refreshToken);
 
     Task<IEnumerable<User>> SearchAsync(string term, int? excludeBoardId = null);
+    Task<User?> GetByStripeIdAsync(string stripeId);
+    Task<string?> GetStripeIdByUserIdAsync(int userId);
+    Task<string?> GetEmailByUserIdAsync(int userId);
 }

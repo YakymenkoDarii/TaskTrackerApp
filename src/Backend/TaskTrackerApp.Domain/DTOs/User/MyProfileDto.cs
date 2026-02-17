@@ -7,4 +7,6 @@ public class MyProfileDto
     public string DisplayName { get; set; }
 
     public string? AvatarUrl { get; set; }
+
+    public bool IsPro { get; set; } = false;
 }

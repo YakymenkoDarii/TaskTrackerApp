@@ -48,4 +48,27 @@ public class UserRepository : Repository<User, int>, IUserRepository
             .Take(10)
             .ToListAsync();
     }
+
+    public async Task<User?> GetByStripeIdAsync(string stripeId)
+    {
+        return await _dbSet.FirstOrDefaultAsync(u => u.StripeCustomerId == stripeId);
+    }
+
+    public async Task<string?> GetStripeIdByUserIdAsync(int userId)
+    {
+        var query = _dbSet.AsQueryable();
+
+        var user = await query.FirstOrDefaultAsync(u => u.Id == userId);
+
+        return user.StripeCustomerId;
+    }
+
+    public async Task<string?> GetEmailByUserIdAsync(int userId)
+    {
+        var query = _dbSet.AsQueryable();
+
+        var user = await query.FirstOrDefaultAsync(u => u.Id == userId);
+
+        return user.Email;
+    }
 }

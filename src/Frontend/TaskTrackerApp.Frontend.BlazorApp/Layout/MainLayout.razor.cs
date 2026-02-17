@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using MudBlazor;
 using System.Security.Claims;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 using TaskTrackerApp.Frontend.Services.Services.Auth;
@@ -19,12 +20,19 @@ public partial class MainLayout : IDisposable
 
     [Inject] private IUsersService UsersService { get; set; }
 
+    [Inject] private ISubscriptionService SubscriptionService { get; set; }
+
+    [Inject] private ISnackbar Snackbar { get; set; }
+
     [CascadingParameter]
     private Task<AuthenticationState> AuthStateTask { get; set; }
 
     private bool _drawerOpen = true;
     private string UserLetter = "?";
     private bool _chatOpen = false;
+
+    public bool IsUserPro { get; private set; }
+
     public string UserDisplayName { get; private set; } = "You";
 
     public string? UserAvatarUrl { get; private set; }
@@ -77,6 +85,8 @@ public partial class MainLayout : IDisposable
                 if (result.IsSuccess)
                 {
                     UserAvatarUrl = result.Value.AvatarUrl;
+
+                    IsUserPro = result.Value.IsPro;
 
                     if (!string.IsNullOrEmpty(result.Value.DisplayName))
                     {
@@ -153,6 +163,34 @@ public partial class MainLayout : IDisposable
         finally
         {
             StateHasChanged();
+        }
+    }
+
+    private async Task ManageSubscriptionAsync()
+    {
+        if (IsUserPro)
+        {
+            var portalResult = await SubscriptionService.CreatePortalSessionAsync();
+            if (portalResult.IsSuccess)
+            {
+                Navigation.NavigateTo(portalResult.Value!, forceLoad: true);
+            }
+            else
+            {
+                Snackbar.Add("Could not access billing portal.", Severity.Error);
+            }
+        }
+        else
+        {
+            var checkoutResult = await SubscriptionService.CreateCheckoutSessionAsync();
+            if (checkoutResult.IsSuccess)
+            {
+                Navigation.NavigateTo(checkoutResult.Value!, forceLoad: true);
+            }
+            else
+            {
+                Snackbar.Add("Could not initiate checkout.", Severity.Error);
+            }
         }
     }
 

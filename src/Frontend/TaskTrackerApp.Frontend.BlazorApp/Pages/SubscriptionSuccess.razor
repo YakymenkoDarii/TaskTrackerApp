@@ -1,0 +1,26 @@
+﻿@page "/subscription/success"
+@inject NavigationManager Nav
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex flex-column align-center justify-center mt-16">
+    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" Style="width: 100px; height: 100px;" />
+    
+    <MudText Typo="Typo.h3" Color="Color.Success" Class="mt-4">Payment Successful!</MudText>
+    
+    <MudText Typo="Typo.body1" Class="mt-2 text-center">
+        Thank you for upgrading to Pro! Your account has been updated.
+    </MudText>
+
+    <MudButton Variant="Variant.Filled" 
+               Color="Color.Primary" 
+               Class="mt-8" 
+               OnClick="@(() => Nav.NavigateTo("/"))">
+        Go to Dashboard
+    </MudButton>
+</MudContainer>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "session_id")]
+    public string SessionId { get; set; }
+}
