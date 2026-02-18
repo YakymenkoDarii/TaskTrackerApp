@@ -3,7 +3,6 @@ using TaskTrackerApp.Application.Interfaces.Common;
 using TaskTrackerApp.Application.Interfaces.Services;
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Errors.Auth;
-using TaskTrackerApp.Domain.Errors.User;
 using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Subscription.Command.CreateCheckoutSession;

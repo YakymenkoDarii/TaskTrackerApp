@@ -9,7 +9,6 @@ using TaskTrackerApp.Frontend.Domain.Enums;
 using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
-using TaskTrackerApp.Frontend.Services.Services.Boards;
 using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.InvitationDialogs;

@@ -7,7 +7,7 @@ public interface IBoardsService
 {
     Task<Result<IEnumerable<BoardDto>>> GetAllAsync();
 
-    Task<Result> CreateAsync(CreateBoardDto board);
+    Task<Result<int>> CreateAsync(CreateBoardDto board);
 
     Task<Result> DeleteAsync(int boardId);
 

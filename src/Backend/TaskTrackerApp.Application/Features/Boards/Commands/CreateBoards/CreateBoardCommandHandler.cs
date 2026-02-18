@@ -7,7 +7,7 @@ using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Boards.Commands.CreateBoards;
 
-internal class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, int>
+internal class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, Result<int>>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 
@@ -16,7 +16,7 @@ internal class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, i
         _uowFactory = uowFactory;
     }
 
-    public async Task<int> Handle(CreateBoardCommand request, CancellationToken cancellationToken)
+    public async Task<Result<int>> Handle(CreateBoardCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();
 
@@ -28,7 +28,10 @@ internal class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, i
 
             if (ownedBoardsCount >= 3)
             {
-                return 0;
+                return Result<int>.Failure(new Error(
+                    "LimitReached",
+                    "You have reached the free limit of 3 boards. Upgrade to Pro to create more."
+                ));
             }
         }
 

@@ -11,7 +11,7 @@ public interface IBoardsApi
     Task<IApiResponse<Result<BoardDto>>> GetByIdAsync(int boardId);
 
     [Post("/api/Boards")]
-    Task<IApiResponse<Result>> CreateAsync(CreateBoardDto boardDto);
+    Task<IApiResponse<Result<int>>> CreateAsync(CreateBoardDto boardDto);
 
     [Delete("/api/Boards")]
     Task<IApiResponse<Result>> DeleteAsync(int id);

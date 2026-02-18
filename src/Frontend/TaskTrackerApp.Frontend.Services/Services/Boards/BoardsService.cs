@@ -28,20 +28,20 @@ public class BoardsService : IBoardsService
         }
     }
 
-    public async Task<Result> CreateAsync(CreateBoardDto board)
+    public async Task<Result<int>> CreateAsync(CreateBoardDto board)
     {
         try
         {
-            await _boardsApi.CreateAsync(board);
-            return Result.Success();
+            var response = await _boardsApi.CreateAsync(board);
+            return response.ToResult();
         }
         catch (ApiException ex)
         {
-            return Result.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+            return Result<int>.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
         }
         catch (Exception ex)
         {
-            return Result.Failure(new Error("UnknownError", ex.Message));
+            return Result<int>.Failure(new Error("UnknownError", ex.Message));
         }
     }
 

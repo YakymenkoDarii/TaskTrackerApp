@@ -1,10 +1,9 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.Common;
 using TaskTrackerApp.Application.Interfaces.UoW;
+using TaskTrackerApp.Application.Mappers.BoardMappers;
 using TaskTrackerApp.Domain.DTOs.Board;
 using TaskTrackerApp.Domain.Results;
-using TaskTrackerApp.Domain.Entities;
-using TaskTrackerApp.Application.Mappers.BoardMappers;
 
 namespace TaskTrackerApp.Application.Features.Boards.Queries.GetAllBoards;
 
