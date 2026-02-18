@@ -51,6 +51,8 @@ public partial class Board : IDisposable
 
     [Inject] private IJSRuntime JS { get; set; }
 
+    [Inject] private ISubscriptionService SubscriptionService { get; set; }
+
     [CascadingParameter] public MainLayout? MainLayout { get; set; }
 
     [SupplyParameterFromQuery]
@@ -69,8 +71,9 @@ public partial class Board : IDisposable
     private bool IsAdmin => _currentUserRole == BoardRole.Admin;
 
     private bool CanEditContent =>
-           board != null
-           && (_currentUserRole == BoardRole.Admin || _currentUserRole == BoardRole.Member);
+                board != null
+                && !board.IsLocked
+                && (_currentUserRole == BoardRole.Admin || _currentUserRole == BoardRole.Member);
 
     //Meeting fields
     private MeetingDto? CurrentMeeting;
@@ -219,6 +222,19 @@ public partial class Board : IDisposable
                 StateHasChanged();
             }
         });
+    }
+
+    private async Task NavigateToUpgrade()
+    {
+        var result = await SubscriptionService.CreateCheckoutSessionAsync();
+        if (result.IsSuccess)
+        {
+            Nav.NavigateTo(result.Value!, forceLoad: true);
+        }
+        else
+        {
+            Snackbar.Add("Could not initiate upgrade.", Severity.Error);
+        }
     }
 
     private async Task OnCardMoved(CardMovedEvent e)
@@ -743,6 +759,12 @@ public partial class Board : IDisposable
 
     private async Task UpdateBoardDetails(string val)
     {
+        if (board.IsLocked)
+        {
+            Snackbar.Add("Board is read-only.", Severity.Warning);
+            return;
+        }
+
         int userId = await GetUserId();
         var updateDto = new UpdateBoardDto { Id = board.Id, Title = board.Title, Description = board.Description, UpdatedById = userId };
         await BoardsService.UpdateAsync(board.Id, updateDto);
@@ -957,20 +979,17 @@ public partial class Board : IDisposable
         {
             var devices = await JS.InvokeAsync<List<MediaDeviceInfo>>("simpleVideo.getDevices");
 
-            // Debugging: Check if we actually got items
             Console.WriteLine($"Found {devices.Count} devices.");
 
             AudioDevices = devices.Where(d => d.Kind == "audioinput").ToList();
             VideoDevices = devices.Where(d => d.Kind == "videoinput").ToList();
 
-            // Set defaults if currently empty
             if (string.IsNullOrEmpty(SelectedAudioId) && AudioDevices.Any())
                 SelectedAudioId = AudioDevices.First().DeviceId;
 
             if (string.IsNullOrEmpty(SelectedVideoId) && VideoDevices.Any())
                 SelectedVideoId = VideoDevices.First().DeviceId;
 
-            // --- FIX: FORCE RE-RENDER ---
             StateHasChanged();
         }
     }

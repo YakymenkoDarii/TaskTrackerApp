@@ -2,6 +2,8 @@
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Entities;
 using TaskTrackerApp.Domain.Enums;
+using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Boards.Commands.CreateBoards;
 
@@ -18,12 +20,25 @@ internal class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, i
     {
         using var uow = _uowFactory.Create();
 
+        var user = await uow.UserRepository.GetById(request.CreatedById);
+
+        if (user != null && !user.IsPro)
+        {
+            var ownedBoardsCount = await uow.BoardRepository.CountByCreatorIdAsync(request.CreatedById);
+
+            if (ownedBoardsCount >= 3)
+            {
+                return 0;
+            }
+        }
+
         var board = new Board
         {
             Title = request.Title,
             Description = request.Description,
             CreatedById = request.CreatedById,
             UpdatedById = request.CreatedById,
+            LastModified = DateTime.UtcNow,
             Members = new List<BoardMember>()
         };
 

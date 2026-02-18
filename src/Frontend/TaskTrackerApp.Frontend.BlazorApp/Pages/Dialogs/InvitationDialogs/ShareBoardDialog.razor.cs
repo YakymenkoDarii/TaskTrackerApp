@@ -9,6 +9,7 @@ using TaskTrackerApp.Frontend.Domain.Enums;
 using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Domain.Events.Invitations;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
+using TaskTrackerApp.Frontend.Services.Services.Boards;
 using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.InvitationDialogs;
@@ -18,6 +19,8 @@ public partial class ShareBoardDialog : IDisposable
     [Inject] public IUsersService UsersService { get; set; }
 
     [Inject] public IBoardMembersService MembersService { get; set; }
+
+    [Inject] private IBoardsService BoardsService { get; set; }
 
     [Inject] public IBoardInvitationsService InvitationsService { get; set; }
 
@@ -49,6 +52,9 @@ public partial class ShareBoardDialog : IDisposable
 
     private int? _currentUserId = null;
     private bool _isCurrentUserAdmin = false;
+
+    private int _ownerId = 0;
+    private bool AmIOwner => _currentUserId.HasValue && _currentUserId.Value == _ownerId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -128,6 +134,12 @@ public partial class ShareBoardDialog : IDisposable
 
     private async Task LoadData()
     {
+        var boardResult = await BoardsService.GetBoardByIdAsync(BoardId);
+        if (boardResult.IsSuccess)
+        {
+            _ownerId = boardResult.Value.CreatedById;
+        }
+
         var membersResult = await MembersService.GetMembersAsync(BoardId);
         if (membersResult.IsSuccess)
         {
@@ -142,6 +154,31 @@ public partial class ShareBoardDialog : IDisposable
             PendingInvites = invitesResult.Value.ToList();
         }
         StateHasChanged();
+    }
+
+    private async Task HandleTransferOwnership(BoardMemberDto newOwner)
+    {
+        if (!AmIOwner) return;
+
+        bool? result = await DialogService.ShowMessageBox(
+            "Transfer Ownership?",
+            $"Are you sure you want to make {newOwner.Name} the owner of this board? You will lose ownership rights.",
+            yesText: "Transfer", cancelText: "Cancel");
+
+        if (result == true)
+        {
+            var response = await BoardsService.TransferOwnershipAsync(BoardId, newOwner.UserId);
+
+            if (response.IsSuccess)
+            {
+                Snackbar.Add($"Ownership transferred to {newOwner.Name}", Severity.Success);
+                await LoadData();
+            }
+            else
+            {
+                Snackbar.Add(response.Error.ToString(), Severity.Error);
+            }
+        }
     }
 
     private async Task<IEnumerable<UserSummaryDto>> SearchUsers(string value, CancellationToken token)
@@ -209,6 +246,12 @@ public partial class ShareBoardDialog : IDisposable
 
     private async Task HandleRemoveMember(BoardMemberDto member)
     {
+        if (IsOwner(member.UserId) && Members.Count > 1)
+        {
+            Snackbar.Add("The owner cannot leave the board unless they transfer ownership or delete the board.", Severity.Warning);
+            return;
+        }
+
         bool isMe = member.UserId == _currentUserId;
         bool isLastMember = Members.Count == 1;
 
@@ -223,7 +266,7 @@ public partial class ShareBoardDialog : IDisposable
             if (isLastMember)
             {
                 title = "Delete Board?";
-                message = "You are the last member. If you leave, this board will be deleted.";
+                message = "You are the last member. If you leave, this board will be deleted permanently.";
                 buttonText = "Delete Board";
             }
             else
@@ -253,7 +296,8 @@ public partial class ShareBoardDialog : IDisposable
             title,
             message,
             yesText: buttonText,
-            cancelText: "Cancel");
+            cancelText: "Cancel",
+            options: new DialogOptions { MaxWidth = MaxWidth.Small });
 
         if (result == true)
         {
@@ -332,4 +376,6 @@ public partial class ShareBoardDialog : IDisposable
     {
         return userId == _currentUserId;
     }
+
+    private bool IsOwner(int userId) => userId == _ownerId;
 }

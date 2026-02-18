@@ -7,6 +7,7 @@ using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Constants;
 using TaskTrackerApp.Domain.DTOs.CommentAttachment;
 using TaskTrackerApp.Domain.Entities;
+using TaskTrackerApp.Domain.Errors;
 using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Events.Comment;
 using TaskTrackerApp.Domain.Results;
@@ -36,6 +37,26 @@ public class CreateCardCommentCommandHandler : IRequestHandler<CreateCardComment
         if (isArchived)
         {
             return BoardErrors.Archived;
+        }
+
+        var boardInfo = await uow.BoardRepository.GetById(card.BoardId);
+        var owner = await uow.UserRepository.GetById(boardInfo.CreatedById);
+
+        if (owner != null && !owner.IsPro)
+        {
+            var ownerBoards = await uow.BoardRepository.GetByCreatorIdAsync(owner.Id);
+
+            var activeBoardIds = ownerBoards
+                .OrderByDescending(b => b.LastModified)
+                .Take(3)
+                .Select(b => b.Id)
+                .ToHashSet();
+
+            if (!activeBoardIds.Contains(card.BoardId))
+            {
+                return Result.Failure(new Error("BoardLocked",
+                    "This board is Read-Only because the owner has reached their free plan limit."));
+            }
         }
 
         var comment = new CardComment
@@ -116,6 +137,15 @@ public class CreateCardCommentCommandHandler : IRequestHandler<CreateCardComment
         );
 
         await _notifier.NotifyCommentAddedAsync(evt);
+
+        var board = await uow.BoardRepository.GetById(card.BoardId);
+        if (board != null)
+        {
+            board.LastModified = DateTime.UtcNow;
+            await uow.BoardRepository.UpdateAsync(board);
+        }
+
+        await uow.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
     }

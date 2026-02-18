@@ -146,4 +146,21 @@ public class BoardsService : IBoardsService
             return Result.Failure(new Error("UnknownError", ex.Message));
         }
     }
+
+    public async Task<Result> TransferOwnershipAsync(int boardId, int userId)
+    {
+        try
+        {
+            var response = await _boardsApi.TransferOwnership(boardId, userId);
+            return response.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
 }

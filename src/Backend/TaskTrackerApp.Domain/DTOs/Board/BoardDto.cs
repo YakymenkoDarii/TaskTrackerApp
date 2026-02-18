@@ -8,5 +8,9 @@ public class BoardDto
 
     public string Description { get; set; }
 
-    public DateTime LastTimeOpenned { get; set; }
+    public DateTime LastModified { get; set; }
+
+    public bool IsLocked { get; set; }
+
+    public int CreatedById { get; set; }
 }

@@ -27,4 +27,7 @@ public interface IBoardsApi
 
     [Put("/api/Boards/unarchive/{boardId}")]
     Task<IApiResponse<Result>> UnArchiveBoardAsync(int boardId);
+
+    [Put("/api/Boards/transferOwnership/{boardId}/{userId}")]
+    Task<IApiResponse<Result>> TransferOwnership(int boardId, int userId);
 }

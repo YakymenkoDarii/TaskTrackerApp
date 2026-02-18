@@ -11,6 +11,8 @@ public static class DependencyInjection
         {
             cfg.RegisterServicesFromAssembly(AssemblyReference.AssemblyReference.Assembly);
             cfg.AddOpenBehavior(typeof(BoardArchivedValidationBehavior<,>));
+            cfg.AddOpenBehavior(typeof(BoardActivityBehavior<,>));
+            cfg.AddOpenBehavior(typeof(BoardLockValidationBehavior<,>));
         });
         return services;
     }

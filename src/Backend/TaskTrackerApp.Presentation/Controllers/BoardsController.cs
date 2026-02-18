@@ -5,6 +5,7 @@ using System.Security.Claims;
 using TaskTrackerApp.Application.Features.Boards.Commands.ArchiveBoard;
 using TaskTrackerApp.Application.Features.Boards.Commands.CreateBoards;
 using TaskTrackerApp.Application.Features.Boards.Commands.DeleteBoards;
+using TaskTrackerApp.Application.Features.Boards.Commands.TransferOwnership;
 using TaskTrackerApp.Application.Features.Boards.Commands.UnArchiveBoard;
 using TaskTrackerApp.Application.Features.Boards.Commands.UpdateBoards;
 using TaskTrackerApp.Application.Features.Boards.Queries.GetAllBoards;
@@ -144,6 +145,20 @@ public class BoardsController : ControllerBase
         var command = new UnArchiveBoardCommand
         {
             BoardId = boardId
+        };
+
+        var result = await _mediator.Send(command);
+
+        return Ok(result);
+    }
+
+    [HttpPut("transferOwnership/{boardId}/{userId}")]
+    public async Task<IActionResult> TransferOwnership(int boardId, int userId)
+    {
+        var command = new TransferOwnershipCommand
+        {
+            BoardId = boardId,
+            TransferUserId = userId
         };
 
         var result = await _mediator.Send(command);

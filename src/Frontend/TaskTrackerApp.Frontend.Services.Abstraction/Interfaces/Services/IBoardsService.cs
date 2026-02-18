@@ -20,4 +20,6 @@ public interface IBoardsService
     Task<Result<IEnumerable<ArchivedBoardDto>>> GetArchivedAsync();
 
     Task<Result> UnArchiveBoardAsync(int boardId);
+
+    Task<Result> TransferOwnershipAsync(int boardId, int userId);
 }

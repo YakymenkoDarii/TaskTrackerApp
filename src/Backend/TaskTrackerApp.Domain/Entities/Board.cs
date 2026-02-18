@@ -10,9 +10,7 @@ public class Board : BaseEntity
 
     public bool IsArchived { get; set; } = false;
 
-    public int Position { get; set; }
-
-    public DateTime LastTimeOpenned { get; set; } = DateTime.UtcNow;
+    public DateTime LastModified { get; set; } = DateTime.UtcNow;
 
     public bool IsQueuedForArchival { get; set; }
 
