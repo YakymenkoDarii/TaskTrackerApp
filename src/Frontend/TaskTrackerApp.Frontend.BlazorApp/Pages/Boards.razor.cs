@@ -31,11 +31,15 @@ public partial class Boards : IDisposable
 
     [Inject] private BoardSignalRService BoardHub { get; set; }
 
+    [Inject] private ISubscriptionService SubscriptionService { get; set; }
+
     private IEnumerable<BoardDto> lastOpenedBoards = Enumerable.Empty<BoardDto>();
     private IEnumerable<BoardDto> allBoards = Enumerable.Empty<BoardDto>();
     private bool isLoading = true;
 
     private HashSet<int> _activeBoardIds = new();
+
+    private bool HasLockedBoards => allBoards.Any(b => b.IsLocked);
 
     protected override async Task OnInitializedAsync()
     {
@@ -56,7 +60,9 @@ public partial class Boards : IDisposable
             if (result.IsSuccess && result.Value is not null)
             {
                 var data = result.Value.ToList();
-                allBoards = data.OrderBy(x => x.Title);
+                allBoards = data
+                    .OrderBy(x => x.IsLocked)
+                    .ThenBy(x => x.Title);
 
                 await LoadRecentBoardsFromStorage(data);
                 foreach (var board in allBoards)
@@ -77,6 +83,29 @@ public partial class Boards : IDisposable
         {
             isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private string GetBoardCardClass(bool isLocked)
+    {
+        if (isLocked)
+        {
+            return "cursor-pointer hover-effect mud-theme-dark opacity-80 border-solid border-2 mud-border-error";
+        }
+
+        return "cursor-pointer hover-effect height-100";
+    }
+
+    private async Task NavigateToUpgrade()
+    {
+        var result = await SubscriptionService.CreateCheckoutSessionAsync();
+        if (result.IsSuccess)
+        {
+            Nav.NavigateTo(result.Value!, forceLoad: true);
+        }
+        else
+        {
+            SnackBar.Add("Could not initiate upgrade.", Severity.Error);
         }
     }
 
@@ -126,13 +155,13 @@ public partial class Boards : IDisposable
                 var matchingBoard = apiBoards.FirstOrDefault(b => b.Id == item.BoardId);
                 if (matchingBoard != null)
                 {
-                    matchingBoard.LastTimeOpenned = item.LastViewed;
+                    matchingBoard.LastModified = item.LastViewed;
                     tempList.Add(matchingBoard);
                 }
             }
 
             lastOpenedBoards = tempList
-                .OrderByDescending(x => x.LastTimeOpenned)
+                .OrderByDescending(x => x.LastModified)
                 .Take(4);
         }
     }
@@ -162,63 +191,6 @@ public partial class Boards : IDisposable
                 SnackBar.Add(createResult.Error.Message, Severity.Error);
             }
         }
-    }
-
-    private async Task DeleteBoard(int boardId)
-    {
-        bool? result = await DialogService.ShowMessageBox(
-            "Delete Board",
-            "Are you sure you want to delete this board? This cannot be undone.",
-            yesText: "Delete", cancelText: "Cancel");
-
-        if (result == true)
-        {
-            var deleteResult = await BoardsService.DeleteAsync(boardId);
-            if (deleteResult.IsSuccess)
-            {
-                SnackBar.Add("Board deleted", Severity.Success);
-                await RemoveFromRecentBoards(boardId);
-
-                allBoards = allBoards.Where(b => b.Id != boardId).ToList();
-                lastOpenedBoards = lastOpenedBoards.Where(b => b.Id != boardId).ToList();
-
-                _ = BoardHub.LeaveBoard(boardId);
-                _activeBoardIds.Remove(boardId);
-
-                StateHasChanged();
-            }
-            else
-            {
-                SnackBar.Add("Failed to delete board", Severity.Error);
-            }
-        }
-    }
-
-    private async Task RemoveFromRecentBoards(int boardId)
-    {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(userId)) return;
-
-        var key = $"recentBoardsState-{userId}";
-        var recent = await LocalStorage.GetItemAsync<List<RecentBoardItem>>(key);
-
-        if (recent != null)
-        {
-            var itemToRemove = recent.FirstOrDefault(x => x.BoardId == boardId);
-
-            if (itemToRemove != null)
-            {
-                recent.Remove(itemToRemove);
-                await LocalStorage.SetItemAsync(key, recent);
-            }
-        }
-    }
-
-    private void ArchiveBoard(int boardId)
-    {
-        SnackBar.Add("Archived (Not implemented yet)", Severity.Info);
     }
 
     public void Dispose()

@@ -4,62 +4,80 @@
 
 <PageTitle>Boards</PageTitle>
 
-<MudContainer MaxWidth=@MaxWidth.Large
-              Class="mt-8 mb-16">
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-16">
 
     @if (isLoading)
     {
         <div class="d-flex justify-center mt-16">
-            <MudProgressCircular Color=@Color.Primary
-                                 Indeterminate=@true />
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
         </div>
     }
     else
     {
+        @if (HasLockedBoards)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mb-6" Icon="@Icons.Material.Filled.Lock">
+                You have reached the free limit of 3 boards. Some boards are now read-only.
+                <MudButton Variant="Variant.Text" Color="Color.Inherit" OnClick="NavigateToUpgrade" Class="ml-2 fw-bold" Style="text-decoration:underline;">
+                    Upgrade to Pro to unlock
+                </MudButton>
+            </MudAlert>
+        }
+
         @* Section 1: Last Opened *@
         @if (lastOpenedBoards.Any())
         {
-            <MudText Typo=@Typo.h5
-                     Class="mb-4 fw-bold">
-                Last Opened
-            </MudText>
+            <MudText Typo="Typo.h5" Class="mb-4 fw-bold">Last Opened</MudText>
 
             <MudGrid Class="mb-8">
-                    @foreach (var board in lastOpenedBoards)
-                    {
-                        <MudItem xs=12
-                                 sm=6
-                                 md=3>
+                @foreach (var board in lastOpenedBoards)
+                {
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudCard Elevation="3"
+                                 Class="@GetBoardCardClass(board.IsLocked)"
+                                 @onclick="@(() => HandleBoardClick(board.Id))">
 
-                            <MudCard Elevation=3
-                                     Class="cursor-pointer hover-effect mud-theme-primary lighten-5"
-                                     @onclick=@(() => HandleBoardClick(board.Id))>
+                            <MudCardContent>
+                                <div class="d-flex justify-space-between">
+                                    <MudText Typo="Typo.h6">@board.Title</MudText>
+                                    @if (board.IsLocked)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Error" Size="Size.Small" />
+                                    }
+                                </div>
 
-                                <MudCardContent>
-                                    <MudText Typo=@Typo.h6>
-                                        @board.Title
+                                <MudText Typo="Typo.caption">
+                                    Last opened: @board.LastModified.ToShortDateString()
+                                </MudText>
+
+                                @if (board.IsLocked)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Error" Class="d-block mt-1">
+                                        Read-Only
                                     </MudText>
-
-                                    <MudText Typo=@Typo.caption>
-                                        Last opened: @board.LastTimeOpenned.ToShortDateString()
-                                    </MudText>
-                                </MudCardContent>
-                            </MudCard>
-                        </MudItem>
-                    }
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
             </MudGrid>
         }
 
         @* Section 2: Your Boards *@
-        <MudText Typo=@Typo.h5
-                 Class="mb-4 fw-bold">
-            Your Boards
-        </MudText>
+        <div class="d-flex justify-space-between align-center mb-4">
+            <MudText Typo="Typo.h5" Class="fw-bold">Your Boards</MudText>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="HandleCreateBoard">
+                Create New Board
+            </MudButton>
+        </div>
 
         @if (!allBoards.Any())
         {
-            <MudAlert Severity=@Severity.Info
-                      Variant=@Variant.Outlined>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
                 You don't have any boards yet.
             </MudAlert>
         }
@@ -68,57 +86,38 @@
             <MudGrid>
                 @foreach (var board in allBoards)
                 {
-                    <MudItem xs=12
-                             sm=6
-                             md=4>
-
-                        <MudCard Elevation=2
-                                 Class="height-100 cursor-pointer hover-effect"
-                                 @onclick=@(() => HandleBoardClick(board.Id))>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Elevation="2"
+                                 Class="@GetBoardCardClass(board.IsLocked)"
+                                 @onclick="@(() => HandleBoardClick(board.Id))">
 
                             <MudCardHeader>
                                 <CardHeaderContent>
-                                    <MudText Typo=@Typo.h6>@board.Title</MudText>
+                                    <div class="d-flex justify-space-between align-center">
+                                        <MudText Typo="Typo.h6">@board.Title</MudText>
+                                        @if (board.IsLocked)
+                                        {
+                                            <MudTooltip Text="Upgrade to Unlock">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Lock" Color="Color.Error" Size="Size.Small" />
+                                            </MudTooltip>
+                                        }
+                                    </div>
                                 </CardHeaderContent>
-
-                                <CardHeaderActions>
-                                    <span @onclick:stopPropagation=@true>
-                                        @* <MudMenu Icon=@Icons.Material.Filled.MoreVert
-                                                 AnchorOrigin=@Origin.BottomRight
-                                                 TransformOrigin=@Origin.TopRight>
-
-                                            <MudMenuItem Icon=@Icons.Material.Filled.Archive
-                                                         OnClick=@(() => ArchiveBoard(board.Id))>
-                                                Archive
-                                            </MudMenuItem>
-
-                                            <MudMenuItem Icon=@Icons.Material.Filled.Delete
-                                                         IconColor=@Color.Error
-                                                         OnClick=@(() => DeleteBoard(board.Id))>
-                                                Delete
-                                            </MudMenuItem>
-                                        </MudMenu> *@
-                                    </span>
-                                </CardHeaderActions>
                             </MudCardHeader>
 
                             <MudCardContent Class="pb-4">
-                                <MudText Typo=@Typo.body2
-                                         Class="text-secondary">
+                                <MudText Typo="Typo.body2" Class="text-secondary">
                                     @board.Description
                                 </MudText>
+                                @if (board.IsLocked)
+                                {
+                                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Class="mt-2" Variant="Variant.Outlined">Read-Only Mode</MudChip>
+                                }
                             </MudCardContent>
                         </MudCard>
                     </MudItem>
                 }
             </MudGrid>
         }
-
-        <div class="d-flex justify-end mt-8">
-            <MudFab Color=@Color.Secondary
-                    StartIcon=@Icons.Material.Filled.Add
-                    Label="Create New Board"
-                    OnClick=@HandleCreateBoard />
-        </div>
     }
 </MudContainer>

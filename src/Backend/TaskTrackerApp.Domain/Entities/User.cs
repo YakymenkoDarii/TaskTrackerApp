@@ -23,6 +23,14 @@ public class User
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiration { get; set; }
 
+    //Stripe
+    public bool IsPro { get; set; }
+
+    public string? StripeCustomerId { get; set; }
+
+    public DateTime? SubscriptionEndDate { get; set; }
+
+
     //Foreign keys
     public IList<Card> AssignedTasks { get; set; } = new List<Card>();
 

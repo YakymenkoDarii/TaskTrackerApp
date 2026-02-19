@@ -23,7 +23,7 @@ public static class DependencyInjection
         services.AddScoped<TaskTrackerDbContext>(p =>
             p.GetRequiredService<IDbContextFactory<TaskTrackerDbContext>>().CreateDbContext());
 
-        services.AddSingleton<IUnitOfWorkFactory, UnitOfWorkFactory>();
+        services.AddScoped<IUnitOfWorkFactory, UnitOfWorkFactory>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;

@@ -68,4 +68,14 @@ public class BoardRepository : Repository<Board, int>, IBoardRepository
             .Select(b => b.Id)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Board>> GetByCreatorIdAsync(int createdById)
+    {
+        return await _dbSet.Where(b => b.CreatedById == createdById).ToListAsync();
+    }
+
+    public async Task<int> CountByCreatorIdAsync(int createdById)
+    {
+        return await _dbSet.Where(b => b.CreatedById == createdById).CountAsync();
+    }
 }

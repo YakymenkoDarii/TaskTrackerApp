@@ -1,0 +1,9 @@
+﻿ALTER TABLE Users ADD IsPro BIT NOT NULL DEFAULT 0;
+ALTER TABLE Users ADD StripeCustomerId NVARCHAR(255) NULL;
+ALTER TABLE Users ADD SubscriptionEndDate DATETIME2 NULL;
+
+GO
+
+CREATE UNIQUE INDEX IX_Users_StripeCustomerId 
+ON Users(StripeCustomerId)
+WHERE StripeCustomerId IS NOT NULL;

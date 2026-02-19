@@ -2,10 +2,12 @@
 using TaskTrackerApp.Application.Interfaces.UoW;
 using TaskTrackerApp.Domain.Entities;
 using TaskTrackerApp.Domain.Enums;
+using TaskTrackerApp.Domain.Errors;
+using TaskTrackerApp.Domain.Results;
 
 namespace TaskTrackerApp.Application.Features.Boards.Commands.CreateBoards;
 
-internal class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, int>
+internal class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, Result<int>>
 {
     private readonly IUnitOfWorkFactory _uowFactory;
 
@@ -14,9 +16,24 @@ internal class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, i
         _uowFactory = uowFactory;
     }
 
-    public async Task<int> Handle(CreateBoardCommand request, CancellationToken cancellationToken)
+    public async Task<Result<int>> Handle(CreateBoardCommand request, CancellationToken cancellationToken)
     {
         using var uow = _uowFactory.Create();
+
+        var user = await uow.UserRepository.GetById(request.CreatedById);
+
+        if (user != null && !user.IsPro)
+        {
+            var ownedBoardsCount = await uow.BoardRepository.CountByCreatorIdAsync(request.CreatedById);
+
+            if (ownedBoardsCount >= 3)
+            {
+                return Result<int>.Failure(new Error(
+                    "LimitReached",
+                    "You have reached the free limit of 3 boards. Upgrade to Pro to create more."
+                ));
+            }
+        }
 
         var board = new Board
         {
@@ -24,6 +41,7 @@ internal class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, i
             Description = request.Description,
             CreatedById = request.CreatedById,
             UpdatedById = request.CreatedById,
+            LastModified = DateTime.UtcNow,
             Members = new List<BoardMember>()
         };
 

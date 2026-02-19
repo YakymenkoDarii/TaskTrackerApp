@@ -40,8 +40,9 @@ internal class GetMyProfileQueryHandler : IRequestHandler<GetMyProfileQuery, Res
             Tag = user.Tag,
             DisplayName = user.DisplayName,
             AvatarUrl = user.AvatarUrl,
+            IsPro = user.IsPro
         };
 
-        return Result<MyProfileDto>.Success(dto);
+        return dto;
     }
 }
