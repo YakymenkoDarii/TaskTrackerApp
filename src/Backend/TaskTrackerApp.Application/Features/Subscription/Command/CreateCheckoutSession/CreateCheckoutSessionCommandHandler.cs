@@ -27,12 +27,12 @@ internal class CreateCheckoutSessionCommandHandler : IRequestHandler<CreateCheck
     {
         var userId = _currentUserService.UserId;
 
-        using var uow = _uowFactory.Create();
-
         if (userId == null)
         {
             return AuthErrors.NotAuthenticated;
         }
+
+        using var uow = _uowFactory.Create();
 
         var user = await uow.UserRepository.GetById(userId.Value);
 
