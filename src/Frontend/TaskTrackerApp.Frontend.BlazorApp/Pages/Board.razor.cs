@@ -7,7 +7,6 @@ using MudBlazor;
 using System.Security.Claims;
 using TaskTrackerApp.Frontend.BlazorApp.Layout;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
-using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.ColumnDialogs;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.InvitationDialogs;
 using TaskTrackerApp.Frontend.Domain;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
@@ -57,6 +56,9 @@ public partial class Board : IDisposable
 
     [SupplyParameterFromQuery]
     public int? OpenCard { get; set; }
+
+    private int? _activeColumnIdForNewCard = null;
+    private bool _isAddingColumn = false;
 
     private BoardDto? board;
     private List<ColumnDto> columns = new();
@@ -531,86 +533,98 @@ public partial class Board : IDisposable
         }
     }
 
-    private async Task HandleAddCard(int columnId)
+    private void ShowAddCardInline(int columnId)
+    {
+        if (!CanEditContent) return;
+        _activeColumnIdForNewCard = columnId;
+    }
+
+    private void HideAddCardInline()
+    {
+        _activeColumnIdForNewCard = null;
+    }
+
+    private async Task HandleAddCardSubmit(int columnId, CreateCardDto newCardInput)
     {
         if (!CanEditContent) return;
 
-        var dialog = await DialogService.ShowAsync<CreateColumnDialog>("Add Card");
-        var result = await dialog.Result;
+        newCardInput.ColumnId = columnId;
+        newCardInput.BoardId = BoardId;
 
-        if (!result.Canceled && result.Data is CreateColumnDto newCardInput)
+        var createResult = await CardsService.CreateCardAsync(newCardInput);
+
+        if (createResult.IsSuccess)
         {
-            var newCardDto = new CreateCardDto
+            int newId = createResult.Value;
+
+            int newPosition = _allCards.Any(c => c.ColumnId == columnId)
+                ? _allCards.Where(c => c.ColumnId == columnId).Max(c => c.Position) + 1
+                : 0;
+
+            var createdCard = new CardDto
             {
+                Id = newId,
                 Title = newCardInput.Title,
                 Description = newCardInput.Description,
+                DueDate = newCardInput.DueDate,
                 ColumnId = columnId,
-                BoardId = BoardId
+                BoardId = BoardId,
+                Position = newPosition,
+                IsCompleted = false,
+                Priority = CardPriority.Low
             };
 
-            var createResult = await CardsService.CreateCardAsync(newCardDto);
+            //_allCards.Add(createdCard);
 
-            if (createResult.IsSuccess)
-            {
-                int newId = createResult.Value;
+            _activeColumnIdForNewCard = null;
 
-                int newPosition = _allCards.Any(c => c.ColumnId == columnId)
-                    ? _allCards.Where(c => c.ColumnId == columnId).Max(c => c.Position) + 1
-                    : 0;
-
-                var createdCard = new CardDto
-                {
-                    Id = newId,
-                    Title = newCardInput.Title,
-                    Description = newCardInput.Description,
-                    ColumnId = columnId,
-                    BoardId = BoardId,
-                    Position = newPosition,
-                    IsCompleted = false,
-                    Priority = CardPriority.Low
-                };
-
-                _cardDropContainer?.Refresh();
-                StateHasChanged();
-            }
+            _cardDropContainer?.Refresh();
+            StateHasChanged();
         }
     }
 
-    private async Task HandleAddColumn()
+    private void ShowAddColumnInline()
+    {
+        if (!CanEditContent) return;
+        _isAddingColumn = true;
+    }
+
+    private void HideAddColumnInline()
+    {
+        _isAddingColumn = false;
+    }
+
+    private async Task HandleAddColumnSubmit(CreateColumnDto newColumnDto)
     {
         if (!CanEditContent) return;
 
-        var dialog = await DialogService.ShowAsync<CreateColumnDialog>("Add List");
-        var result = await dialog.Result;
+        newColumnDto.BoardId = BoardId;
 
-        if (!result.Canceled && result.Data is CreateColumnDto newColumnDto)
+        int nextPosition = columns.Any() ? columns.Max(c => c.Position) + 1 : 0;
+
+        var createResult = await ColumnsService.CreateColumnAsync(newColumnDto);
+
+        if (createResult.IsSuccess)
         {
-            newColumnDto.BoardId = BoardId;
+            int newId = createResult.Value;
 
-            int nextPosition = columns.Any() ? columns.Max(c => c.Position) + 1 : 0;
-
-            var createResult = await ColumnsService.CreateColumnAsync(newColumnDto);
-
-            if (createResult.IsSuccess)
+            if (!columns.Any(c => c.Id == newId))
             {
-                int newId = createResult.Value;
-
-                if (!columns.Any(c => c.Id == newId))
+                var createdColumn = new ColumnDto
                 {
-                    var createdColumn = new ColumnDto
-                    {
-                        Id = newId,
-                        Title = newColumnDto.Title,
-                        Description = newColumnDto.Description,
-                        Position = nextPosition
-                    };
+                    Id = newId,
+                    Title = newColumnDto.Title,
+                    Description = newColumnDto.Description,
+                    Position = nextPosition
+                };
 
-                    columns.Add(createdColumn);
-                    columns = columns.OrderBy(c => c.Position).ToList();
+                columns.Add(createdColumn);
+                columns = columns.OrderBy(c => c.Position).ToList();
 
-                    _columnDropContainer?.Refresh();
-                    StateHasChanged();
-                }
+                _isAddingColumn = false;
+
+                _columnDropContainer?.Refresh();
+                StateHasChanged();
             }
         }
     }

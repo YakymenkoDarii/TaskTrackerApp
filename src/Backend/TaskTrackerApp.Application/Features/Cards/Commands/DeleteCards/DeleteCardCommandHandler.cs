@@ -43,9 +43,12 @@ internal class DeleteCardCommandHandler : IRequestHandler<DeleteCardCommand>
         await uow.CardRepository.DeleteAsync(request.Id);
         await uow.SaveChangesAsync(cancellationToken);
 
-        var folderPrefix = $"card-{request.Id}/";
+        if (card.Labels.Any())
+        {
+            var folderPrefix = $"card-{request.Id}/";
 
-        await _blobService.DeleteFolderAsync(BlobContainerNames.CommentAttachments, folderPrefix);
+            await _blobService.DeleteFolderAsync(BlobContainerNames.CommentAttachments, folderPrefix);
+        }
 
         var evt = new CardDeletedEvent(request.Id, boardId);
         _ = _boardNotifier.NotifyCardDeletedAsync(evt);

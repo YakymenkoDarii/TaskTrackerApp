@@ -1,0 +1,30 @@
+﻿@using TaskTrackerApp.Frontend.Domain.DTOs.Columns
+@using MudBlazor
+
+<div style="width: 280px;">
+    <MudTextField T=@string
+                  Placeholder="Name this column"
+                  @bind-Value=@model.Title
+                  Immediate="true"
+                  Variant=@Variant.Outlined
+                  Margin=@Margin.Dense
+                  OnKeyDown=@HandleKeyDown
+                  AutoFocus=@true
+                  Class="mb-2"
+                  Style="background-color: white; border-radius: 4px;" />
+
+    <div class="d-flex align-center gap-2">
+        <MudButton OnClick=@Submit
+                   Variant=@Variant.Filled
+                   DisableElevation="true"
+                   Style="background-color: #94a3b8; color: white; text-transform: none;">
+            Add section
+        </MudButton>
+
+        <MudButton OnClick=@Cancel
+                   Variant=@Variant.Text
+                   Style="text-transform: none; color: #64748b;">
+            Cancel
+        </MudButton>
+    </div>
+</div>

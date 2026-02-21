@@ -5,15 +5,20 @@
           Outlined="true"
           @onclick="@(() => OnTaskClick.InvokeAsync(Task))">
 
-    <div @onclick:stopPropagation>
+    <MudTooltip Text="@(Task.IsCompleted ? "Mark incomplete" : $"Priority: {Task.Priority}")">
         <MudTooltip Text="@(Task.IsCompleted ? "Mark incomplete" : $"Priority: {Task.Priority}")">
-            <MudIconButton Icon="@(Task.IsCompleted? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.Circle)"
-                           Color="@(Task.IsCompleted ? Color.Success : GetPriorityColor(Task.Priority))"
-                           Size="Size.Medium"
-                           OnClick="@(() => OnToggleComplete.InvokeAsync(Task))"
-                           Class="m-0" />
+
+            <div @onclick:stopPropagation="true">
+
+                <MudIconButton Icon="@(Task.IsCompleted? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.Circle)"
+                               Color="@(Task.IsCompleted ? Color.Success : GetPriorityColor(Task.Priority))"
+                               Size="Size.Medium"
+                               OnClick="@(() => OnToggleComplete.InvokeAsync(Task))"
+                               Class="m-0" />
+
+            </div>
         </MudTooltip>
-    </div>
+    </MudTooltip>
 
     <div class="d-flex flex-column flex-grow-1" style="min-width: 0;">
         <MudText Typo="Typo.body2"

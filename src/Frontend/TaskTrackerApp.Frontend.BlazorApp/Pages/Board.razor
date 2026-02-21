@@ -1,5 +1,7 @@
 ﻿@page "/board/{BoardId:int}"
 @using TaskTrackerApp.Frontend.BlazorApp.Components
+@using TaskTrackerApp.Frontend.BlazorApp.Components.Cards
+@using TaskTrackerApp.Frontend.BlazorApp.Components.Column
 @using TaskTrackerApp.Frontend.Domain.DTOs.Boards
 @using TaskTrackerApp.Frontend.Domain.DTOs.Columns
 @using TaskTrackerApp.Frontend.Domain.DTOs.Cards
@@ -293,15 +295,6 @@ else
                             Identifier="board-zone"
                             Class="d-flex gap-4 h-100"
                             AllowReorder="@CanEditContent" />
-
-                        <div class="board-column px-4">
-                            <MudButton Variant=@Variant.Filled
-                                       Color=@Color.Success
-                                       OnClick=@HandleAddColumn
-                                       Class="py-2 fw-bold text-white">
-                                @(columns.Any() ? "Add another list" : "Add list")
-                            </MudButton>
-                        </div>
                     </ChildContent>
 
                     <ItemRenderer>
@@ -385,13 +378,22 @@ else
 
                                     @if (CanEditContent)
                                     {
+                                    @if (_activeColumnIdForNewCard == col.Id)
+                                    {
+                                        <CreateCardInline 
+                                            OnSubmit="@(async (dto) => await HandleAddCardSubmit(col.Id, dto))" 
+                                            OnCancel="HideAddCardInline" />
+                                    }
+                                    else
+                                    {
                                         <MudButton StartIcon=@Icons.Material.Filled.Add
                                                    FullWidth=@true
                                                    Variant=@Variant.Text
                                                    Color=@Color.Dark
-                                                   OnClick=@(() => HandleAddCard(col.Id))>
-                                            Add a card
+                                                   OnClick=@(() => ShowAddCardInline(col.Id))>
+                                            Add a task
                                         </MudButton>
+                                    }
                                     }
                                 </MudPaper>
                             </div>
@@ -400,12 +402,21 @@ else
                         @if (CanEditContent)
                         {
                             <div class="board-column px-4">
-                                <MudButton Variant=@Variant.Filled
-                                           Color=@Color.Success
-                                           OnClick=@HandleAddColumn
-                                           Class="py-2 fw-bold text-white">
-                                    @(columns.Any() ? "Add another list" : "Add list")
-                                </MudButton>
+                                @if (_isAddingColumn)
+                                {
+                                    <CreateColumnInline 
+                                        OnSubmit="HandleAddColumnSubmit" 
+                                        OnCancel="HideAddColumnInline" />
+                                }
+                                else
+                                {
+                                    <MudButton Variant=@Variant.Filled
+                                               Color=@Color.Success
+                                               OnClick=@ShowAddColumnInline
+                                               Class="py-2 fw-bold text-white w-100">
+                                        @(columns.Any() ? "Add another list" : "Add list")
+                                    </MudButton>
+                                }
                             </div>
                         }
                     </ChildContent>
