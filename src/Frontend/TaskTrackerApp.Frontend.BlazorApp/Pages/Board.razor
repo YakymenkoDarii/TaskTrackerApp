@@ -238,6 +238,30 @@ else
                     }
                 }
 
+                <div style="width: 200px;">
+                    <MudSelect T="int"
+                               MultiSelection="true"
+                               SelectedValues="@_selectedLabelFilters"
+                               SelectedValuesChanged="OnLabelFilterChanged"
+                               ToStringFunc="@(id => _allBoardLabels.FirstOrDefault(l => l.Id == id)?.Name ?? "Unknown")"
+                               Placeholder="Filter by label"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Dense="true"
+                               Clearable="true"
+                               Style="background-color: white; border-radius: 4px;">
+                        @foreach (var label in _allBoardLabels)
+                        {
+                            <MudSelectItem T="int" Value="@label.Id">
+                                <div class="d-flex align-center gap-2">
+                                    <div style="@($"background-color: {label.Color}; width: 12px; height: 12px; border-radius: 50%;")"></div>
+                                    <MudText Typo="Typo.body2">@label.Name</MudText>
+                                </div>
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </div>
+
                 <div style="width: 250px;">
                     <TaskSearch BoardId="@BoardId"
                                 Placeholder="Search..."
@@ -299,11 +323,35 @@ else
 
                     <ItemRenderer>
                         <div @key="@context.Id" class="board-column">
-                            <MudPaper Class="column-paper pa-4 d-flex align-center justify-center cursor-move mud-theme-info"
-                                      Elevation=4
-                                      Style="height: 100px; opacity: 1.0; color: white;">
-                                <MudIcon Icon=@Icons.Material.Filled.DragIndicator Class="mr-2" />
-                                <MudText Typo=@Typo.h6>@context.Title</MudText>
+                            <MudPaper Class="column-paper pa-4 d-flex flex-column cursor-move"
+                                      Elevation="0"
+                                      Outlined="true"
+                                      Style="height: 120px; background-color: rgba(240, 242, 245, 0.7); border: 2px dashed #b0bec5; border-radius: 8px; transition: border-color 0.2s, background-color 0.2s;"
+                                      onmouseover="this.style.borderColor='#1976d2'; this.style.backgroundColor='rgba(25, 118, 210, 0.3)';"
+                                      onmouseout="this.style.borderColor='#b0bec5'; this.style.backgroundColor='rgba(240, 242, 245, 0.7)';">
+
+                                <div class="d-flex align-center">
+                                    <MudIcon Icon=@Icons.Material.Filled.DragIndicator Class="mr-2 mud-text-secondary" Style="opacity: 0.6;" />
+
+                                    <MudText Typo=@Typo.subtitle1 Style="font-weight: 700; color: #424242;" Class="text-truncate">
+                                        @context.Title
+                                    </MudText>
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(context.Description))
+                                {
+                                    <MudText Typo=@Typo.body2 Class="text-truncate mt-1" Style="color: #757575; font-style: italic; margin-left: 32px;">
+                                        @context.Description
+                                    </MudText>
+                                }
+
+                                <div class="mt-auto" style="margin-left: 32px;">
+                                    <MudText Typo=@Typo.caption Color="Color.Info" Style="font-weight: 600;">
+                                        <MudIcon Icon=@Icons.Material.Filled.SyncAlt Size="Size.Small" Class="mr-1 mb-n1" />
+                                        Drag to move
+                                    </MudText>
+                                </div>
+
                             </MudPaper>
                         </div>
                     </ItemRenderer>
@@ -313,7 +361,7 @@ else
             {
                 <MudDropContainer T=@CardDto
                                   @ref=@_cardDropContainer
-                                  Items=@_allCards
+                                  Items=@FilteredCards()
                                   ItemsSelector=@((item, zone) => item.ColumnId.ToString() == zone)
                                   ItemDropped=@CardDropped
                                   Class="board-canvas d-flex h-100 overflow-auto px-4 pb-4 gap-4">
@@ -426,9 +474,11 @@ else
                                  Class=@($"mb-2 hover-effect {(CanEditContent ? "cursor-move" : "cursor-pointer")} {(IsOverdue(context) ? "border-solid border-2 mud-border-error" : "")}")
                                  Elevation=1
                                  onclick=@(() => HandleCardClick(context))>
+
                             <MudCardContent Class="pa-2">
-                                <div class="d-flex align-center gap-2">
-                                    <div @onclick:stopPropagation>
+                                <div class="d-flex align-start gap-2">
+
+                                    <div @onclick:stopPropagation="true" class="mt-n1">
                                         <MudIconButton Icon="@(context.IsCompleted? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.Circle)"
                                                        Color="@(context.IsCompleted ? Color.Success : GetPriorityColor(context.Priority))"
                                                        Size="Size.Small"
@@ -436,36 +486,80 @@ else
                                                        OnClick="@(() => HandleToggleComplete(context))" />
                                     </div>
 
-                                    <MudText Typo=@Typo.body2
-                                             Class="fw-bold flex-grow-1"
-                                             Style=@(context.IsCompleted ? "text-decoration: line-through; color: gray;" : "")>
-                                        @context.Title
-                                    </MudText>
-                                </div>
+                                    <div class="d-flex flex-column flex-grow-1" style="min-width: 0;">
 
-                                @if (!string.IsNullOrWhiteSpace(context.Description))
-                                {
-                                    <MudText Typo=@Typo.caption
-                                             Class="d-block mud-text-secondary mt-1 text-truncate pl-10"
-                                             Style=@(context.IsCompleted ? "text-decoration: line-through;" : "")>
-                                        @context.Description
-                                    </MudText>
-                                }
-
-                                @if (context.DueDate.HasValue)
-                                {
-                                    <div class="d-flex align-center gap-1 mt-2 pl-9">
-                                        <MudIcon Icon=@Icons.Material.Filled.Schedule
-                                                 Size=@Size.Small
-                                                 Color=@(IsOverdue(context) ? Color.Error : Color.Default)
-                                                 Style="font-size: 0.8rem;" />
-
-                                        <MudText Typo=@Typo.caption
-                                                 Color=@(IsOverdue(context) ? Color.Error : Color.Default)>
-                                            @context.DueDate.Value.ToString("MMM dd")
+                                        <MudText Typo=@Typo.body2
+                                                 Class="fw-bold"
+                                                 Style=@(context.IsCompleted ? "text-decoration: line-through; color: gray;" : "")>
+                                            @context.Title
                                         </MudText>
+
+
+
+                                        @if (!string.IsNullOrWhiteSpace(context.Description))
+                                        {
+                                            <MudText Typo=@Typo.caption
+                                                     Class="d-block mud-text-secondary mt-1 text-truncate"
+                                                     Style=@(context.IsCompleted ? "text-decoration: line-through;" : "")>
+                                                @context.Description
+                                            </MudText>
+                                        }
+
+                                        @if (context.Labels != null && context.Labels.Any())
+                                        {
+                                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                                @foreach (var label in context.Labels)
+                                                {
+                                                    <div style="@($"background-color: {label.Color}; color: white; border-radius: 4px; padding: 2px 6px; font-size: 0.65rem; font-weight: 500;")">
+                                                        @label.Name
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+
+                                        <div class="d-flex align-center justify-space-between mt-2">
+
+                                            <div class="d-flex align-center gap-1">
+                                                @if (context.DueDate.HasValue)
+                                                {
+                                                    <MudIcon Icon=@Icons.Material.Filled.Schedule
+                                                             Size=@Size.Small
+                                                             Color=@(IsOverdue(context) ? Color.Error : Color.Default)
+                                                             Style="font-size: 0.8rem;" />
+
+                                                    <MudText Typo=@Typo.caption
+                                                             Color=@(IsOverdue(context) ? Color.Error : Color.Default)>
+                                                        @context.DueDate.Value.ToString("MMM dd")
+                                                    </MudText>
+                                                }
+                                            </div>
+
+                                            <div>
+                                                @if (context.AssigneeId.HasValue)
+                                                {
+                                                    <MudTooltip Text="@context.AssigneeName" Delay="500">
+                                                        <MudAvatar Size="Size.Small"
+                                                                   Color="Color.Primary"
+                                                                   Variant="Variant.Filled"
+                                                                   Style="height: 24px; width: 24px; font-size: 0.75rem;">
+
+                                                            @if (!string.IsNullOrWhiteSpace(context.AssigneeAvatarUrl))
+                                                            {
+                                                                <img src="@context.AssigneeAvatarUrl" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" alt="@context.AssigneeName" />
+                                                            }
+                                                            else if (!string.IsNullOrWhiteSpace(context.AssigneeName))
+                                                            {
+                                                                @context.AssigneeName.Substring(0, 1).ToUpper()
+                                                            }
+
+                                                        </MudAvatar>
+                                                    </MudTooltip>
+                                                }
+                                            </div>
+
+                                        </div>
                                     </div>
-                                }
+                                </div>
                             </MudCardContent>
                         </MudCard>
                     </ItemRenderer>

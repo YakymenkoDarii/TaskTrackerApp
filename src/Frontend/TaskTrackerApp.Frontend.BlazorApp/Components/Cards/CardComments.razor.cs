@@ -228,6 +228,17 @@ public partial class CardComments : IDisposable
     {
         var htmlContent = await _quillHtml.GetHTML();
 
+        var cleanHtml = htmlContent?.Trim() ?? string.Empty;
+        bool isTextEmpty = string.IsNullOrWhiteSpace(cleanHtml) ||
+                           cleanHtml == "<p><br></p>" ||
+                           cleanHtml == "<p></p>";
+
+        if (isTextEmpty && !_selectedFiles.Any())
+        {
+            Snackbar.Add("Comment cannot be empty.", Severity.Warning);
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(htmlContent) && !_selectedFiles.Any()) return;
 
         _isSaving = true;
@@ -342,6 +353,17 @@ public partial class CardComments : IDisposable
         if (_editingCommentId == null) return;
 
         var editedHtml = await _editQuillHtml.GetHTML();
+
+        var cleanHtml = editedHtml?.Trim() ?? string.Empty;
+        bool isTextEmpty = string.IsNullOrWhiteSpace(cleanHtml) ||
+                           cleanHtml == "<p><br></p>" ||
+                           cleanHtml == "<p></p>";
+
+        if (isTextEmpty && !_keepAttachmentIds.Any() && !_newEditFiles.Any())
+        {
+            Snackbar.Add("Comment cannot be completely empty.", Severity.Warning);
+            return;
+        }
 
         var updateDto = new UpdateCardCommentDto
         {

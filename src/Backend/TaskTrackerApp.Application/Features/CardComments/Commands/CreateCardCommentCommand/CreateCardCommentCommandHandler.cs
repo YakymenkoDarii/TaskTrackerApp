@@ -30,6 +30,16 @@ public class CreateCardCommentCommandHandler : IRequestHandler<CreateCardComment
 
     public async Task<Result> Handle(CreateCardCommentCommand request, CancellationToken cancellationToken)
     {
+        var cleanText = request.Text?.Trim() ?? string.Empty;
+        bool isTextEmpty = string.IsNullOrWhiteSpace(cleanText) ||
+                           cleanText == "<p><br></p>" ||
+                           cleanText == "<p></p>";
+
+        if (isTextEmpty && (request.Attachments == null || !request.Attachments.Any()))
+        {
+            return Result.Failure(new Error("Comment.Empty", "Comment cannot be completely empty."));
+        }
+
         using var uow = _uowFactory.Create();
 
         var card = await uow.CardRepository.GetById(request.CardId);

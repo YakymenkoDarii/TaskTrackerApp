@@ -22,9 +22,6 @@ public class BoardNotifier : IBoardNotifier
     public async Task NotifyColumnCreatedAsync(ColumnCreatedEvent e)
     {
         var groupName = $"Board_{e.BoardId}";
-
-        // --- ADD THIS LOG ---
-        Console.WriteLine($"[SERVER NOTIFIER] Sending ColumnCreated to group: {groupName}");
         await _hubContext.Clients.Group($"Board_{e.BoardId}").ColumnCreated(e);
     }
 
@@ -96,5 +93,15 @@ public class BoardNotifier : IBoardNotifier
     public async Task NotifyLabelDeletedAsync(LabelDeletedEvent e)
     {
         await _hubContext.Clients.Group($"Board_{e.BoardId}").LabelDeleted(e);
+    }
+
+    public async Task NotifyLabelAddedAsync(int boardId, int cardId, int labelId)
+    {
+        await _hubContext.Clients.Group($"Board_{boardId}").LabelAdded(cardId, labelId);
+    }
+
+    public async Task NotifyLabelRemovedAsync(int boardId, int cardId, int labelId)
+    {
+        await _hubContext.Clients.Group($"Board_{boardId}").LabelRemoved(cardId, labelId);
     }
 }

@@ -33,11 +33,17 @@ public interface IBoardClient
 
     Task InvitationRevoked(BoardInvitationRevokedEvent e);
 
+    //Labels
+
     Task LabelCreated(LabelCreatedEvent e);
 
     Task LabelUpdated(LabelUpdatedEvent e);
 
     Task LabelDeleted(LabelDeletedEvent e);
+
+    Task LabelAdded(int cardId, int labelId);
+
+    Task LabelRemoved(int cardId, int labelId);
 
     //Meeting
     Task MeetingStateUpdated(MeetingDto? meeting);

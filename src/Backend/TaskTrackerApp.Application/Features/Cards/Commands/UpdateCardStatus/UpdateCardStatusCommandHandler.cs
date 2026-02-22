@@ -35,8 +35,6 @@ public class UpdateCardStatusCommandHandler : IRequestHandler<UpdateCardStatusCo
 
         await uow.SaveChangesAsync();
 
-        Console.WriteLine("CARD STATUS UPDATED" + request.IsCompleted);
-
         var evt = new CardUpdatedEvent(
                     card.Id,
                     card.BoardId,
@@ -45,7 +43,9 @@ public class UpdateCardStatusCommandHandler : IRequestHandler<UpdateCardStatusCo
                     request.IsCompleted,
                     card.DueDate,
                     card.Priority,
-                    card.AssigneeId
+                    card.AssigneeId,
+                    card.AssigneeUser.AvatarUrl,
+                    card.AssigneeUser.DisplayName
         );
 
         _ = _boardNotifier.NotifyCardUpdatedAsync(evt);

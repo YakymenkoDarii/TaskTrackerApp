@@ -53,6 +53,10 @@ public class BoardSignalRService : IAsyncDisposable
 
     public event Action<LabelDeletedEvent>? OnLabelDeleted;
 
+    public event Action<int, int>? OnLabelAdded;
+
+    public event Action<int, int>? OnLabelRemoved;
+
     //Meeting
     public event Action<MeetingDto?>? OnMeetingStateUpdated;
 
@@ -112,6 +116,8 @@ public class BoardSignalRService : IAsyncDisposable
         _hubConnection.On<LabelCreatedEvent>(nameof(IBoardClient.LabelCreated), e => OnLabelCreated?.Invoke(e));
         _hubConnection.On<LabelUpdatedEvent>(nameof(IBoardClient.LabelUpdated), e => OnLabelUpdated?.Invoke(e));
         _hubConnection.On<LabelDeletedEvent>(nameof(IBoardClient.LabelDeleted), e => OnLabelDeleted?.Invoke(e));
+        _hubConnection.On<int, int>(nameof(IBoardClient.LabelAdded), (cardId, labelId) => OnLabelAdded?.Invoke(cardId, labelId));
+        _hubConnection.On<int, int>(nameof(IBoardClient.LabelRemoved), (cardId, labelId) => OnLabelRemoved?.Invoke(cardId, labelId));
 
         //Meeting
         _hubConnection.On<MeetingDto?>(nameof(IBoardClient.MeetingStateUpdated), meeting => OnMeetingStateUpdated?.Invoke(meeting));

@@ -9,5 +9,7 @@ public record CardUpdatedEvent(
     bool IsCompleted,
     DateTime? DueDate,
     CardPriority Priority,
-    int? AssigneeId
+    int? AssigneeId,
+    string? AssigneeAvatarUrl,
+    string? AssigneeDisplayName
 );

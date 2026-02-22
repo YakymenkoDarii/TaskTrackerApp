@@ -8,6 +8,7 @@ using TaskTrackerApp.Application.Mappers.CardCommentsMappers;
 using TaskTrackerApp.Domain.Constants;
 using TaskTrackerApp.Domain.DTOs.CommentAttachment;
 using TaskTrackerApp.Domain.Entities;
+using TaskTrackerApp.Domain.Errors;
 using TaskTrackerApp.Domain.Errors.Auth;
 using TaskTrackerApp.Domain.Errors.Board;
 using TaskTrackerApp.Domain.Errors.CardComments;
@@ -37,6 +38,19 @@ public class UpdateCardCommentCommandHandler : IRequestHandler<UpdateCardComment
 
     public async Task<Result> Handle(UpdateCardCommentCommand request, CancellationToken cancellationToken)
     {
+        var cleanText = request.Text?.Trim() ?? string.Empty;
+        bool isTextEmpty = string.IsNullOrWhiteSpace(cleanText) ||
+                           cleanText == "<p><br></p>" ||
+                           cleanText == "<p></p>";
+
+        bool hasNoNewFiles = request.NewAttachments == null || !request.NewAttachments.Any();
+        bool hasNoKeptFiles = request.KeepAttachmentIds == null || !request.KeepAttachmentIds.Any();
+
+        if (isTextEmpty && hasNoNewFiles && hasNoKeptFiles)
+        {
+            return Result.Failure(new Error("Comment.Empty", "Comment cannot be completely empty."));
+        }
+
         using var uow = _uowFactory.Create();
 
         var currentUserId = _currentUserService.UserId;
