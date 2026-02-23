@@ -9,6 +9,7 @@ using TaskTrackerApp.Domain.DTOs.CommentAttachment;
 using TaskTrackerApp.Domain.Entities;
 using TaskTrackerApp.Domain.Errors;
 using TaskTrackerApp.Domain.Errors.Board;
+using TaskTrackerApp.Domain.Errors.CardComments;
 using TaskTrackerApp.Domain.Events.Comment;
 using TaskTrackerApp.Domain.Results;
 
@@ -30,14 +31,9 @@ public class CreateCardCommentCommandHandler : IRequestHandler<CreateCardComment
 
     public async Task<Result> Handle(CreateCardCommentCommand request, CancellationToken cancellationToken)
     {
-        var cleanText = request.Text?.Trim() ?? string.Empty;
-        bool isTextEmpty = string.IsNullOrWhiteSpace(cleanText) ||
-                           cleanText == "<p><br></p>" ||
-                           cleanText == "<p></p>";
-
-        if (isTextEmpty && (request.Attachments == null || !request.Attachments.Any()))
+        if (CommentEmptyTextValidator.IsEmpty(request.Text, request.Attachments))
         {
-            return Result.Failure(new Error("Comment.Empty", "Comment cannot be completely empty."));
+            return CommentErrors.Empty;
         }
 
         using var uow = _uowFactory.Create();
