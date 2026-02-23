@@ -64,10 +64,7 @@ html, body {
     position: relative;
     width: 100%;
     height: calc(100vh - var(--mud-appbar-height));
-    background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=2070&auto=format&fit=crop');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    background-color: #4E6FA0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -75,9 +72,25 @@ html, body {
 
 .board-header-text {
     color: white !important;
-    text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.8);
     font-weight: 700;
+    text-shadow: 0px 1px 2px rgba(11, 37, 75, 0.4);
 }
+
+.board-header-btn {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    text-transform: none !important;
+    font-weight: 500 !important;
+    transition: background-color 0.2s ease;
+    border: none !important;
+    height: 32px;
+}
+
+    .board-header-btn:hover {
+        background-color: rgba(255, 255, 255, 0.3) !important;
+    }
 
 .board-canvas {
     flex-grow: 1;
@@ -93,11 +106,13 @@ html, body {
 }
 
 .column-paper {
-    background-color: #f1f2f4;
+    background-color: #FFFFFF;
+    border: 1px solid #84A0CA;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(11, 37, 75, 0.08);
     max-height: calc(100vh - 140px);
     display: flex;
     flex-direction: column;
-    border-radius: 12px;
 }
 
 .task-list {
@@ -106,12 +121,17 @@ html, body {
 }
 
 .add-list-btn {
-    background-color: rgba(255, 255, 255, 0.25) !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
     color: white !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    text-transform: none !important;
+    font-weight: 500 !important;
+    transition: background-color 0.2s ease;
 }
 
     .add-list-btn:hover {
-        background-color: rgba(255, 255, 255, 0.4) !important;
+        background-color: rgba(255, 255, 255, 0.3) !important;
     }
 
 .text-secondary-custom {

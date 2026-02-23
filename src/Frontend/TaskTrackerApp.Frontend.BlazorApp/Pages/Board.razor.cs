@@ -103,6 +103,7 @@ public partial class Board : IDisposable
     private bool IsSettingsOpen;
 
     private IEnumerable<int> _selectedLabelFilters = new HashSet<int>();
+    private string _filterKeyword = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -1162,18 +1163,47 @@ public partial class Board : IDisposable
         _cardDropContainer?.Refresh();
     }
 
-    private IEnumerable<CardDto> FilteredCards()
+    private bool CardSelector(CardDto item, string dropzoneId)
     {
-        if (!_selectedLabelFilters.Any())
-        {
-            return _allCards;
-        }
-        var result = _allCards.Where(c =>
-                c.Labels != null &&
-                _selectedLabelFilters.All(filterId => c.Labels.Any(l => l.Id == filterId))
-            ).ToList();
+        if (item.ColumnId.ToString() != dropzoneId)
+            return false;
 
-        return result;
+        if (!string.IsNullOrWhiteSpace(_filterKeyword))
+        {
+            bool matchesTitle = item.Title != null && item.Title.Contains(_filterKeyword, StringComparison.OrdinalIgnoreCase);
+            bool matchesDesc = item.Description != null && item.Description.Contains(_filterKeyword, StringComparison.OrdinalIgnoreCase);
+
+            if (!matchesTitle && !matchesDesc)
+                return false;
+        }
+
+        if (_selectedLabelFilters.Any())
+        {
+            if (item.Labels == null || !_selectedLabelFilters.All(filterId => item.Labels.Any(l => l.Id == filterId)))
+                return false;
+        }
+
+        return true;
+    }
+
+    private void ToggleLabelFilter(int labelId, bool isChecked)
+    {
+        if (isChecked && !_selectedLabelFilters.Contains(labelId))
+        {
+            _selectedLabelFilters = _selectedLabelFilters.Append(labelId).ToArray();
+        }
+        else if (!isChecked && _selectedLabelFilters.Contains(labelId))
+        {
+            _selectedLabelFilters = _selectedLabelFilters.Where(id => id != labelId).ToArray();
+        }
+
+        OnLabelFilterChanged(_selectedLabelFilters);
+    }
+
+    private void OnFilterKeywordChanged(string newValue)
+    {
+        _filterKeyword = newValue;
+        _cardDropContainer?.Refresh();
     }
 
     public void Dispose()
