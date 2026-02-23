@@ -37,6 +37,11 @@ public class UpdateCardCommentCommandHandler : IRequestHandler<UpdateCardComment
 
     public async Task<Result> Handle(UpdateCardCommentCommand request, CancellationToken cancellationToken)
     {
+        if (CommentEmptyTextValidator.IsEmpty(request.Text, request.KeepAttachmentIds, request.NewAttachments))
+        {
+            return CommentErrors.Empty;
+        }
+
         using var uow = _uowFactory.Create();
 
         var currentUserId = _currentUserService.UserId;

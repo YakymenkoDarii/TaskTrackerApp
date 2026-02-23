@@ -44,6 +44,7 @@ public partial class CardDetailsDialog : IAsyncDisposable
     private string title = string.Empty;
     private string description = string.Empty;
     private DateTime? dueDate;
+    private TimeSpan? _dueTime;
     private bool isCompleted;
     private CardPriority _priority = CardPriority.Low;
     private int? _assigneeId;
@@ -172,7 +173,8 @@ public partial class CardDetailsDialog : IAsyncDisposable
     {
         title = dto.Title;
         description = dto.Description;
-        dueDate = dto.DueDate;
+        dueDate = dto.DueDate?.Date;
+        _dueTime = dto.DueDate?.TimeOfDay;
         isCompleted = dto.IsCompleted;
         _assigneeId = dto.AssigneeId;
         _priority = dto.Priority;
@@ -248,12 +250,16 @@ public partial class CardDetailsDialog : IAsyncDisposable
             return;
         }
 
+        DateTime? finalDueDate = dueDate.HasValue
+        ? dueDate.Value.Date + (_dueTime ?? TimeSpan.Zero)
+        : null;
+
         var updateDto = new UpdateCardDto
         {
             Id = Card.Id,
             Title = title,
             Description = description,
-            DueDate = dueDate,
+            DueDate = finalDueDate,
             ColumnId = Card.ColumnId,
             BoardId = BoardId,
             IsCompleted = isCompleted,
@@ -298,8 +304,11 @@ public partial class CardDetailsDialog : IAsyncDisposable
 
         var deleteResult = await CardsService.DeleteCardAsync(Card.Id);
 
+        Console.WriteLine(deleteResult.ToString());
+
         if (deleteResult.IsSuccess)
         {
+            Console.WriteLine("CARD IS DELETED");
             Snackbar.Add("Card deleted", Severity.Success);
             MudDialog.Close(DialogResult.Ok("Deleted"));
         }

@@ -1,0 +1,67 @@
+﻿@using TaskTrackerApp.Frontend.Domain.DTOs.Cards
+@using MudBlazor
+
+<MudPaper Outlined="true" Elevation="0" Class="d-flex flex-column pa-0" Style="border-radius: 8px; border-color: #e2e8f0; width: 100%; background-color: white;">
+    <div class="pa-3 pb-1">
+        <MudTextField T=@string
+                      Placeholder="Task name"
+                      @bind-Value=@model.Title
+                      Immediate=@true
+                      Variant=@Variant.Text
+                      Underline="false"
+                      Style="font-weight: 500;"
+                      Margin="Margin.None"
+                      OnKeyDown=@HandleKeyDown
+                      DisableToolbar=true
+                      AutoFocus=@true />
+
+        <MudTextField T=@string
+                      Placeholder="Description"
+                      @bind-Value=@model.Description
+                      Variant=@Variant.Text
+                      Underline="false"
+                      Margin="Margin.None"
+                      DisableToolbar=true
+                      Class="mt-n2" />
+
+        <div class="d-flex flex-column mt-2" @onclick:stopPropagation="true">
+            <MudDatePicker @bind-Date=@date
+                           Placeholder="Due Date"
+                           Variant=@Variant.Outlined
+                           Margin=@Margin.Dense
+                           Color=@Color.Primary
+                           IconSize=@Size.Small
+                           Clearable="true" />
+
+            @if (date.HasValue)
+            {
+                <MudTimePicker @bind-Time=@time
+                               Placeholder="Time (Optional)"
+                               Variant=@Variant.Outlined
+                               Margin=@Margin.Dense
+                               Color=@Color.Primary
+                               IconSize=@Size.Small
+                               Clearable="true"
+                               Class="mt-2" />
+            }
+        </div>
+    </div>
+
+    <MudDivider />
+
+    <div class="d-flex align-center justify-end pa-2" Style="background-color: #f8fafc;">
+        <MudIconButton Icon="@Icons.Material.Filled.Close"
+                       OnClick=@Cancel
+                       Size=@Size.Small
+                       Variant=@Variant.Text
+                       Class="mr-1"
+                       Style="color: #64748b;" />
+
+        <MudIconButton Icon="@Icons.Material.Filled.Send"
+                       OnClick=@Submit
+                       Size=@Size.Small
+                       Variant=@Variant.Filled
+                       DisableElevation="true"
+                       Style="background-color: #94a3b8; color: white; border-radius: 4px;" />
+    </div>
+</MudPaper>

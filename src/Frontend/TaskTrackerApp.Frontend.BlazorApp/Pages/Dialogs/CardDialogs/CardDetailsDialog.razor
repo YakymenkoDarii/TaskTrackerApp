@@ -138,12 +138,25 @@
                         Add to card
                     </MudText>
 
-                    <MudDatePicker Label="Due Date"
-                                   @bind-Date=@dueDate
-                                   Color=Color.Primary
-                                   Variant=Variant.Outlined
-                                   Class=mb-3
-                                   ReadOnly=@IsReadOnly />
+                    <div class="mb-3">
+                        <MudDatePicker Label="Due Date"
+                                       @bind-Date=@dueDate
+                                       Color=Color.Primary
+                                       Variant=Variant.Outlined
+                                       ReadOnly=@IsReadOnly
+                                       Clearable="true" />
+
+                        @if (dueDate.HasValue)
+                        {
+                            <MudTimePicker Label="Time (Optional)"
+                                           @bind-Time=@_dueTime
+                                           Color=Color.Primary
+                                           Variant=Variant.Outlined
+                                           ReadOnly=@IsReadOnly
+                                           Clearable="true"
+                                           Class="mt-2" />
+                        }
+                    </div>
 
                     <MudText Typo=Typo.caption
                              Class="text-uppercase fw-bold text-secondary mb-2 d-block mt-4">

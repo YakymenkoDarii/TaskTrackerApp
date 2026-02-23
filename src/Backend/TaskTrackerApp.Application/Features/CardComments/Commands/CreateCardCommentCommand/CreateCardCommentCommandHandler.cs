@@ -9,6 +9,7 @@ using TaskTrackerApp.Domain.DTOs.CommentAttachment;
 using TaskTrackerApp.Domain.Entities;
 using TaskTrackerApp.Domain.Errors;
 using TaskTrackerApp.Domain.Errors.Board;
+using TaskTrackerApp.Domain.Errors.CardComments;
 using TaskTrackerApp.Domain.Events.Comment;
 using TaskTrackerApp.Domain.Results;
 
@@ -30,6 +31,11 @@ public class CreateCardCommentCommandHandler : IRequestHandler<CreateCardComment
 
     public async Task<Result> Handle(CreateCardCommentCommand request, CancellationToken cancellationToken)
     {
+        if (CommentEmptyTextValidator.IsEmpty(request.Text, request.Attachments))
+        {
+            return CommentErrors.Empty;
+        }
+
         using var uow = _uowFactory.Create();
 
         var card = await uow.CardRepository.GetById(request.CardId);

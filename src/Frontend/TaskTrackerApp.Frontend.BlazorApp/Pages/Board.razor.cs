@@ -7,17 +7,18 @@ using MudBlazor;
 using System.Security.Claims;
 using TaskTrackerApp.Frontend.BlazorApp.Layout;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.CardDialogs;
-using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.ColumnDialogs;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.InvitationDialogs;
 using TaskTrackerApp.Frontend.Domain;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Columns;
+using TaskTrackerApp.Frontend.Domain.DTOs.Labels;
 using TaskTrackerApp.Frontend.Domain.DTOs.Meeting;
 using TaskTrackerApp.Frontend.Domain.Enums;
 using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Domain.Events.Card;
 using TaskTrackerApp.Frontend.Domain.Events.Column;
+using TaskTrackerApp.Frontend.Domain.Events.Labels;
 using TaskTrackerApp.Frontend.Domain.Models;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 using TaskTrackerApp.Frontend.Services.Services.Hubs;
@@ -39,6 +40,8 @@ public partial class Board : IDisposable
 
     [Inject] private IBoardMembersService BoardMembersService { get; set; }
 
+    [Inject] private ILabelService LabelService { get; set; }
+
     [Inject] private ISnackbar Snackbar { get; set; }
 
     [Inject] private IDialogService DialogService { get; set; }
@@ -58,11 +61,15 @@ public partial class Board : IDisposable
     [SupplyParameterFromQuery]
     public int? OpenCard { get; set; }
 
+    private int? _activeColumnIdForNewCard = null;
+    private bool _isAddingColumn = false;
+
     private BoardDto? board;
     private List<ColumnDto> columns = new();
     private List<CardDto> _allCards = new();
     private bool isLoading = true;
     private bool _isLayoutMode = false;
+    private List<LabelDto> _allBoardLabels = new();
 
     private MudDropContainer<ColumnDto> _columnDropContainer;
     private MudDropContainer<CardDto> _cardDropContainer;
@@ -95,6 +102,8 @@ public partial class Board : IDisposable
     private string SelectedVideoId;
     private bool IsSettingsOpen;
 
+    private IEnumerable<int> _selectedLabelFilters = new HashSet<int>();
+
     protected override async Task OnInitializedAsync()
     {
         await AddToRecentBoardsAsync(BoardId);
@@ -102,6 +111,7 @@ public partial class Board : IDisposable
         await BoardHub.StartConnection();
         RegisterSignalREvents();
         await BoardHub.JoinBoard(BoardId);
+        await LoadBoardLabels();
 
         CurrentMeeting = await BoardHub.GetActiveMeetingAsync(BoardId);
 
@@ -125,6 +135,12 @@ public partial class Board : IDisposable
         BoardHub.OnCardDeleted += async (e) => await InvokeAsync(() => OnCardDeleted(e));
         BoardHub.OnMemberRoleUpdated += async (e) => await InvokeAsync(() => OnMemberRoleUpdated(e));
         BoardHub.OnMemberRemoved += async (e) => await InvokeAsync(() => OnMemberRemoved(e));
+
+        BoardHub.OnLabelAdded += HandleLabelAdded;
+        BoardHub.OnLabelRemoved += HandleLabelRemoved;
+        BoardHub.OnLabelCreated += HandleLabelCreated;
+        BoardHub.OnLabelUpdated += HandleLabelUpdated;
+        BoardHub.OnLabelDeleted += HandleLabelDeleted;
 
         BoardHub.OnMeetingStateUpdated += async (m) => await InvokeAsync(() =>
         {
@@ -285,6 +301,8 @@ public partial class Board : IDisposable
             card.Priority = e.Priority;
             card.IsCompleted = e.IsCompleted;
             card.AssigneeId = e.AssigneeId;
+            card.AssigneeAvatarUrl = e.AssigneeAvatarUrl;
+            card.AssigneeName = e.AssigneeDisplayName;
             StateHasChanged();
             _cardDropContainer.Refresh();
         }
@@ -495,6 +513,15 @@ public partial class Board : IDisposable
         }
     }
 
+    private async Task LoadBoardLabels()
+    {
+        var result = await LabelService.GetLabelsByBoardIdAsync(BoardId);
+        if (result.IsSuccess)
+        {
+            _allBoardLabels = result.Value.ToList();
+        }
+    }
+
     private async Task LoadBoardDataAsync()
     {
         isLoading = true;
@@ -531,86 +558,98 @@ public partial class Board : IDisposable
         }
     }
 
-    private async Task HandleAddCard(int columnId)
+    private void ShowAddCardInline(int columnId)
+    {
+        if (!CanEditContent) return;
+        _activeColumnIdForNewCard = columnId;
+    }
+
+    private void HideAddCardInline()
+    {
+        _activeColumnIdForNewCard = null;
+    }
+
+    private async Task HandleAddCardSubmit(int columnId, CreateCardDto newCardInput)
     {
         if (!CanEditContent) return;
 
-        var dialog = await DialogService.ShowAsync<CreateColumnDialog>("Add Card");
-        var result = await dialog.Result;
+        newCardInput.ColumnId = columnId;
+        newCardInput.BoardId = BoardId;
 
-        if (!result.Canceled && result.Data is CreateColumnDto newCardInput)
+        var createResult = await CardsService.CreateCardAsync(newCardInput);
+
+        if (createResult.IsSuccess)
         {
-            var newCardDto = new CreateCardDto
+            int newId = createResult.Value;
+
+            int newPosition = _allCards.Any(c => c.ColumnId == columnId)
+                ? _allCards.Where(c => c.ColumnId == columnId).Max(c => c.Position) + 1
+                : 0;
+
+            var createdCard = new CardDto
             {
+                Id = newId,
                 Title = newCardInput.Title,
                 Description = newCardInput.Description,
+                DueDate = newCardInput.DueDate,
                 ColumnId = columnId,
-                BoardId = BoardId
+                BoardId = BoardId,
+                Position = newPosition,
+                IsCompleted = false,
+                Priority = CardPriority.Low
             };
 
-            var createResult = await CardsService.CreateCardAsync(newCardDto);
+            //_allCards.Add(createdCard);
 
-            if (createResult.IsSuccess)
-            {
-                int newId = createResult.Value;
+            _activeColumnIdForNewCard = null;
 
-                int newPosition = _allCards.Any(c => c.ColumnId == columnId)
-                    ? _allCards.Where(c => c.ColumnId == columnId).Max(c => c.Position) + 1
-                    : 0;
-
-                var createdCard = new CardDto
-                {
-                    Id = newId,
-                    Title = newCardInput.Title,
-                    Description = newCardInput.Description,
-                    ColumnId = columnId,
-                    BoardId = BoardId,
-                    Position = newPosition,
-                    IsCompleted = false,
-                    Priority = CardPriority.Low
-                };
-
-                _cardDropContainer?.Refresh();
-                StateHasChanged();
-            }
+            _cardDropContainer?.Refresh();
+            StateHasChanged();
         }
     }
 
-    private async Task HandleAddColumn()
+    private void ShowAddColumnInline()
+    {
+        if (!CanEditContent) return;
+        _isAddingColumn = true;
+    }
+
+    private void HideAddColumnInline()
+    {
+        _isAddingColumn = false;
+    }
+
+    private async Task HandleAddColumnSubmit(CreateColumnDto newColumnDto)
     {
         if (!CanEditContent) return;
 
-        var dialog = await DialogService.ShowAsync<CreateColumnDialog>("Add List");
-        var result = await dialog.Result;
+        newColumnDto.BoardId = BoardId;
 
-        if (!result.Canceled && result.Data is CreateColumnDto newColumnDto)
+        int nextPosition = columns.Any() ? columns.Max(c => c.Position) + 1 : 0;
+
+        var createResult = await ColumnsService.CreateColumnAsync(newColumnDto);
+
+        if (createResult.IsSuccess)
         {
-            newColumnDto.BoardId = BoardId;
+            int newId = createResult.Value;
 
-            int nextPosition = columns.Any() ? columns.Max(c => c.Position) + 1 : 0;
-
-            var createResult = await ColumnsService.CreateColumnAsync(newColumnDto);
-
-            if (createResult.IsSuccess)
+            if (!columns.Any(c => c.Id == newId))
             {
-                int newId = createResult.Value;
-
-                if (!columns.Any(c => c.Id == newId))
+                var createdColumn = new ColumnDto
                 {
-                    var createdColumn = new ColumnDto
-                    {
-                        Id = newId,
-                        Title = newColumnDto.Title,
-                        Description = newColumnDto.Description,
-                        Position = nextPosition
-                    };
+                    Id = newId,
+                    Title = newColumnDto.Title,
+                    Description = newColumnDto.Description,
+                    Position = nextPosition
+                };
 
-                    columns.Add(createdColumn);
-                    columns = columns.OrderBy(c => c.Position).ToList();
+                columns.Add(createdColumn);
+                columns = columns.OrderBy(c => c.Position).ToList();
 
-                    _columnDropContainer?.Refresh();
-                    StateHasChanged();
-                }
+                _isAddingColumn = false;
+
+                _columnDropContainer?.Refresh();
+                StateHasChanged();
             }
         }
     }
@@ -1006,6 +1045,137 @@ public partial class Board : IDisposable
         await JS.InvokeVoidAsync("simpleVideo.switchVideoDevice", deviceId);
     }
 
+    private void HandleLabelAdded(int cardId, int labelId)
+    {
+        InvokeAsync(() =>
+        {
+            var card = _allCards.FirstOrDefault(x => x.Id == cardId);
+
+            if (card != null && !card.Labels.Any(l => l.Id == labelId))
+            {
+                var labelDef = _allBoardLabels.FirstOrDefault(l => l.Id == labelId);
+                if (labelDef != null)
+                {
+                    card.Labels.Add(labelDef);
+                    StateHasChanged();
+                    _cardDropContainer?.Refresh();
+                }
+            }
+        });
+    }
+
+    private void HandleLabelRemoved(int cardId, int labelId)
+    {
+        InvokeAsync(() =>
+        {
+            var card = _allCards.FirstOrDefault(x => x.Id == cardId);
+
+            if (card != null)
+            {
+                var label = card.Labels.FirstOrDefault(l => l.Id == labelId);
+                if (label != null)
+                {
+                    card.Labels.Remove(label);
+                    StateHasChanged();
+                    _cardDropContainer?.Refresh();
+                }
+            }
+        });
+    }
+
+    private void HandleLabelCreated(LabelCreatedEvent e)
+    {
+        InvokeAsync(() =>
+        {
+            if (e.BoardId == BoardId && !_allBoardLabels.Any(l => l.Id == e.LabelId))
+            {
+                var newLabel = new LabelDto
+                {
+                    Id = e.LabelId,
+                    Name = e.Name,
+                    Color = e.Color
+                };
+
+                _allBoardLabels.Add(newLabel);
+                _allBoardLabels = _allBoardLabels.OrderBy(l => l.Name).ToList();
+
+                StateHasChanged();
+            }
+        });
+    }
+
+    private void HandleLabelUpdated(LabelUpdatedEvent e)
+    {
+        InvokeAsync(() =>
+        {
+            if (e.BoardId != BoardId) return;
+
+            var masterLabel = _allBoardLabels.FirstOrDefault(l => l.Id == e.LabelId);
+            if (masterLabel != null)
+            {
+                masterLabel.Name = e.Name;
+                masterLabel.Color = e.Color;
+            }
+            foreach (var card in _allCards)
+            {
+                var cardLabel = card.Labels.FirstOrDefault(l => l.Id == e.LabelId);
+                if (cardLabel != null)
+                {
+                    cardLabel.Name = e.Name;
+                    cardLabel.Color = e.Color;
+                }
+            }
+
+            StateHasChanged();
+            _cardDropContainer?.Refresh();
+        });
+    }
+
+    private void HandleLabelDeleted(LabelDeletedEvent e)
+    {
+        InvokeAsync(() =>
+        {
+            if (e.BoardId != BoardId) return;
+
+            _allBoardLabels.RemoveAll(l => l.Id == e.LabelId);
+
+            if (_selectedLabelFilters.Contains(e.LabelId))
+            {
+                _selectedLabelFilters = _selectedLabelFilters.Where(id => id != e.LabelId).ToList();
+            }
+
+            foreach (var card in _allCards)
+            {
+                card.Labels.RemoveAll(l => l.Id == e.LabelId);
+            }
+
+            StateHasChanged();
+            _cardDropContainer?.Refresh();
+        });
+    }
+
+    private async Task OnLabelFilterChanged(IEnumerable<int> selectedIds)
+    {
+        _selectedLabelFilters = selectedIds ?? new HashSet<int>();
+        StateHasChanged();
+        await Task.Yield();
+        _cardDropContainer?.Refresh();
+    }
+
+    private IEnumerable<CardDto> FilteredCards()
+    {
+        if (!_selectedLabelFilters.Any())
+        {
+            return _allCards;
+        }
+        var result = _allCards.Where(c =>
+                c.Labels != null &&
+                _selectedLabelFilters.All(filterId => c.Labels.Any(l => l.Id == filterId))
+            ).ToList();
+
+        return result;
+    }
+
     public void Dispose()
     {
         BoardHub.OnMeetingStateUpdated -= (m) => InvokeAsync(() => CurrentMeeting = m);
@@ -1024,6 +1194,12 @@ public partial class Board : IDisposable
         BoardHub.OnCardDeleted -= (e) => InvokeAsync(() => OnCardDeleted(e));
         BoardHub.OnMemberRoleUpdated -= (e) => InvokeAsync(() => OnMemberRoleUpdated(e));
         BoardHub.OnMemberRemoved -= (e) => InvokeAsync(() => OnMemberRemoved(e));
+
+        BoardHub.OnLabelAdded -= HandleLabelAdded;
+        BoardHub.OnLabelRemoved -= HandleLabelRemoved;
+        BoardHub.OnLabelCreated -= HandleLabelCreated;
+        BoardHub.OnLabelUpdated -= HandleLabelUpdated;
+        BoardHub.OnLabelDeleted -= HandleLabelDeleted;
 
         _ = BoardHub.LeaveBoard(BoardId);
         _objRef?.Dispose();

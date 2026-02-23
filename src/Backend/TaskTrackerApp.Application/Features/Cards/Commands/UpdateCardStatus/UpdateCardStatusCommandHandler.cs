@@ -40,10 +40,12 @@ public class UpdateCardStatusCommandHandler : IRequestHandler<UpdateCardStatusCo
                     card.BoardId,
                     card.Title,
                     card.Description,
-                    card.IsCompleted,
+                    request.IsCompleted,
                     card.DueDate,
                     card.Priority,
-                    card.AssigneeId
+                    card.AssigneeId,
+                    card.AssigneeUser.AvatarUrl,
+                    card.AssigneeUser.DisplayName
         );
 
         _ = _boardNotifier.NotifyCardUpdatedAsync(evt);

@@ -109,6 +109,10 @@ internal class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, Res
         card.IsCompleted = request.IsCompleted;
         card.Priority = request.Priority;
 
+        card.AssigneeUser = request.AssigneeId.HasValue
+            ? await uow.UserRepository.GetById(request.AssigneeId.Value)
+            : null;
+
         await uow.CardRepository.UpdateAsync(card);
         await uow.SaveChangesAsync(cancellationToken);
 
@@ -127,7 +131,9 @@ internal class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, Res
                 card.IsCompleted,
                 card.DueDate,
                 card.Priority,
-                card.AssigneeId
+                card.AssigneeId,
+                card.AssigneeUser?.AvatarUrl,
+                card.AssigneeUser?.DisplayName
             );
             _ = _boardNotifier.NotifyCardUpdatedAsync(updateEvt);
         }

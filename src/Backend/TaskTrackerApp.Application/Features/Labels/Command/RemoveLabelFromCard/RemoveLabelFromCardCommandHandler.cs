@@ -11,11 +11,13 @@ public class RemoveLabelFromCardCommandHandler : IRequestHandler<RemoveLabelFrom
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly ICardNotifier _cardNotifier;
+    private readonly IBoardNotifier _boardNotifier;
 
-    public RemoveLabelFromCardCommandHandler(IUnitOfWorkFactory uowFactory, ICardNotifier cardNotifier)
+    public RemoveLabelFromCardCommandHandler(IUnitOfWorkFactory uowFactory, ICardNotifier cardNotifier, IBoardNotifier boardNotifier)
     {
         _uowFactory = uowFactory;
         _cardNotifier = cardNotifier;
+        _boardNotifier = boardNotifier;
     }
 
     public async Task<Result> Handle(RemoveLabelFromCardCommand request, CancellationToken ct)
@@ -41,6 +43,7 @@ public class RemoveLabelFromCardCommandHandler : IRequestHandler<RemoveLabelFrom
         }
 
         await _cardNotifier.NotifyLabelRemovedAsync(card.Id, label.Id);
+        await _boardNotifier.NotifyLabelRemovedAsync(card.BoardId, card.Id, label.Id);
 
         return Result.Success();
     }

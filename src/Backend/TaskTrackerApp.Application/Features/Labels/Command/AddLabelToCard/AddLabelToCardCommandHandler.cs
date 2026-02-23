@@ -11,11 +11,13 @@ public class AddLabelToCardCommandHandler : IRequestHandler<AddLabelToCardComman
 {
     private readonly IUnitOfWorkFactory _uowFactory;
     private readonly ICardNotifier _cardNotifier;
+    private readonly IBoardNotifier _boardNotifier;
 
-    public AddLabelToCardCommandHandler(IUnitOfWorkFactory uowFactory, ICardNotifier cardNotifier)
+    public AddLabelToCardCommandHandler(IUnitOfWorkFactory uowFactory, ICardNotifier cardNotifier, IBoardNotifier boardNotifier)
     {
         _uowFactory = uowFactory;
         _cardNotifier = cardNotifier;
+        _boardNotifier = boardNotifier;
     }
 
     public async Task<Result> Handle(AddLabelToCardCommand request, CancellationToken ct)
@@ -42,6 +44,7 @@ public class AddLabelToCardCommandHandler : IRequestHandler<AddLabelToCardComman
         await uow.SaveChangesAsync(ct);
 
         await _cardNotifier.NotifyLabelAddedAsync(card.Id, label.Id);
+        await _boardNotifier.NotifyLabelAddedAsync(card.BoardId, card.Id, label.Id);
 
         return Result.Success();
     }

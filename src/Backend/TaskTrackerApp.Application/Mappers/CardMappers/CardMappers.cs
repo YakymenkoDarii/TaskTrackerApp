@@ -18,6 +18,8 @@ public static class CardMappers
             Description = entity.Description,
             DueDate = entity.DueDate,
             AssigneeId = entity.AssigneeId,
+            AssigneeName = entity.AssigneeUser?.DisplayName ?? "Unknown",
+            AssigneeAvatarUrl = entity.AssigneeUser?.AvatarUrl,
             CreatedAt = entity.CreatedAt,
             IsCompleted = entity.IsCompleted,
             Position = entity.Position,

@@ -15,6 +15,10 @@ public class CardDto
 
     public int? AssigneeId { get; set; }
 
+    public string? AssigneeAvatarUrl { get; set; }
+
+    public string AssigneeName { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public bool IsCompleted { get; set; }

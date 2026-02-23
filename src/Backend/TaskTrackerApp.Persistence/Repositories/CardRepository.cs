@@ -15,6 +15,7 @@ public class CardRepository : Repository<Card, int>, ICardRepository
     {
         return await _dbSet
             .Include(c => c.Labels)
+            .Include(c => c.AssigneeUser)
             .Where(c => c.BoardId == boardId)
             .ToListAsync();
     }
@@ -75,6 +76,7 @@ public class CardRepository : Repository<Card, int>, ICardRepository
     {
         return _dbSet
             .Include(c => c.Labels)
+            .Include(a => a.AssigneeUser)
             .Include(c => c.Column)
             .AsNoTracking()
             .AsQueryable();

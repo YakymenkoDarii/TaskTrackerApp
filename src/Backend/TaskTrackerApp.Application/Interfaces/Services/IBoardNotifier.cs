@@ -42,4 +42,8 @@ public interface IBoardNotifier
     Task NotifyLabelUpdatedAsync(LabelUpdatedEvent e);
 
     Task NotifyLabelDeletedAsync(LabelDeletedEvent e);
+
+    Task NotifyLabelAddedAsync(int boardId, int cardId, int labelId);
+
+    Task NotifyLabelRemovedAsync(int boardId, int cardId, int labelId);
 }
