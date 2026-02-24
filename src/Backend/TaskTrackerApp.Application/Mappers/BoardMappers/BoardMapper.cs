@@ -5,7 +5,7 @@ namespace TaskTrackerApp.Application.Mappers.BoardMappers;
 
 public static class BoardMapper
 {
-    public static BoardDto MapToDto(Board board, bool isLocked)
+    public static BoardDto MapToDto(Board board, bool isLocked, bool isStarred)
     {
         return new BoardDto
         {
@@ -14,7 +14,8 @@ public static class BoardMapper
             Description = board.Description,
             LastModified = board.LastModified,
             CreatedById = board.CreatedById,
-            IsLocked = isLocked
+            IsLocked = isLocked,
+            IsStarred = isStarred
         };
     }
 }

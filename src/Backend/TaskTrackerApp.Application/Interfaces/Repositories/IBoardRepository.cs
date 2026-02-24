@@ -16,7 +16,7 @@ public interface IBoardRepository : IRepository<Board, int>
 
     Task<IEnumerable<int>> GetBoardIdsToArchiveAsync();
 
-    Task<IEnumerable<Board>> GetByCreatorIdAsync(int createdById);
+    Task<List<Board>> GetByCreatorIdAsync(int createdById);
 
     Task<int> CountByCreatorIdAsync(int createdById);
 }

@@ -6,8 +6,10 @@ using System.Security.Claims;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.BoardDialogs;
 using TaskTrackerApp.Frontend.Domain;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
+using TaskTrackerApp.Frontend.Domain.DTOs.Boards.Requests;
 using TaskTrackerApp.Frontend.Domain.Events.BoardMember;
 using TaskTrackerApp.Frontend.Domain.Events.Invitations;
+using TaskTrackerApp.Frontend.Domain.Results;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
@@ -33,18 +35,28 @@ public partial class Boards : IDisposable
 
     [Inject] private ISubscriptionService SubscriptionService { get; set; }
 
+    private List<BoardDto> StarredBoards = new();
+    private List<BoardDto> OwnedBoards = new();
+    private List<BoardDto> SharedBoards = new();
     private IEnumerable<BoardDto> lastOpenedBoards = Enumerable.Empty<BoardDto>();
-    private IEnumerable<BoardDto> allBoards = Enumerable.Empty<BoardDto>();
-    private bool isLoading = true;
+    private List<BoardDto> allBoards = new();
 
+    private bool isLoading = true;
     private HashSet<int> _activeBoardIds = new();
+    private int _currentUserId;
 
     private bool HasLockedBoards => allBoards.Any(b => b.IsLocked);
 
     protected override async Task OnInitializedAsync()
     {
-        InvitationHub.OnInviteResponded += HandleInviteResponded;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var myIdStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(myIdStr, out int myId))
+        {
+            _currentUserId = myId;
+        }
 
+        InvitationHub.OnInviteResponded += HandleInviteResponded;
         BoardHub.OnMemberRemoved += HandleMemberRemoved;
 
         await LoadBoardsAsync();
@@ -55,34 +67,59 @@ public partial class Boards : IDisposable
         isLoading = true;
         try
         {
-            var result = await BoardsService.GetAllAsync();
+            var ownedResult = await BoardsService.GetOwnedBoardsAsync();
+            var sharedResult = await BoardsService.GetSharedWithMeBoardsAsync();
 
-            if (result.IsSuccess && result.Value is not null)
-            {
-                var data = result.Value.ToList();
-                allBoards = data
-                    .OrderBy(x => x.IsLocked)
-                    .ThenBy(x => x.Title);
+            var owned = ownedResult.IsSuccess && ownedResult.Value != null ? ownedResult.Value.ToList() : new List<BoardDto>();
+            var shared = sharedResult.IsSuccess && sharedResult.Value != null ? sharedResult.Value.ToList() : new List<BoardDto>();
 
-                await LoadRecentBoardsFromStorage(data);
-                foreach (var board in allBoards)
-                {
-                    if (!_activeBoardIds.Contains(board.Id))
-                    {
-                        await BoardHub.JoinBoard(board.Id);
-                        _activeBoardIds.Add(board.Id);
-                    }
-                }
-            }
-            else
-            {
-                SnackBar.Add(result.Error.Message, Severity.Error);
-            }
+            allBoards = owned.Concat(shared)
+                             .OrderBy(x => x.IsLocked)
+                             .ThenBy(x => x.Title)
+                             .ToList();
+
+            StarredBoards = allBoards.Where(b => b.IsStarred).ToList();
+            OwnedBoards = owned.Where(b => !b.IsStarred).ToList();
+            SharedBoards = shared.Where(b => !b.IsStarred).ToList();
+
+            await LoadRecentBoardsFromStorage(allBoards);
         }
         finally
         {
             isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task ToggleBoardStar(BoardDto board)
+    {
+        board.IsStarred = !board.IsStarred;
+
+        Result result;
+
+        if (board.IsStarred)
+        {
+            StarredBoards.Add(board);
+            OwnedBoards.Remove(board);
+            SharedBoards.Remove(board);
+
+            var request = new UpdateStarRequest { IsStarred = board.IsStarred };
+            result = await BoardsService.UpdateBoardStarAsync(board.Id, request);
+        }
+        else
+        {
+            var request = new UpdateStarRequest { IsStarred = board.IsStarred };
+            result = await BoardsService.UpdateBoardStarAsync(board.Id, request);
+
+            StarredBoards.Remove(board);
+            await LoadBoardsAsync();
+        }
+        StateHasChanged();
+
+        if (!result.IsSuccess)
+        {
+            SnackBar.Add("Failed to update board star.", Severity.Error);
+            await LoadBoardsAsync();
         }
     }
 
@@ -149,7 +186,6 @@ public partial class Boards : IDisposable
         if (recentItems != null && recentItems.Any())
         {
             var tempList = new List<BoardDto>();
-
             foreach (var item in recentItems)
             {
                 var matchingBoard = apiBoards.FirstOrDefault(b => b.Id == item.BoardId);
@@ -159,10 +195,7 @@ public partial class Boards : IDisposable
                     tempList.Add(matchingBoard);
                 }
             }
-
-            lastOpenedBoards = tempList
-                .OrderByDescending(x => x.LastModified)
-                .Take(4);
+            lastOpenedBoards = tempList.OrderByDescending(x => x.LastModified).Take(4);
         }
     }
 
@@ -197,10 +230,5 @@ public partial class Boards : IDisposable
     {
         InvitationHub.OnInviteResponded -= HandleInviteResponded;
         BoardHub.OnMemberRemoved -= HandleMemberRemoved;
-
-        foreach (var boardId in _activeBoardIds)
-        {
-            _ = BoardHub.LeaveBoard(boardId);
-        }
     }
 }

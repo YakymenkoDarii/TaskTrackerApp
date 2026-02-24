@@ -13,4 +13,6 @@ public class BoardDto
     public bool IsLocked { get; set; }
 
     public int CreatedById { get; set; }
+
+    public bool IsStarred { get; set; }
 }

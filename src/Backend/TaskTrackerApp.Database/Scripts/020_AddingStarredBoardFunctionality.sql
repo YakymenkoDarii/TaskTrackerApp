@@ -1,0 +1,2 @@
+﻿ALTER TABLE BoardMembers
+ADD IsStarred BIT NOT NULL DEFAULT 0; 

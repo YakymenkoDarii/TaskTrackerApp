@@ -14,6 +14,8 @@ public class BoardMember
 
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
+    public bool IsStarred { get; set; } = false;
+
     public User User { get; set; }
 
     public Board Board { get; set; }

@@ -44,12 +44,12 @@ public class GetAllBoardsQueryHandler : IRequestHandler<GetAllBoardsQuery, Resul
 
             bool isLocked = i >= limit;
 
-            boardDtos.Add(BoardMapper.MapToDto(board, isLocked));
+            boardDtos.Add(BoardMapper.MapToDto(board, isLocked, false));
         }
 
         foreach (var board in guestBoards)
         {
-            boardDtos.Add(BoardMapper.MapToDto(board, isLocked: false));
+            boardDtos.Add(BoardMapper.MapToDto(board, isLocked: false, false));
         }
 
         return Result<IEnumerable<BoardDto>>.Success(

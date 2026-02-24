@@ -5,13 +5,17 @@ using System.Security.Claims;
 using TaskTrackerApp.Application.Features.Boards.Commands.ArchiveBoard;
 using TaskTrackerApp.Application.Features.Boards.Commands.CreateBoards;
 using TaskTrackerApp.Application.Features.Boards.Commands.DeleteBoards;
+using TaskTrackerApp.Application.Features.Boards.Commands.StarBoard;
 using TaskTrackerApp.Application.Features.Boards.Commands.TransferOwnership;
 using TaskTrackerApp.Application.Features.Boards.Commands.UnArchiveBoard;
 using TaskTrackerApp.Application.Features.Boards.Commands.UpdateBoards;
 using TaskTrackerApp.Application.Features.Boards.Queries.GetAllBoards;
 using TaskTrackerApp.Application.Features.Boards.Queries.GetArchivedBoards;
 using TaskTrackerApp.Application.Features.Boards.Queries.GetBoardById;
+using TaskTrackerApp.Application.Features.Boards.Queries.GetOwnedbBoards;
+using TaskTrackerApp.Application.Features.Boards.Queries.GetSharedWithMeBoards;
 using TaskTrackerApp.Domain.DTOs.Board;
+using TaskTrackerApp.Domain.DTOs.Board.Requests;
 
 namespace TaskTrackerApp.Presentation.Controllers;
 
@@ -159,6 +163,40 @@ public class BoardsController : ControllerBase
         {
             BoardId = boardId,
             TransferUserId = userId
+        };
+
+        var result = await _mediator.Send(command);
+
+        return Ok(result);
+    }
+
+    [HttpGet("owned")]
+    public async Task<IActionResult> GetOwnedBoards()
+    {
+        var query = new GetOwnedBoardsQuery();
+
+        var result = await _mediator.Send(query);
+
+        return Ok(result);
+    }
+
+    [HttpGet("sharedWithMe")]
+    public async Task<IActionResult> GetSharedWithMeBoards()
+    {
+        var query = new GetSharedWithMeBoardsQuery();
+
+        var result = await _mediator.Send(query);
+
+        return Ok(result);
+    }
+
+    [HttpPut("{boardId}/star")]
+    public async Task<IActionResult> UpdateBoardStar(int boardId, [FromBody] UpdateStarRequest request)
+    {
+        var command = new UpdateBoardStarCommand
+        {
+            BoardId = boardId,
+            IsStarred = request.IsStarred
         };
 
         var result = await _mediator.Send(command);
