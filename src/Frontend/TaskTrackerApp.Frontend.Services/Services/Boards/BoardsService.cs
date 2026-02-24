@@ -1,6 +1,7 @@
 ﻿using Refit;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards.Requests;
+using TaskTrackerApp.Frontend.Domain.Enums;
 using TaskTrackerApp.Frontend.Domain.Errors;
 using TaskTrackerApp.Frontend.Domain.Results;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
@@ -200,6 +201,23 @@ public class BoardsService : IBoardsService
         try
         {
             var response = await _boardsApi.UpdateBoardStar(boardId, request);
+            return response.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
+
+    public async Task<Result> UpdateBoardThemeAsync(int boardId, BoardThemeColor newColor)
+    {
+        try
+        {
+            var response = await _boardsApi.UpdateBoardTheme(boardId, newColor);
             return response.ToResult();
         }
         catch (ApiException ex)

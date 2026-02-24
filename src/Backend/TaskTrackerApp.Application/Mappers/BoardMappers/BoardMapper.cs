@@ -1,11 +1,13 @@
 ﻿using TaskTrackerApp.Domain.DTOs.Board;
+using TaskTrackerApp.Domain.DTOs.BoardMembers;
 using TaskTrackerApp.Domain.Entities;
+using TaskTrackerApp.Domain.Enums;
 
 namespace TaskTrackerApp.Application.Mappers.BoardMappers;
 
 public static class BoardMapper
 {
-    public static BoardDto MapToDto(Board board, bool isLocked, bool isStarred)
+    public static BoardDto MapToDto(Board board, bool isLocked, bool isStarred, BoardThemeColor themeColor)
     {
         return new BoardDto
         {
@@ -15,7 +17,14 @@ public static class BoardMapper
             LastModified = board.LastModified,
             CreatedById = board.CreatedById,
             IsLocked = isLocked,
-            IsStarred = isStarred
+            IsStarred = isStarred,
+            ThemeColor = themeColor,
+            Members = board.Members?.Select(m => new BoardMemberAvatarDto
+            {
+                UserId = m.User.Id,
+                DisplayName = m.User.DisplayName ?? "Unknown",
+                AvatarUrl = m.User.AvatarUrl
+            }).ToList() ?? new List<BoardMemberAvatarDto>()
         };
     }
 }

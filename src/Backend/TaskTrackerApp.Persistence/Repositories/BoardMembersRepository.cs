@@ -41,6 +41,16 @@ public class BoardMembersRepository : Repository<BoardMember, int>, IBoardMember
                     .ToListAsync();
     }
 
+    public async Task<IEnumerable<BoardMember>> GetMembershipsWithBoardDetailsAsync(int userId)
+    {
+        return await _context.BoardMembers
+            .Where(bm => bm.UserId == userId)
+            .Include(bm => bm.Board)
+                .ThenInclude(b => b.Members)
+                    .ThenInclude(m => m.User)
+            .ToListAsync();
+    }
+
     public async Task<bool> ExistsAsync(int boardId, int userId)
     {
         return await _dbSet

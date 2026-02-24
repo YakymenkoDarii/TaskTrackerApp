@@ -31,7 +31,7 @@ internal class GetOwnedBoardsQueryHandler : IRequestHandler<GetOwnedBoardsQuery,
         bool isUserPro = await uow.UserRepository.IsUserProAsync(userId.Value);
         int limit = isUserPro ? int.MaxValue : 3;
 
-        var memberships = await uow.BoardMembersRepository.GetByUserIdAsync(userId.Value);
+        var memberships = await uow.BoardMembersRepository.GetMembershipsWithBoardDetailsAsync(userId.Value);
 
         var ownedMemberships = memberships
             .Where(m => m.Board.CreatedById == userId.Value)
@@ -42,7 +42,7 @@ internal class GetOwnedBoardsQueryHandler : IRequestHandler<GetOwnedBoardsQuery,
             .Select((member, index) =>
             {
                 bool isLocked = index >= limit;
-                return BoardMapper.MapToDto(member.Board, isLocked, member.IsStarred);
+                return BoardMapper.MapToDto(member.Board, isLocked, member.IsStarred, member.ThemeColor);
             })
             .ToList();
 

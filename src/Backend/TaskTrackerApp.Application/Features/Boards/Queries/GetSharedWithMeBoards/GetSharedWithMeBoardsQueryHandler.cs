@@ -32,7 +32,7 @@ internal class GetSharedWithMeBoardsQueryHandler : IRequestHandler<GetSharedWith
 
         using var uow = _uowFactory.Create();
 
-        var memberships = await uow.BoardMembersRepository.GetByUserIdAsync(userId.Value);
+        var memberships = await uow.BoardMembersRepository.GetMembershipsWithBoardDetailsAsync(userId.Value);
 
         var boardDtos = new List<BoardDto>();
 
@@ -49,7 +49,7 @@ internal class GetSharedWithMeBoardsQueryHandler : IRequestHandler<GetSharedWith
             {
                 foreach (var member in ownerGroup)
                 {
-                    boardDtos.Add(BoardMapper.MapToDto(member.Board, isLocked: false, isStarred: member.IsStarred));
+                    boardDtos.Add(BoardMapper.MapToDto(member.Board, false, member.IsStarred, member.ThemeColor));
                 }
             }
             else
@@ -65,7 +65,7 @@ internal class GetSharedWithMeBoardsQueryHandler : IRequestHandler<GetSharedWith
                 foreach (var member in ownerGroup)
                 {
                     bool isLocked = !unlockedBoardIds.Contains(member.Board.Id);
-                    boardDtos.Add(BoardMapper.MapToDto(member.Board, isLocked, member.IsStarred));
+                    boardDtos.Add(BoardMapper.MapToDto(member.Board, isLocked, member.IsStarred, member.ThemeColor));
                 }
             }
         }

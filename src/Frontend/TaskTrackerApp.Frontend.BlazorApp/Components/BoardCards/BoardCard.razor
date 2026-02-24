@@ -1,0 +1,126 @@
+﻿@using TaskTrackerApp.Frontend.Domain.DTOs.Boards
+@using TaskTrackerApp.Frontend.Domain.Enums
+@using MudBlazor
+@using TaskTrackerApp.Frontend.Services.Helpers
+
+<MudCard Elevation="2"
+         Class="@($"d-flex flex-column {GetBoardCardClass()}")"
+         Style="@($"border-top: 5px solid {BoardHex.GetThemeHex(Board.ThemeColor)}; height: 160px; overflow: hidden;")"
+         @onclick="@(() => OnBoardClick.InvokeAsync(Board.Id))">
+
+    <MudCardHeader>
+        <CardHeaderContent>
+            <div class="d-flex justify-space-between align-center">
+
+                <div class="d-flex align-center gap-2">
+                    <MudText Typo="Typo.h6" Class="text-truncate" Style="max-width: 150px;">@Board.Title</MudText>
+
+                    @if (!IsLastOpenedView)
+                    {
+                        @if (Board.CreatedById == CurrentUserId)
+                        {
+                            <MudTooltip Text="Owned by you" Placement="Placement.Top">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mud-text-secondary" />
+                            </MudTooltip>
+                        }
+                        else
+                        {
+                            <MudTooltip Text="Shared with you" Placement="Placement.Top">
+                                <MudIcon Icon="@Icons.Material.Filled.PeopleAlt" Size="Size.Small" Class="mud-text-secondary" />
+                            </MudTooltip>
+                        }
+                    }
+                </div>
+
+                <div class="d-flex align-center">
+                    @if (Board.IsLocked)
+                    {
+                        <MudTooltip Text="Upgrade to Unlock">
+                            <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Error" Size="Size.Small" Class="mr-1" />
+                        </MudTooltip>
+                    }
+
+                    <MudIconButton Icon="@(Board.IsStarred? Icons.Material.Filled.Star : Icons.Material.Outlined.StarOutline)"
+                                   Color="@(Board.IsStarred ? Color.Warning : Color.Default)"
+                                   Size="Size.Small"
+                                   OnClick="@(() => OnToggleStar.InvokeAsync(Board))"
+                                   OnClickStopPropagation="true" />
+
+                    @if (!IsLastOpenedView)
+                    {
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert"
+                                 Size="Size.Small"
+                                 Dense="true"
+                                 OnClickStopPropagation="true"
+                                 AnchorOrigin="Origin.BottomRight"
+                                 TransformOrigin="Origin.TopRight">
+
+                            <div class="pa-3">
+                                <MudText Typo="Typo.caption" Class="fw-bold mb-2 d-block text-secondary">Set Theme</MudText>
+                                <div class="d-flex flex-wrap gap-2" style="width: 140px;">
+                                    @foreach (var color in Enum.GetValues<BoardThemeColor>())
+                                    {
+                                        var hex = BoardHex.GetThemeHex(color);
+                                        var isSelected = Board.ThemeColor == color;
+                                        <div @onclick="@(() => OnThemeChange.InvokeAsync(color))"
+                                             class="hover-effect"
+                                             style="@($"background-color: {hex}; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; {(isSelected ? "outline: 2px solid #264575; outline-offset: 2px;" : "")}")">
+                                            @if (isSelected)
+                                            {
+                                                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" Style="color: white; font-size: 1rem;" />
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </MudMenu>
+                    }
+                </div>
+            </div>
+        </CardHeaderContent>
+    </MudCardHeader>
+
+    <MudCardContent Class="pb-2 pt-0 d-flex flex-column flex-grow-1" Style="overflow: hidden;">
+
+        <div class="flex-grow-1" style="overflow: hidden;">
+            @if (IsLastOpenedView)
+            {
+                <MudText Typo="Typo.caption" Class="text-secondary">Last opened: @Board.LastModified.ToShortDateString()</MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Class="text-secondary" Style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                    @Board.Description
+                </MudText>
+            }
+
+            @if (Board.IsLocked && IsLastOpenedView)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Error" Class="d-block mt-1 fw-bold">Read-Only</MudText>
+            }
+        </div>
+
+        @if (Board.Members != null && Board.Members.Any())
+        {
+            <div class="mt-auto d-flex justify-end">
+                <MudAvatarGroup Max="4" Spacing="3" MaxColor="Color.Primary" Size="Size.Small">
+                    @foreach (var member in Board.Members)
+                    {
+                        <MudTooltip Text="@member.DisplayName">
+                            <MudAvatar Size="Size.Small" Style="background-color: var(--mud-palette-primary); color: white;">
+                                @if (!string.IsNullOrEmpty(member.AvatarUrl))
+                                {
+                                    <MudImage Src="@member.AvatarUrl" />
+                                }
+                                else
+                                {
+                                    @member.DisplayName.Substring(0, 1).ToUpper()
+                                }
+                            </MudAvatar>
+                        </MudTooltip>
+                    }
+                </MudAvatarGroup>
+            </div>
+        }
+    </MudCardContent>
+</MudCard>
