@@ -52,7 +52,8 @@ internal class CreateBoardCommandHandler : IRequestHandler<CreateBoardCommand, R
         {
             BoardId = board.Id,
             UserId = request.CreatedById,
-            Role = BoardRole.Admin
+            Role = BoardRole.Admin,
+            ThemeColor = request.ThemeColor,
         };
 
         await uow.BoardMembersRepository.AddAsync(adminMember);

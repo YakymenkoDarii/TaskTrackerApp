@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
+using TaskTrackerApp.Frontend.Domain.Enums;
 
 namespace TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.BoardDialogs;
 
@@ -19,6 +20,11 @@ public partial class CreateBoardDialog
         {
             Submit();
         }
+    }
+
+    private void SelectColor(BoardThemeColor color)
+    {
+        model.ThemeColor = color;
     }
 
     private void Submit()

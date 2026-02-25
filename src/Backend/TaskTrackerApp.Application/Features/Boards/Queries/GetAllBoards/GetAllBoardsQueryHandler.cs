@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using TaskTrackerApp.Application.Interfaces.Common;
 using TaskTrackerApp.Application.Interfaces.UoW;
-using TaskTrackerApp.Application.Mappers.BoardMappers;
 using TaskTrackerApp.Domain.DTOs.Board;
 using TaskTrackerApp.Domain.Results;
 
@@ -44,12 +43,12 @@ public class GetAllBoardsQueryHandler : IRequestHandler<GetAllBoardsQuery, Resul
 
             bool isLocked = i >= limit;
 
-            boardDtos.Add(BoardMapper.MapToDto(board, isLocked));
+            //boardDtos.Add(BoardMapper.MapToDto(board, isLocked, false));
         }
 
         foreach (var board in guestBoards)
         {
-            boardDtos.Add(BoardMapper.MapToDto(board, isLocked: false));
+            //boardDtos.Add(BoardMapper.MapToDto(board, isLocked: false, false));
         }
 
         return Result<IEnumerable<BoardDto>>.Success(

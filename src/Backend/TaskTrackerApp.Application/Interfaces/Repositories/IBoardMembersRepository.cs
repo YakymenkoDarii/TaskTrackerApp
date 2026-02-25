@@ -16,4 +16,5 @@ public interface IBoardMembersRepository : IRepository<BoardMember, int>
     Task<IEnumerable<BoardMember>> GetByUserIdAsync(int userId);
 
     Task<BoardMember> GetMemberAsync(int boardId, int userId);
+    Task<IEnumerable<BoardMember>> GetMembershipsWithBoardDetailsAsync(int userId);
 }

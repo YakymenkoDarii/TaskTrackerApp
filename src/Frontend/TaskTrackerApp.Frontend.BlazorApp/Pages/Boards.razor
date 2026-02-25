@@ -1,5 +1,7 @@
 ﻿@page "/boards"
 @using Microsoft.AspNetCore.Authorization
+@using TaskTrackerApp.Frontend.BlazorApp.Components.BoardCards
+@using TaskTrackerApp.Frontend.BlazorApp.Components.Cards
 @attribute [Authorize]
 
 <PageTitle>Boards</PageTitle>
@@ -24,97 +26,177 @@
             </MudAlert>
         }
 
-        @* Section 1: Last Opened *@
+        @if (!_isPro)
+        {
+            <MudPaper Elevation="0" Class="pa-4 mb-8" Style="background-color: rgba(38, 69, 117, 0.05); border-radius: 8px; border: 1px solid rgba(38, 69, 117, 0.1);">
+                <div class="d-flex justify-space-between align-center mb-2">
+                    <MudText Typo="Typo.subtitle2" Class="fw-bold d-flex align-center gap-2" Style="color: #44546f;">
+                        <MudIcon Icon="@Icons.Material.Filled.PieChart" Size="Size.Small" />
+                        Free Plan Usage
+                    </MudText>
+                    <MudText Typo="Typo.subtitle2" Class="fw-bold" Color="@(IsMaxedOut? Color.Error: Color.Default)">
+                        @_ownedCount / @_maxFreeBoards Boards
+                    </MudText>
+                </div>
+
+                <MudProgressLinear Color="@(IsMaxedOut? Color.Error: Color.Primary)"
+                                   Value="@_ownedCount"
+                                   Max="@_maxFreeBoards"
+                                   Size="Size.Large"
+                                   Rounded="true" />
+
+                @if (IsMaxedOut)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Error" Class="d-block mt-2 fw-bold">
+                        You have reached your free board limit. Upgrade to Pro to unlock unlimited boards and premium features.
+                    </MudText>
+                }
+            </MudPaper>
+        }
+
+        <MudPaper Elevation="0" Class="d-flex flex-column flex-sm-row gap-4 mb-8 pa-0" Style="background: transparent;">
+            <MudTextField T="string" 
+                          Value="@_searchString" 
+                          ValueChanged="OnSearchChanged" 
+                          Immediate="true"
+                          Placeholder="Search boards by title..." 
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" 
+                          Variant="Variant.Outlined" 
+                          Margin="Margin.Dense" 
+                          Class="flex-grow-1 bg-white" />
+            
+            <MudSelect T="string" 
+                       Value="@_sortOption" 
+                       ValueChanged="OnSortChanged" 
+                       Variant="Variant.Outlined" 
+                       Margin="Margin.Dense" 
+                       AnchorOrigin="Origin.BottomCenter"
+                       Class="bg-white"
+                       Style="min-width: 200px; max-width: 250px;">
+                <MudSelectItem Value="@("Last Opened")">Last Opened</MudSelectItem>
+                <MudSelectItem Value="@("Alphabetical")">Alphabetical (A-Z)</MudSelectItem>
+                <MudSelectItem Value="@("Newest Created")">Newest Created</MudSelectItem>
+            </MudSelect>
+        </MudPaper>
+
+        @* SECTION 1: Last Opened *@
         @if (lastOpenedBoards.Any())
         {
-            <MudText Typo="Typo.h5" Class="mb-4 fw-bold">Last Opened</MudText>
-
+            <MudText Typo="Typo.h5" Class="mb-4 fw-bold">
+                <MudIcon Icon="@Icons.Material.Filled.AccessTime" Class="mr-2 mb-n1" /> Last Opened
+            </MudText>
             <MudGrid Class="mb-8">
                 @foreach (var board in lastOpenedBoards)
                 {
                     <MudItem xs="12" sm="6" md="3">
-                        <MudCard Elevation="3"
-                                 Class="@GetBoardCardClass(board.IsLocked)"
-                                 @onclick="@(() => HandleBoardClick(board.Id))">
-
-                            <MudCardContent>
-                                <div class="d-flex justify-space-between">
-                                    <MudText Typo="Typo.h6">@board.Title</MudText>
-                                    @if (board.IsLocked)
-                                    {
-                                        <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Error" Size="Size.Small" />
-                                    }
-                                </div>
-
-                                <MudText Typo="Typo.caption">
-                                    Last opened: @board.LastModified.ToShortDateString()
-                                </MudText>
-
-                                @if (board.IsLocked)
-                                {
-                                    <MudText Typo="Typo.caption" Color="Color.Error" Class="d-block mt-1">
-                                        Read-Only
-                                    </MudText>
-                                }
-                            </MudCardContent>
-                        </MudCard>
+                        <BoardCard Board="board" 
+                                   CurrentUserId="_currentUserId" 
+                                   IsLastOpenedView="true"
+                                   OnBoardClick="HandleBoardClick" 
+                                   OnToggleStar="ToggleBoardStar" />
                     </MudItem>
                 }
             </MudGrid>
         }
 
-        @* Section 2: Your Boards *@
-        <div class="d-flex justify-space-between align-center mb-4">
-            <MudText Typo="Typo.h5" Class="fw-bold">Your Boards</MudText>
-
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Secondary"
-                       StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="HandleCreateBoard">
-                Create New Board
-            </MudButton>
-        </div>
-
-        @if (!allBoards.Any())
+        @* SECTION 2: Starred Boards *@
+        @if (StarredBoards.Any())
         {
-            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
-                You don't have any boards yet.
-            </MudAlert>
-        }
-        else
-        {
-            <MudGrid>
-                @foreach (var board in allBoards)
+            <MudText Typo="Typo.h5" Class="mb-4 fw-bold">
+                <MudIcon Icon="@Icons.Material.Filled.Star" Color="Color.Warning" Class="mr-2 mb-n1" /> Starred Boards
+            </MudText>
+            <MudGrid Class="mb-8">
+                @foreach (var board in StarredBoards)
                 {
                     <MudItem xs="12" sm="6" md="4">
-                        <MudCard Elevation="2"
-                                 Class="@GetBoardCardClass(board.IsLocked)"
-                                 @onclick="@(() => HandleBoardClick(board.Id))">
+                        <BoardCard Board="board" 
+                                   CurrentUserId="_currentUserId" 
+                                   OnBoardClick="HandleBoardClick" 
+                                   OnToggleStar="ToggleBoardStar" 
+                                   OnThemeChange="@(color => UpdateBoardTheme(board, color))" />
+                    </MudItem>
+                }
+            </MudGrid>
+        }
 
-                            <MudCardHeader>
-                                <CardHeaderContent>
-                                    <div class="d-flex justify-space-between align-center">
-                                        <MudText Typo="Typo.h6">@board.Title</MudText>
-                                        @if (board.IsLocked)
-                                        {
-                                            <MudTooltip Text="Upgrade to Unlock">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Lock" Color="Color.Error" Size="Size.Small" />
-                                            </MudTooltip>
-                                        }
-                                    </div>
-                                </CardHeaderContent>
-                            </MudCardHeader>
+        @* SECTION 3: My Workspaces (Owned Boards) *@
+        <div class="d-flex justify-space-between align-center mb-4">
+            <MudText Typo="Typo.h5" Class="fw-bold">
+                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2 mb-n1" /> My Workspaces
+            </MudText>
+        </div>
 
-                            <MudCardContent Class="pb-4">
-                                <MudText Typo="Typo.body2" Class="text-secondary">
-                                    @board.Description
-                                </MudText>
-                                @if (board.IsLocked)
-                                {
-                                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Class="mt-2" Variant="Variant.Outlined">Read-Only Mode</MudChip>
-                                }
-                            </MudCardContent>
-                        </MudCard>
+        <MudGrid Class="mb-8">
+
+            @if (string.IsNullOrEmpty(_searchString))
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Elevation="0"
+                             Class="d-flex align-center justify-center cursor-pointer hover-effect"
+                             Style="@($"border: 2px dashed {(IsMaxedOut ? "var(--mud-palette-error)" : "var(--mud-palette-primary)")}; background-color: transparent; height: 160px; transition: all 0.2s;")"
+                             @onclick="HandleCreateBoard"
+                             onmouseover="this.style.backgroundColor='var(--mud-palette-background-grey)';"
+                             onmouseout="this.style.backgroundColor='transparent';">
+
+                        <MudCardContent Class="d-flex flex-column align-center pa-4">
+                            <MudIcon Icon="@(IsMaxedOut? Icons.Material.Filled.Lock : Icons.Material.Filled.Add)"
+                                     Size="Size.Large"
+                                     Color="@(IsMaxedOut ? Color.Error : Color.Primary)" />
+
+                            <MudText Typo="Typo.button" Color="@(IsMaxedOut? Color.Error: Color.Primary)" Class="mt-2 fw-bold">
+                                @(IsMaxedOut ? "Upgrade to Create" : "Create New Board")
+                            </MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+            @if (!OwnedBoards.Any() && !StarredBoards.Any() && string.IsNullOrEmpty(_searchString))
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">You don't own any boards yet. Click the dashed card to create one!</MudAlert>
+                </MudItem>
+            }
+            else if (!OwnedBoards.Any() && !string.IsNullOrEmpty(_searchString))
+            {
+                <MudItem xs="12">
+                    <MudText Typo="Typo.body2" Class="text-secondary">No owned boards match your search.</MudText>
+                </MudItem>
+            }
+            @foreach (var board in OwnedBoards)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <BoardCard Board="board"
+                               CurrentUserId="_currentUserId"
+                               OnBoardClick="HandleBoardClick"
+                               OnToggleStar="ToggleBoardStar"
+                               OnThemeChange="@(color => UpdateBoardTheme(board, color))" />
+                </MudItem>
+            }
+        </MudGrid>
+
+        @* SECTION 4: Shared With Me *@
+        @if (SharedBoards.Any() || (!SharedBoards.Any() && !string.IsNullOrEmpty(_searchString) && allBoards.Any(b => b.CreatedById != _currentUserId)))
+        {
+            <MudText Typo="Typo.h5" Class="mb-4 fw-bold">
+                <MudIcon Icon="@Icons.Material.Filled.PeopleAlt" Class="mr-2 mb-n1" /> Shared With Me
+            </MudText>
+            <MudGrid>
+                @if (!SharedBoards.Any() && !string.IsNullOrEmpty(_searchString))
+                {
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.body2" Class="text-secondary">No shared boards match your search.</MudText>
+                    </MudItem>
+                }
+                
+                @foreach (var board in SharedBoards)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <BoardCard Board="board" 
+                                   CurrentUserId="_currentUserId" 
+                                   OnBoardClick="HandleBoardClick" 
+                                   OnToggleStar="ToggleBoardStar" 
+                                   OnThemeChange="@(color => UpdateBoardTheme(board, color))" />
                     </MudItem>
                 }
             </MudGrid>

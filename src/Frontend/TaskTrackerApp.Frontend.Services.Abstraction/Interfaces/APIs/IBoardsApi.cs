@@ -1,5 +1,7 @@
 ﻿using Refit;
 using TaskTrackerApp.Frontend.Domain.DTOs.Boards;
+using TaskTrackerApp.Frontend.Domain.DTOs.Boards.Requests;
+using TaskTrackerApp.Frontend.Domain.Enums;
 using TaskTrackerApp.Frontend.Domain.Results;
 
 public interface IBoardsApi
@@ -30,4 +32,16 @@ public interface IBoardsApi
 
     [Put("/api/Boards/transferOwnership/{boardId}/{userId}")]
     Task<IApiResponse<Result>> TransferOwnership(int boardId, int userId);
+
+    [Get("/api/Boards/owned")]
+    Task<IApiResponse<Result<IEnumerable<BoardDto>>>> GetOwnedBoards();
+
+    [Get("/api/Boards/sharedWithMe")]
+    Task<IApiResponse<Result<IEnumerable<BoardDto>>>> GetSharedWithMeBoards();
+
+    [Put("/api/Boards/{boardId}/star")]
+    Task<IApiResponse<Result>> UpdateBoardStar(int boardId, [Body] UpdateStarRequest request);
+
+    [Put("/api/Boards/{boardId}/newColor")]
+    Task<IApiResponse<Result>> UpdateBoardTheme(int boardId, [Body] BoardThemeColor newColor);
 }

@@ -14,4 +14,5 @@ public interface IUserRepository : IRepository<User, int>
     Task<User?> GetByStripeIdAsync(string stripeId);
     Task<string?> GetStripeIdByUserIdAsync(int userId);
     Task<string?> GetEmailByUserIdAsync(int userId);
+    Task<bool> IsUserProAsync(int userId);
 }

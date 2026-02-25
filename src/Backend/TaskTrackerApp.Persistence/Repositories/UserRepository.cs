@@ -71,4 +71,13 @@ public class UserRepository : Repository<User, int>, IUserRepository
 
         return user.Email;
     }
+
+    public async Task<bool> IsUserProAsync(int userId)
+    {
+        var query = _dbSet.AsQueryable();
+
+        var user = await query.FirstOrDefaultAsync(u => u.Id == userId);
+
+        return user.IsPro;
+    }
 }

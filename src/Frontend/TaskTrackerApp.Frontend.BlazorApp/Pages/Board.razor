@@ -192,21 +192,21 @@ else
                     <EditableLabel @bind-Value="board.Title"
                                    OnCommit="UpdateBoardDetails"
                                    Typo="Typo.h5"
-                                   Style="color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); font-weight: bold;" />
+                                   Class="board-header-text" />
 
                     <EditableLabel @bind-Value="board.Description"
                                    OnCommit="UpdateBoardDetails"
                                    Typo="Typo.body2"
                                    Multiline="true"
                                    Placeholder=""
-                                   Style="color: rgba(255, 255, 255, 0.9); text-shadow: 0px 0px 2px black;" />
+                                   Class="board-header-text" />
                 }
                 else
                 {
-                    <MudText Typo="Typo.h5" Style="color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); font-weight: bold;">
+                    <MudText Typo="Typo.h5" Class="board-header-text">
                         @board.Title
                     </MudText>
-                    <MudText Typo="Typo.body2" Style="color: rgba(255, 255, 255, 0.9); text-shadow: 0px 0px 2px black;">
+                    <MudText Typo="Typo.body2" Class="board-header-text">
                         @board.Description
                     </MudText>
                 }
@@ -214,58 +214,82 @@ else
 
             <div class="d-flex align-center gap-4">
 
-                @if (!IsInMeeting)
-                {
-                    @if (CurrentMeeting != null && CurrentMeeting.Participants.Any())
-                    {
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Success"
-                                   Size="Size.Small"
-                                   OnClick="StartMeeting"
-                                   StartIcon="@Icons.Material.Filled.Login">
-                            Join Call (@CurrentMeeting.Participants.Count) • <MeetingTimer StartTime="@CurrentMeeting.StartTime" />
-                        </MudButton>
-                    }
-                    else
-                    {
-                        <MudButton Variant="Variant.Outlined" 
-                                   Style="color: white; border-color: rgba(255,255,255,0.5);"
-                                   Size="Size.Small"
-                                   OnClick="StartMeeting" 
-                                   StartIcon="@Icons.Material.Filled.VideoCall">
-                            Start Call
-                        </MudButton>
-                    }
-                }
+                <div class="d-flex align-center gap-2">
 
-                <div style="width: 200px;">
-                    <MudSelect T="int"
-                               MultiSelection="true"
-                               SelectedValues="@_selectedLabelFilters"
-                               SelectedValuesChanged="OnLabelFilterChanged"
-                               ToStringFunc="@(id => _allBoardLabels.FirstOrDefault(l => l.Id == id)?.Name ?? "Unknown")"
-                               Placeholder="Filter by label"
-                               Variant="Variant.Outlined"
-                               Margin="Margin.Dense"
-                               Dense="true"
-                               Clearable="true"
-                               Style="background-color: white; border-radius: 4px;">
-                        @foreach (var label in _allBoardLabels)
+                    @if (!IsInMeeting)
+                    {
+                        @if (CurrentMeeting != null && CurrentMeeting.Participants.Any())
                         {
-                            <MudSelectItem T="int" Value="@label.Id">
-                                <div class="d-flex align-center gap-2">
-                                    <div style="@($"background-color: {label.Color}; width: 12px; height: 12px; border-radius: 50%;")"></div>
-                                    <MudText Typo="Typo.body2">@label.Name</MudText>
-                                </div>
-                            </MudSelectItem>
+                            <MudButton Variant="Variant.Filled"
+                                       Class="board-header-btn"
+                                       Style="background-color: #2e7d32 !important;" @* Keep join active call green *@
+                                       OnClick="StartMeeting"
+                                       StartIcon="@Icons.Material.Filled.Login">
+                                Join Call (@CurrentMeeting.Participants.Count) • <MeetingTimer StartTime="@CurrentMeeting.StartTime" />
+                            </MudButton>
                         }
-                    </MudSelect>
-                </div>
+                        else
+                        {
+                            <MudButton Variant="Variant.Filled"
+                                       Class="board-header-btn"
+                                       OnClick="StartMeeting"
+                                       StartIcon="@Icons.Material.Filled.VideoCall">
+                                Start Call
+                            </MudButton>
+                        }
+                    }
 
-                <div style="width: 250px;">
-                    <TaskSearch BoardId="@BoardId"
-                                Placeholder="Search..."
-                                OnTaskChanged="@LoadBoardDataAsync" />
+                    <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" PopoverClass="pa-0" Style="border-radius: 8px;">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Filled"
+                                       Class="board-header-btn"
+                                       StartIcon="@Icons.Material.Filled.FilterList">
+                                Filter
+                            </MudButton>
+                        </ActivatorContent>
+                        <ChildContent>
+                            <MudPaper Class="pa-4" Style="width: 320px; border-radius: 8px;" Elevation="0">
+                                <div class="d-flex justify-space-between align-center mb-2">
+                                    <MudText Typo="Typo.subtitle2" Class="fw-bold mx-auto">Filter</MudText>
+                                </div>
+                                <MudDivider Class="mb-3" />
+
+                                <MudText Typo="Typo.caption" 
+                                         Class="fw-bold mb-1 d-block" 
+                                         Style="color: #44546f;">
+                                         Keyword
+                                </MudText>
+
+                                <MudTextField T="string"
+                                              Value="@_filterKeyword"
+                                              ValueChanged="OnFilterKeywordChanged"
+                                              Immediate="true"
+                                              Placeholder="Enter a keyword..."
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="mb-4" />
+
+                                <MudText Typo="Typo.caption" Class="fw-bold mb-1 d-block" Style="color: #44546f;">Labels</MudText>
+                                @foreach (var label in _allBoardLabels)
+                                {
+                                    <MudCheckBox T="bool"
+                                                 Value="@(_selectedLabelFilters.Contains(label.Id))"
+                                                 ValueChanged="@((isChecked) => ToggleLabelFilter(label.Id, isChecked))"
+                                                 Color="Color.Primary" Dense="true" Class="mb-1 py-1">
+                                        <div style="@($"background-color: {label.Color}; color: white; border-radius: 4px; padding: 4px 12px; font-size: 0.75rem; font-weight: 600; min-width: 150px;")">
+                                            @label.Name
+                                        </div>
+                                    </MudCheckBox>
+                                }
+                            </MudPaper>
+                        </ChildContent>
+                    </MudMenu>
+
+                    <div style="width: 200px;">
+                        <TaskSearch BoardId="@BoardId"
+                                    Placeholder="Search..."
+                                    OnTaskChanged="@LoadBoardDataAsync" />
+                    </div>
                 </div>
 
                 <MudMenu Icon="@Icons.Material.Filled.MoreVert"
@@ -359,10 +383,10 @@ else
             }
             else
             {
-                <MudDropContainer T=@CardDto
-                                  @ref=@_cardDropContainer
-                                  Items=@FilteredCards()
-                                  ItemsSelector=@((item, zone) => item.ColumnId.ToString() == zone)
+                <MudDropContainer T="CardDto"
+                                  @ref="_cardDropContainer"
+                                  Items="_allCards"
+                                  ItemsSelector="CardSelector"
                                   ItemDropped=@CardDropped
                                   Class="board-canvas d-flex h-100 overflow-auto px-4 pb-4 gap-4">
                     <ChildContent>
@@ -458,10 +482,9 @@ else
                                 }
                                 else
                                 {
-                                    <MudButton Variant=@Variant.Filled
-                                               Color=@Color.Success
-                                               OnClick=@ShowAddColumnInline
-                                               Class="py-2 fw-bold text-white w-100">
+                                    <MudButton Variant="Variant.Filled"
+                                               OnClick="@ShowAddColumnInline"
+                                               Class="add-list-btn py-2 fw-bold w-100">
                                         @(columns.Any() ? "Add another list" : "Add list")
                                     </MudButton>
                                 }

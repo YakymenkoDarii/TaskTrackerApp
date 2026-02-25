@@ -1,4 +1,7 @@
-﻿namespace TaskTrackerApp.Frontend.Domain.DTOs.Boards;
+﻿using TaskTrackerApp.Frontend.Domain.DTOs.BoardMembers;
+using TaskTrackerApp.Frontend.Domain.Enums;
+
+namespace TaskTrackerApp.Frontend.Domain.DTOs.Boards;
 
 public class BoardDto
 {
@@ -13,4 +16,10 @@ public class BoardDto
     public bool IsLocked { get; set; }
 
     public int CreatedById { get; set; }
+
+    public bool IsStarred { get; set; }
+
+    public BoardThemeColor ThemeColor { get; set; } = BoardThemeColor.DefaultBlue;
+
+    public List<BoardMemberAvatarDto> Members { get; set; } = new();
 }
