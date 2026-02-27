@@ -51,7 +51,16 @@ public static class CardMappers
             Priority = entity.Priority,
 
             BoardTitle = entity.Board?.Title ?? "Unknown Board",
-            ColumnTitle = entity.Column?.Title ?? "Unknown List"
+            ColumnTitle = entity.Column?.Title ?? "Unknown List",
+
+            Labels = entity.Labels != null
+                ? entity.Labels.Select(l => new LabelDto
+                {
+                    Id = l.Id,
+                    Name = l.Name,
+                    Color = l.Color
+                }).ToList()
+                : new List<LabelDto>()
         };
     }
 

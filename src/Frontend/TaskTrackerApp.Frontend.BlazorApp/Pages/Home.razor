@@ -3,57 +3,85 @@
 @using TaskTrackerApp.Frontend.BlazorApp.Components
 @using TaskTrackerApp.Frontend.Domain.DTOs.Cards
 @using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services
+@using TaskTrackerApp.Frontend.Domain.Enums
 
 <PageTitle>Home - Upcoming</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="py-8">
 
-    <div class="d-flex justify-space-between align-center mb-6">
-        <div>
-            <MudText Typo="Typo.h4" Class="fw-bold">Upcoming</MudText>
-            <MudText Typo="Typo.body1" Class="mud-text-secondary">
-                @_weekStart.ToString("MMM dd") - @_weekEnd.ToString("MMM dd, yyyy")
+    <div class="d-flex justify-space-between align-start mb-4">
+
+        <div class="d-flex flex-column">
+            <div class="d-flex align-center gap-4">
+                <MudText Typo="Typo.h4" Class="fw-bold">Upcoming</MudText>
+
+                @if (_selectedGrouping == GroupByMode.Date)
+                {
+                    <div class="d-flex align-center">
+                        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" OnClick="PreviousWeek" Size="Size.Small" />
+                        <MudButton OnClick="GoToToday" Disabled="@IsCurrentWeek()" Size="Size.Small" Class="px-2">Today</MudButton>
+                        <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" OnClick="NextWeek" Size="Size.Small" />
+                    </div>
+                }
+            </div>
+
+            <MudText Typo="Typo.body1" Class="mud-text-secondary mt-1">
+                @if (_selectedGrouping == GroupByMode.Date)
+                {
+                    @if (_isCalendarView)
+                    {
+                        @_anchorDate.ToString("MMMM yyyy")
+                    }
+                    else
+                    {
+                        @($"{_weekStart:MMM dd} - {_weekEnd:MMM dd, yyyy}")
+                    }
+                }
+                else
+                {
+                    @("All assigned tasks")
+                }
             </MudText>
         </div>
 
-        <div class="d-flex align-center gap-4">
+        <MudBadge Content="@_pendingInvitesCount" Color="Color.Error" Overlap="true" Visible="@(_pendingInvitesCount > 0)">
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Mail" Color="Color.Primary" OnClick="OpenInvitationsDialog">
+                Invitations
+            </MudButton>
+        </MudBadge>
 
-            <div style="width: 250px;">
+    </div>
+
+    <div class="d-flex justify-space-between align-center pb-4 mb-6" style="border-bottom: 1px solid var(--mud-palette-divider);">
+
+        <div class="d-flex align-center gap-4">
+            <div style="width: 280px;">
                 <TaskSearch AssigneeId="@_currentUserId"
                             Placeholder="Search my tasks..."
                             OnTaskChanged=@LoadDataAsync />
             </div>
 
-            <MudBadge Content="@_pendingInvitesCount"
-                      Color="Color.Error"
-                      Overlap="true"
-                      Visible="@(_pendingInvitesCount > 0)"
-                      Class="cursor-pointer mr-2">
-
-                <MudButton Variant="Variant.Filled"
-                           StartIcon="@Icons.Material.Filled.Mail"
-                           Color="Color.Primary"
-                           OnClick="OpenInvitationsDialog">
-                    Invitations
-                </MudButton>
-            </MudBadge>
-
-            <div class="d-flex align-center gap-2">
-                <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
-                               OnClick="PreviousWeek"
-                               Variant="Variant.Outlined" />
-
-                <MudButton Variant="Variant.Outlined"
-                           OnClick="GoToToday"
-                           Disabled="@IsCurrentWeek()">
-                    Today
-                </MudButton>
-
-                <MudIconButton Icon="@Icons.Material.Filled.ChevronRight"
-                               OnClick="NextWeek"
-                               Variant="Variant.Outlined" />
-            </div>
+            @if (!_isCalendarView)
+            {
+                <div style="width: 150px;">
+                    <MudSelect T="GroupByMode" Value="_selectedGrouping" ValueChanged="OnGroupingChanged" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem Value="GroupByMode.Date">By Date</MudSelectItem>
+                        <MudSelectItem Value="GroupByMode.Board">By Board</MudSelectItem>
+                        <MudSelectItem Value="GroupByMode.Label">By Label</MudSelectItem>
+                    </MudSelect>
+                </div>
+            }
         </div>
+
+        <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Medium">
+            <MudButton Variant="@(_isCalendarView? Variant.Outlined: Variant.Filled)"
+                       OnClick="() => SetView(false)"
+                       StartIcon="@Icons.Material.Filled.FormatListBulleted">List</MudButton>
+            <MudButton Variant="@(_isCalendarView? Variant.Filled: Variant.Outlined)"
+                       OnClick="() => SetView(true)"
+                       StartIcon="@Icons.Material.Filled.CalendarMonth">Calendar</MudButton>
+        </MudButtonGroup>
+
     </div>
 
     @if (_isLoading)
@@ -64,63 +92,205 @@
     }
     else
     {
-        @if (_overdueTasks.Any() && IsCurrentWeek())
+        @if (_overdueTasks.Any())
         {
             <MudExpansionPanel Text="Overdue" Class="mb-6 border-solid border-1 mud-border-error" IsExpanded="true">
                 <TitleContent>
                     <div class="d-flex align-center gap-2">
-                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Small"/>
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Small" />
                         <MudText Color="Color.Error" Class="fw-bold">Overdue (@_overdueTasks.Count)</MudText>
                     </div>
                 </TitleContent>
                 <ChildContent>
-                     @foreach (var task in _overdueTasks)
-                     {
-                         <TaskRowItem Task="task" OnTaskClick="NavigateToTask" OnToggleComplete="ToggleComplete" />
-                     }
+                    @foreach (var task in _overdueTasks)
+                    {
+                        <TaskRowItem Task="task" OnTaskClick="NavigateToTask" OnToggleComplete="ToggleComplete" />
+                    }
                 </ChildContent>
             </MudExpansionPanel>
         }
 
-        <MudStack Spacing="4">
-            @for (int i = 0; i < 7; i++)
-            {
-                var currentDay = _weekStart.AddDays(i);
-                var isToday = currentDay.Date == DateTime.Today;
-                var dayTasks = _tasks.Where(t => t.DueDate.HasValue && t.DueDate.Value.Date == currentDay.Date).ToList();
-
-                <div class="mt-4">
-                    <div class="d-flex align-center gap-2 mb-2 pb-1" style="border-bottom: 1px solid var(--mud-palette-divider);">
-                        <MudText Typo="Typo.h6" Class="@(isToday ? "text-primary fw-bold" : "")">
-                            @currentDay.ToString("dddd") 
-                            <span class="mud-text-secondary" style="font-size: 0.8em; margin-left: 4px;">
-                                @currentDay.ToString("MMM dd")
-                            </span>
-                        </MudText>
-                        @if (isToday)
-                        {
-                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Label="true" Class="ml-2">Today</MudChip>
-                        }
-                    </div>
-
-                    @if (dayTasks.Any())
+        @if (!_isCalendarView)
+        {
+            <MudStack Spacing="4">
+                @if (_selectedGrouping == GroupByMode.Date)
+                {
+                    @for (int i = 0; i < 7; i++)
                     {
-                        <MudStack Spacing="2">
-                            @foreach (var task in dayTasks)
+                        var currentDay = _weekStart.AddDays(i);
+                        var isToday = currentDay.Date == DateTime.Today;
+                        var dayTasks = _tasks.Where(t => t.DueDate.HasValue && t.DueDate.Value.Date == currentDay.Date).ToList();
+
+                        <div class="mt-4">
+                            <div class="d-flex align-center gap-2 mb-2 pb-1" style="border-bottom: 1px solid var(--mud-palette-divider);">
+                                <MudText Typo="Typo.h6" Class="@(isToday ? "text-primary fw-bold" : "")">
+                                    @currentDay.ToString("dddd")
+                                    <span class="mud-text-secondary" style="font-size: 0.8em; margin-left: 4px;">
+                                        @currentDay.ToString("MMM dd")
+                                    </span>
+                                </MudText>
+                                @if (isToday)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Label="true" Class="ml-2">Today</MudChip>
+                                }
+                            </div>
+
+                            @if (dayTasks.Any())
                             {
-                                <TaskRowItem Task="task" OnTaskClick="NavigateToTask" OnToggleComplete="ToggleComplete" />
+                                <MudStack Spacing="2">
+                                    @foreach (var task in dayTasks)
+                                    {
+                                        <TaskRowItem Task="task" OnTaskClick="NavigateToTask" OnToggleComplete="ToggleComplete" />
+                                    }
+                                </MudStack>
                             }
-                        </MudStack>
+                            else
+                            {
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary font-italic ml-2 py-2">
+                                    No tasks scheduled
+                                </MudText>
+                            }
+                        </div>
                     }
-                    else
+                }
+                else if (_selectedGrouping == GroupByMode.Board)
+                {
+                    var boardGroups = _tasks.GroupBy(t => t.BoardId).OrderBy(g => g.First().BoardTitle);
+
+                    @foreach (var group in boardGroups)
                     {
-                        <MudText Typo="Typo.body2" Class="mud-text-secondary font-italic ml-2 py-2">
-                            No tasks scheduled
-                        </MudText>
+                        var boardTitle = group.First().BoardTitle;
+
+                        <div class="mt-4">
+                            <div class="d-flex align-center gap-2 mb-2 pb-1" style="border-bottom: 1px solid var(--mud-palette-divider);">
+                                <MudIcon Icon="@Icons.Material.Filled.Dashboard" Size="Size.Small" Class="mud-text-secondary" />
+                                <MudText Typo="Typo.h6" Class="fw-bold">@boardTitle</MudText>
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text">@group.Count() tasks</MudChip>
+                            </div>
+
+                            <MudStack Spacing="2">
+                                @foreach (var task in group)
+                                {
+                                    <TaskRowItem Task="task" OnTaskClick="NavigateToTask" OnToggleComplete="ToggleComplete" />
+                                }
+                            </MudStack>
+                        </div>
+                    }
+                }
+                else if (_selectedGrouping == GroupByMode.Label)
+                {
+                    var labelsWithTasks = _tasks
+                    .Where(t => t.Labels != null && t.Labels.Any())
+                    .SelectMany(t => t.Labels.Select(label => new { Label = label, Task = t }))
+                    .GroupBy(x => x.Label.Id)
+                    .OrderBy(g => g.First().Task.BoardTitle)
+                    .ThenBy(g => g.First().Label.Name);
+
+                    var untaggedTasks = _tasks.Where(t => t.Labels == null || !t.Labels.Any()).ToList();
+
+                    @foreach (var group in labelsWithTasks)
+                    {
+                        var label = group.First().Label;
+                        var boardTitle = group.First().Task.BoardTitle;
+
+                        <div class="mt-4">
+                            <div class="d-flex align-center gap-2 mb-2 pb-1" style="border-bottom: 1px solid var(--mud-palette-divider);">
+                                <MudIcon Icon="@Icons.Material.Filled.Label" Size="Size.Small" Style="@($"color: {label.Color};")" />
+                                <MudText Typo="Typo.h6" Class="fw-bold">
+                                    @label.Name
+                                </MudText>
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary ml-2">
+                                    in @boardTitle
+                                </MudText>
+                            </div>
+
+                            <MudStack Spacing="2">
+                                @foreach (var item in group)
+                                {
+                                    <TaskRowItem Task="item.Task" OnTaskClick="NavigateToTask" OnToggleComplete="ToggleComplete" />
+                                }
+                            </MudStack>
+                        </div>
+                    }
+
+                    @if (untaggedTasks.Any())
+                    {
+                        <div class="mt-4">
+                            <div class="d-flex align-center gap-2 mb-2 pb-1" style="border-bottom: 1px solid var(--mud-palette-divider);">
+                                <MudIcon Icon="@Icons.Material.Filled.LabelOff" Size="Size.Small" Class="mud-text-secondary" />
+                                <MudText Typo="Typo.h6" Class="mud-text-secondary fw-bold">No Labels</MudText>
+                            </div>
+
+                            <MudStack Spacing="2">
+                                @foreach (var task in untaggedTasks)
+                                {
+                                    <TaskRowItem Task="task" OnTaskClick="NavigateToTask" OnToggleComplete="ToggleComplete" />
+                                }
+                            </MudStack>
+                        </div>
+                    }
+                }
+            </MudStack>
+        }
+        else
+        {
+            <div class="calendar-container mt-4">
+                <div class="calendar-header">
+                    @foreach (var day in new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" })
+                    {
+                        <div class="calendar-header-cell mud-text-secondary fw-bold text-center py-2">@day</div>
                     }
                 </div>
-            }
-        </MudStack>
-    }
 
+                <div class="calendar-grid">
+                    @for (int i = 0; i < 42; i++)
+                    {
+                        var currentDate = _calendarStart.AddDays(i);
+                        var isCurrentMonth = currentDate.Month == _anchorDate.Month;
+                        var isToday = currentDate.Date == DateTime.Today;
+                        var dayTasks = _tasks.Where(t => t.DueDate?.Date == currentDate.Date).ToList();
+
+                        <div class="calendar-cell @(isCurrentMonth ? "" : "calendar-out-of-month") @(isToday ? "calendar-today" : "")">
+                            <div class="d-flex justify-space-between align-center mb-1">
+                                <MudText Typo="Typo.caption" Class="@(isToday ? "fw-bold text-primary" : "")">
+                                    @currentDate.Day
+                                </MudText>
+                            </div>
+
+                            <div class="calendar-tasks-container">
+                                @foreach (var task in dayTasks)
+                                {
+                                    var indicatorStyle = $"background-color: {task.Labels?.FirstOrDefault()?.Color ?? "var(--mud-palette-primary)"};";
+
+                                    <MudTooltip Delay="400" Placement="Placement.Top">
+                                        <TooltipContent>
+                                            <MudText Typo="Typo.body2" Class="fw-bold">@task.Title</MudText>
+                                            <MudText Typo="Typo.caption">Board: @task.BoardTitle</MudText>
+                                        </TooltipContent>
+                                        <ChildContent>
+                                            <div class="calendar-task-chip cursor-pointer @(task.IsCompleted ? "mud-opacity-50" : "")" @onclick="() => NavigateToTask(task)">
+
+                                                @if (task.IsCompleted)
+                                                {
+                                                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="mr-1" Style="width: 12px; height: 12px; color: var(--mud-palette-success);" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="task-color-indicator" style="@indicatorStyle"></div>
+                                                }
+
+                                                <span class="task-title-truncate @(task.IsCompleted ? "text-decoration-line-through" : "")">
+                                                    @task.Title
+                                                </span>
+                                            </div>
+                                        </ChildContent>
+                                    </MudTooltip>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
 </MudContainer>

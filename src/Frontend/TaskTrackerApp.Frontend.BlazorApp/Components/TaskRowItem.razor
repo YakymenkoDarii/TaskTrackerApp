@@ -1,44 +1,60 @@
 ﻿@using TaskTrackerApp.Frontend.Domain.DTOs.Cards
 
-<MudPaper Class="pa-3 d-flex align-center gap-3 cursor-pointer hover-effect mb-2"
+<MudPaper Class="task-row-item pa-3 d-flex align-center gap-3 mb-2"
           Elevation="0"
           Outlined="true"
           @onclick="@(() => OnTaskClick.InvokeAsync(Task))">
 
-    <MudTooltip Text="@(Task.IsCompleted ? "Mark incomplete" : $"Priority: {Task.Priority}")">
-        <MudTooltip Text="@(Task.IsCompleted ? "Mark incomplete" : $"Priority: {Task.Priority}")">
-
-            <div @onclick:stopPropagation="true">
-
-                <MudIconButton Icon="@(Task.IsCompleted? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.Circle)"
-                               Color="@(Task.IsCompleted ? Color.Success : GetPriorityColor(Task.Priority))"
-                               Size="Size.Medium"
-                               OnClick="@(() => OnToggleComplete.InvokeAsync(Task))"
-                               Class="m-0" />
-
-            </div>
+    <div @onclick:stopPropagation="true">
+        <MudTooltip Text="@(Task.IsCompleted ? "Mark incomplete" : $"Priority: {Task.Priority}")" Placement="Placement.Top">
+            <MudIconButton Icon="@(Task.IsCompleted? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.Circle)"
+                           Color="@(Task.IsCompleted ? Color.Success : GetPriorityColor(Task.Priority))"
+                           Size="Size.Medium"
+                           OnClick="@(() => OnToggleComplete.InvokeAsync(Task))"
+                           Class="pa-2" />
         </MudTooltip>
-    </MudTooltip>
+    </div>
 
     <div class="d-flex flex-column flex-grow-1" style="min-width: 0;">
-        <MudText Typo="Typo.body2"
-                 Style="@(Task.IsCompleted ? "text-decoration: line-through; color: gray;" : "")">
-            @Task.Title
-        </MudText>
 
-        <div class="d-flex align-center gap-2 mt-1">
-            <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-size: 0.75rem;">
-                @Task.BoardTitle
+        <div class="d-flex flex-wrap align-center gap-2 mb-1">
+            <MudText Typo="Typo.body1"
+                     Class="@(Task.IsCompleted ? "mud-text-secondary" : "fw-medium")"
+                     Style="@(Task.IsCompleted ? "text-decoration: line-through; margin-right: 4px;" : "margin-right: 4px;")">
+                @Task.Title
             </MudText>
+
+            @if (Task.Labels != null && Task.Labels.Any())
+            {
+                <div class="d-flex flex-wrap gap-1">
+                    @foreach (var label in Task.Labels)
+                    {
+                        <span class="task-label-chip" style="background-color: @label.Color;">
+                            @label.Name
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="d-flex align-center gap-3 mt-1 mud-text-secondary" style="font-size: 0.75rem;">
+
+            <div class="d-flex align-center gap-1">
+                <MudIcon Icon="@Icons.Material.Filled.Dashboard" Style="font-size: 0.9rem;" />
+                <span>@Task.BoardTitle</span>
+            </div>
 
             @if (Task.DueDate.HasValue)
             {
-                <MudText Typo="Typo.caption" Color="@(IsOverdue(Task) ? Color.Error : Color.Default)">
-                    • @Task.DueDate.Value.ToString("t")
-                </MudText>
+                <div class="d-flex align-center gap-1 @(IsOverdue(Task) && !Task.IsCompleted ? "mud-error-text fw-bold" : "")">
+                    <MudIcon Icon="@(IsOverdue(Task) && !Task.IsCompleted ? Icons.Material.Filled.Warning : Icons.Material.Filled.AccessTime)" Style="font-size: 0.9rem;" />
+                    <span>@Task.DueDate.Value.ToString("MMM dd, HH:mm")</span>
+                </div>
             }
+
         </div>
     </div>
 
-    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small" Class="mud-text-disabled" />
+    <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Medium" Class="mud-text-disabled right-arrow-icon" />
+
 </MudPaper>

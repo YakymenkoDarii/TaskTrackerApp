@@ -5,41 +5,75 @@
 
 
 <MudAutocomplete T="CardDto"
-                 Label="@Placeholder"
+                 Placeholder="@Placeholder"
                  Value="selectedCard"
                  ValueChanged="OnCardSelected"
                  SearchFunc="@SearchTasks"
                  ToStringFunc="@(c => c?.Title)"
                  AdornmentIcon="@Icons.Material.Filled.Search"
+                 AdornmentColor="Color.Primary"
                  Variant="Variant.Filled"
                  Margin="Margin.Dense"
                  Clearable="true"
                  ResetValueOnEmptyText="true"
                  CoerceText="false"
                  DebounceInterval="500"
-                 Style="background-color: white; border-radius: var(--mud-default-borderradius);"
+                 DisableUnderLine="true"
+                 Style="background-color: #ffffff; border-radius: 8px;"
                  Class="flex-grow-1">
 
     <ItemTemplate Context="card">
-        <MudStack Row="true" AlignItems="AlignItems.Center" Class="pa-2" Style="width: 100%">
+        <div class="d-flex align-center gap-3 py-2 px-1" style="width: 100%;">
 
             <MudIcon Icon="@(card.IsCompleted? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.Circle)"
                      Color="@(card.IsCompleted ? Color.Success : GetPriorityColor(card.Priority))"
                      Size="Size.Small" />
 
-            <MudStack Spacing="0" Class="flex-grow-1">
-                <MudText Typo="Typo.body2" Class="fw-bold">@card.Title</MudText>
-                @if (card.DueDate.HasValue)
-                {
-                    <div class="d-flex align-center gap-1">
-                        <MudIcon Icon="@Icons.Material.Filled.Event" Size="Size.Small" Style="font-size: 0.75rem; color: gray;" />
-                        <MudText Typo="Typo.caption" Color="@(card.DueDate < DateTime.Now && !card.IsCompleted ? Color.Error : Color.Secondary)">
-                            @card.DueDate.Value.ToString("MMM dd")
-                        </MudText>
-                    </div>
-                }
-            </MudStack>
-        </MudStack>
+            <div class="d-flex flex-column flex-grow-1" style="min-width: 0;">
+
+                <MudText Typo="Typo.body2"
+                         Class="@(card.IsCompleted ? "mud-text-secondary" : "fw-medium")"
+                         Style="@(card.IsCompleted ? "text-decoration: line-through;" : "")">
+                    @card.Title
+                </MudText>
+
+                <div class="d-flex align-center flex-wrap gap-2 mt-1">
+                    @if (card.DueDate.HasValue)
+                    {
+                        bool isOverdue = card.DueDate < DateTime.Now && !card.IsCompleted;
+                        <div class="d-flex align-center gap-1">
+                            <MudIcon Icon="@(isOverdue? Icons.Material.Filled.Warning : Icons.Material.Filled.Event)"
+                                     Size="Size.Small"
+                                     Style="font-size: 0.75rem;"
+                                     Color="@(isOverdue ? Color.Error : Color.Default)"
+                                     Class="@(isOverdue ? "" : "mud-text-secondary")" />
+
+                            <MudText Typo="Typo.caption" Color="@(isOverdue? Color.Error: Color.Secondary)" Class="@(isOverdue ? "fw-bold" : "")">
+                                @card.DueDate.Value.ToString("MMM dd")
+                            </MudText>
+                        </div>
+                    }
+
+                    @if (card.Labels != null && card.Labels.Any())
+                    {
+                        <div class="d-flex gap-1">
+                            @foreach (var label in card.Labels)
+                            {
+                                <span class="search-label-chip" style="background-color: @label.Color;">
+                                    @label.Name
+                                </span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
     </ItemTemplate>
+
+    <NoItemsTemplate>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary pa-3 text-center">
+            No tasks found.
+        </MudText>
+    </NoItemsTemplate>
 
 </MudAutocomplete>

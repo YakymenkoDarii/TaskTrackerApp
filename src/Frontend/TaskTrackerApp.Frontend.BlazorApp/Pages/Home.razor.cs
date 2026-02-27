@@ -4,8 +4,10 @@ using MudBlazor;
 using System.Security.Claims;
 using TaskTrackerApp.Frontend.BlazorApp.Pages.Dialogs.InvitationDialogs;
 using TaskTrackerApp.Frontend.Domain.DTOs.Cards;
+using TaskTrackerApp.Frontend.Domain.Enums;
 using TaskTrackerApp.Frontend.Domain.Events.Card;
 using TaskTrackerApp.Frontend.Domain.Events.Invitations;
+using TaskTrackerApp.Frontend.Domain.Results;
 using TaskTrackerApp.Frontend.Services.Abstraction.Interfaces.Services;
 using TaskTrackerApp.Frontend.Services.Services.Hubs;
 
@@ -39,6 +41,12 @@ public partial class Home : IDisposable
     private int _pendingInvitesCount = 0;
     private int _currentUserId;
 
+    private bool _isCalendarView = false;
+    private DateTime _calendarStart;
+    private DateTime _calendarEnd;
+
+    private GroupByMode _selectedGrouping = GroupByMode.Date;
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -52,10 +60,12 @@ public partial class Home : IDisposable
 
                 BoardHub.OnCardUpdated += HandleCardUpdated;
                 BoardHub.OnCardDeleted += HandleCardDeleted;
+
+                await BoardHub.StartConnection();
             }
         }
 
-        CalculateWeekRange();
+        CalculateRanges();
         await Task.WhenAll(LoadDataAsync(), UpdateInvitationCount());
     }
 
@@ -64,7 +74,19 @@ public partial class Home : IDisposable
         _isLoading = true;
         try
         {
-            var result = await CardService.GetUpcoming(_weekStart, _weekEnd, includeOverdue: true);
+            Result<IEnumerable<UpcomingCardDto>> result;
+
+            if (_selectedGrouping == GroupByMode.Date)
+            {
+                var startDate = _isCalendarView ? _calendarStart : _weekStart;
+                var endDate = _isCalendarView ? _calendarEnd : _weekEnd;
+
+                result = await CardService.GetUpcoming(startDate, endDate, includeOverdue: true);
+            }
+            else
+            {
+                result = await CardService.GetAllMyAssigned();
+            }
 
             if (result.IsSuccess && result.Value != null)
             {
@@ -72,16 +94,26 @@ public partial class Home : IDisposable
 
                 _overdueTasks = allData
                     .Where(t => t.DueDate.HasValue
-                                && t.DueDate.Value.Date < DateTime.Today
+                                && t.DueDate.Value.Date < DateTime.UtcNow
                                 && !t.IsCompleted)
                     .OrderBy(t => t.DueDate)
                     .ToList();
 
-                _tasks = allData
-                    .Where(t => t.DueDate.HasValue
-                                && t.DueDate.Value.Date >= _weekStart
-                                && t.DueDate.Value.Date <= _weekEnd)
-                    .ToList();
+                if (_selectedGrouping == GroupByMode.Date)
+                {
+                    var startDate = _isCalendarView ? _calendarStart : _weekStart;
+                    var endDate = _isCalendarView ? _calendarEnd : _weekEnd;
+
+                    _tasks = allData
+                        .Where(t => t.DueDate.HasValue
+                                    && t.DueDate.Value.Date >= startDate
+                                    && t.DueDate.Value.Date <= endDate)
+                        .ToList();
+                }
+                else
+                {
+                    _tasks = allData.ToList();
+                }
 
                 var visibleBoardIds = allData.Select(t => t.BoardId).Distinct();
 
@@ -115,6 +147,7 @@ public partial class Home : IDisposable
     {
         var task = _tasks.Concat(_overdueTasks).FirstOrDefault(t => t.Id == e.CardId);
 
+        Console.WriteLine($"Task marked as something Name: {e.Title}  {e.IsCompleted}");
         if (task != null)
         {
             task.Title = e.Title;
@@ -166,42 +199,50 @@ public partial class Home : IDisposable
         };
 
         var dialog = DialogService.Show<InvitationsDialog>("My Invitations", options);
-        var result = await dialog.Result;
+        await dialog.Result;
 
         await UpdateInvitationCount();
     }
 
-    private void CalculateWeekRange()
+    private void CalculateRanges()
     {
         int diff = (7 + (_anchorDate.DayOfWeek - DayOfWeek.Monday)) % 7;
         _weekStart = _anchorDate.AddDays(-1 * diff).Date;
         _weekEnd = _weekStart.AddDays(6).Date;
+
+        var firstDayOfMonth = new DateTime(_anchorDate.Year, _anchorDate.Month, 1);
+        int monthDiff = (7 + (firstDayOfMonth.DayOfWeek - DayOfWeek.Monday)) % 7;
+        _calendarStart = firstDayOfMonth.AddDays(-1 * monthDiff).Date;
+        _calendarEnd = _calendarStart.AddDays(41).Date;
     }
 
     private async Task PreviousWeek()
     {
-        _anchorDate = _anchorDate.AddDays(-7);
-        CalculateWeekRange();
+        _anchorDate = _isCalendarView ? _anchorDate.AddMonths(-1) : _anchorDate.AddDays(-7);
+        CalculateRanges();
         await LoadDataAsync();
     }
 
     private async Task NextWeek()
     {
-        _anchorDate = _anchorDate.AddDays(7);
-        CalculateWeekRange();
+        _anchorDate = _isCalendarView ? _anchorDate.AddMonths(1) : _anchorDate.AddDays(7);
+        CalculateRanges();
         await LoadDataAsync();
     }
 
     private async Task GoToToday()
     {
         _anchorDate = DateTime.Today;
-        CalculateWeekRange();
+        CalculateRanges();
         await LoadDataAsync();
     }
 
     private bool IsCurrentWeek()
     {
         var today = DateTime.Today;
+        if (_isCalendarView)
+            return today.Month == _anchorDate.Month && today.Year == _anchorDate.Year;
+
         return today >= _weekStart && today <= _weekEnd;
     }
 
@@ -221,6 +262,25 @@ public partial class Home : IDisposable
 
         await CardService.UpdateStatus(task.Id, task.IsCompleted);
         StateHasChanged();
+    }
+
+    private async Task ToggleCalendarView(bool value)
+    {
+        _isCalendarView = value;
+        await LoadDataAsync();
+    }
+
+    private async Task SetView(bool isCalendar)
+    {
+        if (_isCalendarView == isCalendar) return;
+        _isCalendarView = isCalendar;
+        await LoadDataAsync();
+    }
+
+    private async Task OnGroupingChanged(GroupByMode newMode)
+    {
+        _selectedGrouping = newMode;
+        await LoadDataAsync();
     }
 
     public void Dispose()
