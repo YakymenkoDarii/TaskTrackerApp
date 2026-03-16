@@ -143,4 +143,21 @@ public class CardsService : ICardsService
             return Result<IEnumerable<CardDto>>.Failure(new Error("UnknownError", ex.Message));
         }
     }
+
+    public async Task<Result<IEnumerable<UpcomingCardDto>>> GetAllMyAssigned()
+    {
+        try
+        {
+            var response = await _cardsApi.GetAllMyAssigned();
+            return response.ToResult();
+        }
+        catch (ApiException ex)
+        {
+            return Result<IEnumerable<UpcomingCardDto>>.Failure(new Error(ClientErrors.NetworkError.Code, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return Result<IEnumerable<UpcomingCardDto>>.Failure(new Error("UnknownError", ex.Message));
+        }
+    }
 }

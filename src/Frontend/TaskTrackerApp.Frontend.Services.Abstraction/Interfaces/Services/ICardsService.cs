@@ -20,4 +20,6 @@ public interface ICardsService
     Task<Result<IEnumerable<CardDto>>> SearchCardsAsync(string query, int? boardId = null, int? assigneeId = null);
 
     Task<Result<IEnumerable<CardDto>>> GetCardsByBoardIdAsync(int boardId);
+
+    Task<Result<IEnumerable<UpcomingCardDto>>> GetAllMyAssigned();
 }

@@ -23,7 +23,7 @@ public class UpdateCardStatusCommandHandler : IRequestHandler<UpdateCardStatusCo
     {
         using var uow = _uowFactory.Create();
 
-        var card = await uow.CardRepository.GetById(request.Id);
+        var card = await uow.CardRepository.GetCardDetailsAsync(request.Id);
 
         var isArchived = await uow.BoardRepository.IsBoardArchivedAsync(card.BoardId);
         if (isArchived)
@@ -44,8 +44,8 @@ public class UpdateCardStatusCommandHandler : IRequestHandler<UpdateCardStatusCo
                     card.DueDate,
                     card.Priority,
                     card.AssigneeId,
-                    card.AssigneeUser.AvatarUrl,
-                    card.AssigneeUser.DisplayName
+                    card.AssigneeUser?.AvatarUrl,
+                    card.AssigneeUser?.DisplayName
         );
 
         _ = _boardNotifier.NotifyCardUpdatedAsync(evt);

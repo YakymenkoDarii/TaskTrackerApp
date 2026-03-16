@@ -24,6 +24,7 @@ public class CardRepository : Repository<Card, int>, ICardRepository
     {
         return await _dbSet
             .Include(c => c.Labels)
+            .Include(c => c.AssigneeUser)
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
@@ -44,7 +45,10 @@ public class CardRepository : Repository<Card, int>, ICardRepository
 
     public async Task<IEnumerable<Card>> GetUpcomingCardsAsync(int userId, DateTime start, DateTime end, bool includeOverdue)
     {
-        var query = _dbSet.Include(c => c.Board).AsQueryable();
+        var query = _dbSet
+            .Include(c => c.Board)
+            .Include(c => c.Labels)
+            .AsQueryable();
 
         query = query.Where(c => c.AssigneeId == userId && c.DueDate.HasValue);
         query = query.Where(c => !c.Board.IsArchived);
@@ -67,6 +71,9 @@ public class CardRepository : Repository<Card, int>, ICardRepository
     {
         return await _dbSet
                 .Include(c => c.Board)
+                .Include(c => c.Labels)
+                .Include(c => c.AssigneeUser)
+                .Include(c => c.Column)
                 .Where(c => c.AssigneeId == userId)
                 .Where(c => !c.Board.IsArchived)
                 .ToListAsync();

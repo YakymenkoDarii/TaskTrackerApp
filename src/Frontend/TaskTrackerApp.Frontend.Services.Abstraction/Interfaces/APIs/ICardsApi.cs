@@ -29,4 +29,7 @@ public interface ICardsApi
 
     [Get("/api/Cards/board/{boardId}")]
     Task<ApiResponse<Result<IEnumerable<CardDto>>>> GetCardsByBoardIdAsync(int boardId);
+
+    [Get("/api/Cards/assigned-cards")]
+    Task<ApiResponse<Result<IEnumerable<UpcomingCardDto>>>> GetAllMyAssigned();
 }

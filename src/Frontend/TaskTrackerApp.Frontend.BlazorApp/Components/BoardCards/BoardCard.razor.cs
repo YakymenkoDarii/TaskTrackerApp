@@ -17,4 +17,12 @@ public partial class BoardCard
     [Parameter] public EventCallback<BoardDto> OnToggleStar { get; set; }
 
     [Parameter] public EventCallback<BoardThemeColor> OnThemeChange { get; set; }
+
+    private string GetBoardCardClass()
+    {
+        if (Board.IsLocked)
+            return "cursor-pointer hover-effect mud-theme-dark opacity-80 border-solid border-2 mud-border-error position-relative";
+
+        return "cursor-pointer hover-effect position-relative";
+    }
 }
